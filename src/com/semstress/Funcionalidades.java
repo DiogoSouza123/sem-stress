@@ -34,7 +34,7 @@ public class Funcionalidades {
         checkBox2.setText(checkBoxTemp.getText());
     }
     
-    public String verificarMatchVerticalColuna(List<JToggleButton> jToggleButtons){
+    public int verificarMatchVerticalColuna(List<JToggleButton> jToggleButtons){
 
         if(verificarQuatroElementos(jToggleButtons.get(4), jToggleButtons.get(5), jToggleButtons.get(6), jToggleButtons.get(7))){
             //verificar elementos 5, 6, 7, 8 dão match
@@ -48,7 +48,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
             
-            return "100";
+            return 1000;
         }else if(verificarQuatroElementos(jToggleButtons.get(3), jToggleButtons.get(4), jToggleButtons.get(5), jToggleButtons.get(6))){
             //verificar elementos 4,5,6,7
             trocarIcones(jToggleButtons.get(6), jToggleButtons.get(2));
@@ -58,7 +58,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(0));
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
-            return "100";
+            return 1000;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(2), jToggleButtons.get(3), jToggleButtons.get(4), jToggleButtons.get(5))){
             //verificar elementos 3, 4, 5, 6
@@ -69,7 +69,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return "100";
+            return 1000;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(1), jToggleButtons.get(2), jToggleButtons.get(3), jToggleButtons.get(4))){
             //verificar elementos 2, 3, 4, 5
@@ -79,7 +79,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return "100";
+            return 1000;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(0), jToggleButtons.get(1), jToggleButtons.get(2), jToggleButtons.get(3))){
             //verificar elementos 1, 2, 3, 4
@@ -88,10 +88,10 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return "100";
+            return 1000;
         }
         
-        return "0";
+        return 0;
     }
     
     public boolean verificarQuatroElementos(JToggleButton jToggleButton1, JToggleButton jToggleButton2, JToggleButton jToggleButton3,JToggleButton jToggleButton4){

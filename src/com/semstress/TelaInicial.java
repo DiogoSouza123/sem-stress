@@ -16,10 +16,7 @@ public class TelaInicial extends javax.swing.JFrame {
 
     public TelaInicial() {
 
-        initComponents();
-        System.out.println(TelaInicial.class.getPackage());
-        System.out.println(TelaInicial.class.getPackageName());
-        System.out.println(getClass().getResource(""));            
+        initComponents();       
         ImageIcon imageIcon = new ImageIcon(getClass().getResource("images/cup.png")); // load the image to a imageIcon                
         Image image = imageIcon.getImage(); // transform it 
         Image newimg = image.getScaledInstance(80, 80,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
@@ -662,7 +659,7 @@ public class TelaInicial extends javax.swing.JFrame {
 
         jLabelPontosTitulo.setText("Pontos");
 
-        jLabelPontosValor.setText("XXXX");
+        jLabelPontosValor.setText("0");
 
         jLabelMetaTitulo.setText("Meta");
 
@@ -901,6 +898,13 @@ public class TelaInicial extends javax.swing.JFrame {
             reduzirMovimento();
             verificaMovimentosRestantes();
             
+            //verifica e faz o match
+            int pontosGanhos=0; 
+            pontosGanhos += verificarMatchTodaTabela();
+            int pontosAtuais = Integer.parseInt(jLabelPontosValor.getText());
+            pontosAtuais+=pontosGanhos;
+            jLabelPontosValor.setText(String.valueOf(pontosAtuais));
+            
         }
     }
     
@@ -961,7 +965,9 @@ public class TelaInicial extends javax.swing.JFrame {
         
     }//GEN-LAST:event_jButtonIniciarActionPerformed
 
-    public void verificarMatchTodaTabela(){
+    public int verificarMatchTodaTabela(){
+        
+        int pontos=0;
         
         List<JToggleButton> jToggleButtonsColuna1 = new ArrayList<>();
         jToggleButtonsColuna1.add(jToggleButton1);
@@ -974,7 +980,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna1.add(jToggleButton8);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna1);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna1);
 
         List<JToggleButton> jToggleButtonsColuna2 = new ArrayList<>();
         jToggleButtonsColuna2.add(jToggleButton9);
@@ -987,7 +993,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna2.add(jToggleButton16);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna2);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna2);
         
         List<JToggleButton> jToggleButtonsColuna3 = new ArrayList<>();
         jToggleButtonsColuna3.add(jToggleButton17);
@@ -1000,7 +1006,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna3.add(jToggleButton24);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna3);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna3);
         
         List<JToggleButton> jToggleButtonsColuna4 = new ArrayList<>();
         jToggleButtonsColuna4.add(jToggleButton25);
@@ -1013,7 +1019,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna4.add(jToggleButton32);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna4);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna4);
         
         List<JToggleButton> jToggleButtonsColuna5 = new ArrayList<>();
         jToggleButtonsColuna5.add(jToggleButton33);
@@ -1026,7 +1032,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna5.add(jToggleButton40);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna5);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna5);
         
         List<JToggleButton> jToggleButtonsColuna6 = new ArrayList<>();
         jToggleButtonsColuna6.add(jToggleButton41);
@@ -1039,14 +1045,14 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna6.add(jToggleButton48);
         
         //Depois com o retorno do metodo abaixo somar na pontuacao
-        funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna6);
+        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna6);
         
+        return pontos;
     }
     
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
         verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton9);
         verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton2);
-        verificarMatchTodaTabela();
     }//GEN-LAST:event_jToggleButton1ActionPerformed
 
     private void jToggleButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton2ActionPerformed
