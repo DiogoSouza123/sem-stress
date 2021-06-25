@@ -15,11 +15,11 @@ import com.enums.NomeIconeEnum;
  */
 public class IconesJogo {
     
-    private ImageIcon coffeWhite = new ImageIcon("src\\main\\java\\com\\images\\coffee-white.png");
-    private ImageIcon coffeBeans = new ImageIcon("src\\main\\java\\com\\images\\coffee-beans.png");
-    private ImageIcon coffeBrown = new ImageIcon("src\\main\\java\\com\\images\\coffee-brown.png");
-    private ImageIcon coffeYellow = new ImageIcon("src\\main\\java\\com\\images\\coffee-yellow.png");
-    private ImageIcon coffeRed = new ImageIcon("src\\main\\java\\com\\images\\coffee-red.png");
+    private ImageIcon coffeWhite = new ImageIcon(getClass().getResource("images/coffee-white.png"));
+    private ImageIcon coffeBeans = new ImageIcon(getClass().getResource("images/coffee-beans.png"));
+    private ImageIcon coffeBrown = new ImageIcon(getClass().getResource("images/coffee-brown.png"));
+    private ImageIcon coffeYellow = new ImageIcon(getClass().getResource("images/coffee-yellow.png"));
+    private ImageIcon coffeRed = new ImageIcon(getClass().getResource("images/coffee-red.png"));
     
     public ImageIcon retornarIcone(NomeIconeEnum nomeIconeEnum){
         
