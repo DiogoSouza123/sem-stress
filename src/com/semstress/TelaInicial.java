@@ -16,13 +16,13 @@ public class TelaInicial extends javax.swing.JFrame {
 
     public TelaInicial() {
 
-        initComponents();       
+        initComponents();
         ImageIcon imageIcon = new ImageIcon(getClass().getResource("images/cup.png")); // load the image to a imageIcon                
         Image image = imageIcon.getImage(); // transform it 
         Image newimg = image.getScaledInstance(80, 80,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
         imageIcon = new ImageIcon(newimg);
         jLabelLogoJogo.setIcon(imageIcon);
-        
+
     }
 
     /**
@@ -833,32 +833,32 @@ public class TelaInicial extends javax.swing.JFrame {
         atualizarCampoSelecionado(jToggleButton46);
         atualizarCampoSelecionado(jToggleButton47);
         atualizarCampoSelecionado(jToggleButton48);
-        
+
     }
-    
+
     private void reduzirMovimento(){
         int movimentos = Integer.parseInt(jLabelMovimentosValor.getText());
         movimentos--;
-        
+
         jLabelMovimentosValor.setText(String.valueOf(movimentos));
-        
+
     }
-    
+
     private void verificaMovimentosRestantes(){
         int movimentos = Integer.parseInt(jLabelMovimentosValor.getText());
         if(movimentos<=0){
-            
+
             this.setVisible(false);
-            
+
             GameOver gameOver = new GameOver();
             gameOver.pontuacaoFinal(jLabelPontosValor.getText());
             gameOver.setVisible(true);
 
         }
     }
-            
+
     public void atualizarCampoSelecionado(JToggleButton jToggleButton){
-        
+
         switch (jToggleButton.getText()) {
             case "0":
                 jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_BEANS));
@@ -880,34 +880,34 @@ public class TelaInicial extends javax.swing.JFrame {
         }
 
     }
-    
-    public void verificarSeBotaoEstaPrecionado(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho){
-        if(jToggleButtonFilho.isSelected()){
+
+    public void verificarSeBotaoEstaPrecionado(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho) {
+        if (jToggleButtonFilho.isSelected()) {
             String texto = jToggleButtonFilho.getText();
             Icon icone = jToggleButtonFilho.getIcon();
-            
+
             jToggleButtonFilho.setText(jToggleButtonPai.getText());
             jToggleButtonFilho.setIcon(jToggleButtonPai.getIcon());
-            
+
             jToggleButtonPai.setText(texto);
             jToggleButtonPai.setIcon(icone);
-            
+
             jToggleButtonPai.setSelected(false);
             jToggleButtonFilho.setSelected(false);
-            
+
             reduzirMovimento();
             verificaMovimentosRestantes();
-            
+
             //verifica e faz o match
-            int pontosGanhos=0; 
+            int pontosGanhos = 0;
             pontosGanhos += verificarMatchTodaTabela();
             int pontosAtuais = Integer.parseInt(jLabelPontosValor.getText());
-            pontosAtuais+=pontosGanhos;
+            pontosAtuais += pontosGanhos;
             jLabelPontosValor.setText(String.valueOf(pontosAtuais));
-            
+
         }
     }
-    
+
     private void jButtonIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonIniciarActionPerformed
         jToggleButton1.setText(funcionalidades.gerarValorRandomico());
         jToggleButton2.setText(funcionalidades.gerarValorRandomico());
@@ -957,18 +957,18 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButton46.setText(funcionalidades.gerarValorRandomico());
         jToggleButton47.setText(funcionalidades.gerarValorRandomico());
         jToggleButton48.setText(funcionalidades.gerarValorRandomico());
-        
+
         atualizarImagens();
-        
+
         jLabelMovimentosValor.setText("30");
         jButtonIniciar.setEnabled(false);
-        
+
     }//GEN-LAST:event_jButtonIniciarActionPerformed
 
-    public int verificarMatchTodaTabela(){
-        
-        int pontos=0;
-        
+    public int verificarMatchTodaTabela() {
+
+        int pontos = 0;
+
         List<JToggleButton> jToggleButtonsColuna1 = new ArrayList<>();
         jToggleButtonsColuna1.add(jToggleButton1);
         jToggleButtonsColuna1.add(jToggleButton2);
@@ -978,7 +978,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna1.add(jToggleButton6);
         jToggleButtonsColuna1.add(jToggleButton7);
         jToggleButtonsColuna1.add(jToggleButton8);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna1);
 
@@ -991,10 +991,10 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna2.add(jToggleButton14);
         jToggleButtonsColuna2.add(jToggleButton15);
         jToggleButtonsColuna2.add(jToggleButton16);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna2);
-        
+
         List<JToggleButton> jToggleButtonsColuna3 = new ArrayList<>();
         jToggleButtonsColuna3.add(jToggleButton17);
         jToggleButtonsColuna3.add(jToggleButton18);
@@ -1004,10 +1004,10 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna3.add(jToggleButton22);
         jToggleButtonsColuna3.add(jToggleButton23);
         jToggleButtonsColuna3.add(jToggleButton24);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna3);
-        
+
         List<JToggleButton> jToggleButtonsColuna4 = new ArrayList<>();
         jToggleButtonsColuna4.add(jToggleButton25);
         jToggleButtonsColuna4.add(jToggleButton26);
@@ -1017,10 +1017,10 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna4.add(jToggleButton30);
         jToggleButtonsColuna4.add(jToggleButton31);
         jToggleButtonsColuna4.add(jToggleButton32);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna4);
-        
+
         List<JToggleButton> jToggleButtonsColuna5 = new ArrayList<>();
         jToggleButtonsColuna5.add(jToggleButton33);
         jToggleButtonsColuna5.add(jToggleButton34);
@@ -1030,10 +1030,10 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna5.add(jToggleButton38);
         jToggleButtonsColuna5.add(jToggleButton39);
         jToggleButtonsColuna5.add(jToggleButton40);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna5);
-        
+
         List<JToggleButton> jToggleButtonsColuna6 = new ArrayList<>();
         jToggleButtonsColuna6.add(jToggleButton41);
         jToggleButtonsColuna6.add(jToggleButton42);
@@ -1043,13 +1043,15 @@ public class TelaInicial extends javax.swing.JFrame {
         jToggleButtonsColuna6.add(jToggleButton46);
         jToggleButtonsColuna6.add(jToggleButton47);
         jToggleButtonsColuna6.add(jToggleButton48);
-        
+
         //Depois com o retorno do metodo abaixo somar na pontuacao
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna6);
         
+        pontos += funcionalidades.verificarMatchHorizontalColuna(retornarBotoesEmMatriz());
+
         return pontos;
     }
-    
+
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
         verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton9);
         verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton2);
@@ -1059,7 +1061,7 @@ public class TelaInicial extends javax.swing.JFrame {
         verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton1);
         verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton10);
         verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton3);
-        
+
     }//GEN-LAST:event_jToggleButton2ActionPerformed
 
     private void jToggleButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton3ActionPerformed
@@ -1337,15 +1339,15 @@ public class TelaInicial extends javax.swing.JFrame {
     }//GEN-LAST:event_jToggleButton44ActionPerformed
 
     private void jToggleButton45ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton45ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton44);
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton46);
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton37);
+        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton44);
+        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton46);
+        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton37);
     }//GEN-LAST:event_jToggleButton45ActionPerformed
 
     private void jToggleButton46ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton46ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton45);
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton47);
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton38);
+        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton45);
+        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton47);
+        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton38);
     }//GEN-LAST:event_jToggleButton46ActionPerformed
 
     private void jToggleButton47ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton47ActionPerformed
@@ -1358,6 +1360,66 @@ public class TelaInicial extends javax.swing.JFrame {
         verificarSeBotaoEstaPrecionado(jToggleButton48, jToggleButton47);
         verificarSeBotaoEstaPrecionado(jToggleButton48, jToggleButton40);
     }//GEN-LAST:event_jToggleButton48ActionPerformed
+
+    public JToggleButton[][] retornarBotoesEmMatriz(){
+        JToggleButton[][] botoes = new JToggleButton[8][6];
+        
+        botoes[0][0] = jToggleButton1;
+        botoes[1][0] = jToggleButton2;
+        botoes[2][0] = jToggleButton3;
+        botoes[3][0] = jToggleButton4;
+        botoes[4][0] = jToggleButton5;
+        botoes[5][0] = jToggleButton6;
+        botoes[6][0] = jToggleButton7;
+        botoes[7][0] = jToggleButton8;
+        
+        botoes[0][1] = jToggleButton9;
+        botoes[1][1] = jToggleButton10;
+        botoes[2][1] = jToggleButton11;
+        botoes[3][1] = jToggleButton12;
+        botoes[4][1] = jToggleButton13;
+        botoes[5][1] = jToggleButton14;
+        botoes[6][1] = jToggleButton15;
+        botoes[7][1] = jToggleButton16;
+        
+        botoes[0][2] = jToggleButton17;
+        botoes[1][2] = jToggleButton18;
+        botoes[2][2] = jToggleButton19;
+        botoes[3][2] = jToggleButton20;
+        botoes[4][2] = jToggleButton21;
+        botoes[5][2] = jToggleButton22;
+        botoes[6][2] = jToggleButton23;
+        botoes[7][2] = jToggleButton24;
+        
+        botoes[0][3] = jToggleButton25;
+        botoes[1][3] = jToggleButton26;
+        botoes[2][3] = jToggleButton27;
+        botoes[3][3] = jToggleButton28;
+        botoes[4][3] = jToggleButton29;
+        botoes[5][3] = jToggleButton30;
+        botoes[6][3] = jToggleButton31;
+        botoes[7][3] = jToggleButton32;
+        
+        botoes[0][4] = jToggleButton33;
+        botoes[1][4] = jToggleButton34;
+        botoes[2][4] = jToggleButton35;
+        botoes[3][4] = jToggleButton36;
+        botoes[4][4] = jToggleButton37;
+        botoes[5][4] = jToggleButton38;
+        botoes[6][4] = jToggleButton39;
+        botoes[7][4] = jToggleButton40;
+        
+        botoes[0][5] = jToggleButton41;
+        botoes[1][5] = jToggleButton42;
+        botoes[2][5] = jToggleButton43;
+        botoes[3][5] = jToggleButton44;
+        botoes[4][5] = jToggleButton45;
+        botoes[5][5] = jToggleButton46;
+        botoes[6][5] = jToggleButton47;
+        botoes[7][5] = jToggleButton48;
+        
+        return botoes;
+    }
 
     /**
      * @param args the command line arguments

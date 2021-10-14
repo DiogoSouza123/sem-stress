@@ -6,7 +6,6 @@
 package com.semstress;
 
 import java.util.List;
-import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JToggleButton;
 import com.enums.NomeIconeEnum;
@@ -101,6 +100,11 @@ public class Funcionalidades {
                 && jToggleButton3.getText().equals(jToggleButton4.getText());
     }
     
+    public boolean verificaTresElementos(JToggleButton jToggleButton1, JToggleButton jToggleButton2, JToggleButton jToggleButton3){
+        return jToggleButton1.getText().equals(jToggleButton2.getText())
+                && jToggleButton2.getText().equals(jToggleButton3.getText());
+    }
+    
     public void trocarIcones(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho){
             jToggleButtonPai.setText(jToggleButtonFilho.getText());
             jToggleButtonPai.setIcon(jToggleButtonFilho.getIcon());
@@ -136,4 +140,67 @@ public class Funcionalidades {
 
     }
     
+    public int verificarMatchHorizontalColuna (JToggleButton[][] botoes){
+        
+        int pontos = 0;
+        
+        //1 - Verificar combinações de 4 na horizontal, de cima para baixo, da esquerda para direita
+        for(int i = 0 ; i < 8 ; i++){
+            for(int j = 0 ; j < 3 ;j++){
+                
+                if(verificarQuatroElementos(botoes[i][j], botoes[i][j+1], botoes[i][j+2], botoes[i][j+3])){
+                    botoes[i][j].setText("5");
+                    botoes[i][j].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    botoes[i][j+1].setText("5");
+                    botoes[i][j+1].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    botoes[i][j+2].setText("5");
+                    botoes[i][j+2].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    botoes[i][j+3].setText("5");
+                    botoes[i][j+3].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    pontos += 1000;
+                    
+                    removeEspacosQueimados(botoes);
+                    
+                }
+                    
+            }
+        }
+        
+        //2 - Verificar combinações de 3 na horizontal, de cima para baixo, da esquerda para direita
+        for(int i = 0 ; i < 8 ; i++){
+            for(int j = 0 ; j < 4 ;j++){
+                
+                if(verificaTresElementos(botoes[i][j], botoes[i][j+1], botoes[i][j+2])){
+                    botoes[i][j].setText("5");
+                    botoes[i][j].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    botoes[i][j+1].setText("5");
+                    botoes[i][j+1].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    botoes[i][j+2].setText("5");
+                    botoes[i][j+2].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
+                    
+                    pontos += 500;
+                }
+                    
+            }
+        }
+        
+        return pontos;
+        
+    }
+    
+    public void removeEspacosQueimados(JToggleButton[][] botoes){
+        
+        for(int i = 0 ; i <= 7 ; i++){
+            for(int j = 7 ; j >= 0 ; j--){
+                System.out.println("J="+j+"  I="+i);
+            }
+        }
+        
+    }
 }

@@ -10,5 +10,5 @@ package com.enums;
  * @author DiogoSouza
  */
 public enum NomeIconeEnum {
-    COFFEE_WHITE, COFFEE_BEANS, COFFEE_BROWN, COFFEE_YELLOW, COFFEE_RED
+    COFFEE_WHITE, COFFEE_BEANS, COFFEE_BROWN, COFFEE_YELLOW, COFFEE_RED, FIRE
 }
