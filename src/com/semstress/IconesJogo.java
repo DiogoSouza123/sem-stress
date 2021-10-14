@@ -20,6 +20,7 @@ public class IconesJogo {
     private ImageIcon coffeBrown = new ImageIcon(getClass().getResource("images/coffee-brown.png"));
     private ImageIcon coffeYellow = new ImageIcon(getClass().getResource("images/coffee-yellow.png"));
     private ImageIcon coffeRed = new ImageIcon(getClass().getResource("images/coffee-red.png"));
+    private ImageIcon fire = new ImageIcon(getClass().getResource("images/fire.png"));
     
     public ImageIcon retornarIcone(NomeIconeEnum nomeIconeEnum){
         
@@ -53,6 +54,12 @@ public class IconesJogo {
                 Image coffeImg = coffeYellow.getImage();
                 Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
                 return coffeYellow = new ImageIcon(coffeImgNew);
+            }
+            case FIRE:
+            {
+                Image coffeImg = fire.getImage();
+                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+                return fire = new ImageIcon(coffeImgNew);
             }
             default:
                 break;
