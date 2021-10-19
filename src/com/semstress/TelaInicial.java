@@ -7,6 +7,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import com.enums.NomeIconeEnum;
+import java.util.Arrays;
 
 /**
  *
@@ -881,6 +882,7 @@ public class TelaInicial extends javax.swing.JFrame {
 
     }
 
+    //Essa função deverá no futuro vericar se o movimento é válido, caso não seja ele não deverá realizar a troca
     public void verificarSeBotaoEstaPrecionado(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho) {
         if (jToggleButtonFilho.isSelected()) {
             String texto = jToggleButtonFilho.getText();
@@ -969,87 +971,39 @@ public class TelaInicial extends javax.swing.JFrame {
 
         int pontos = 0;
 
-        List<JToggleButton> jToggleButtonsColuna1 = new ArrayList<>();
-        jToggleButtonsColuna1.add(jToggleButton1);
-        jToggleButtonsColuna1.add(jToggleButton2);
-        jToggleButtonsColuna1.add(jToggleButton3);
-        jToggleButtonsColuna1.add(jToggleButton4);
-        jToggleButtonsColuna1.add(jToggleButton5);
-        jToggleButtonsColuna1.add(jToggleButton6);
-        jToggleButtonsColuna1.add(jToggleButton7);
-        jToggleButtonsColuna1.add(jToggleButton8);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna1 = formarColuna(jToggleButton1, jToggleButton2, jToggleButton3, jToggleButton4,
+                jToggleButton5, jToggleButton6, jToggleButton7, jToggleButton8);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna1);
 
-        List<JToggleButton> jToggleButtonsColuna2 = new ArrayList<>();
-        jToggleButtonsColuna2.add(jToggleButton9);
-        jToggleButtonsColuna2.add(jToggleButton10);
-        jToggleButtonsColuna2.add(jToggleButton11);
-        jToggleButtonsColuna2.add(jToggleButton12);
-        jToggleButtonsColuna2.add(jToggleButton13);
-        jToggleButtonsColuna2.add(jToggleButton14);
-        jToggleButtonsColuna2.add(jToggleButton15);
-        jToggleButtonsColuna2.add(jToggleButton16);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna2 = formarColuna(jToggleButton9, jToggleButton10, jToggleButton11, jToggleButton12,
+                jToggleButton13, jToggleButton14, jToggleButton15, jToggleButton16);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna2);
 
-        List<JToggleButton> jToggleButtonsColuna3 = new ArrayList<>();
-        jToggleButtonsColuna3.add(jToggleButton17);
-        jToggleButtonsColuna3.add(jToggleButton18);
-        jToggleButtonsColuna3.add(jToggleButton19);
-        jToggleButtonsColuna3.add(jToggleButton20);
-        jToggleButtonsColuna3.add(jToggleButton21);
-        jToggleButtonsColuna3.add(jToggleButton22);
-        jToggleButtonsColuna3.add(jToggleButton23);
-        jToggleButtonsColuna3.add(jToggleButton24);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna3 = formarColuna(jToggleButton17, jToggleButton18, jToggleButton19, jToggleButton20,
+                jToggleButton21, jToggleButton22, jToggleButton23, jToggleButton24);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna3);
 
-        List<JToggleButton> jToggleButtonsColuna4 = new ArrayList<>();
-        jToggleButtonsColuna4.add(jToggleButton25);
-        jToggleButtonsColuna4.add(jToggleButton26);
-        jToggleButtonsColuna4.add(jToggleButton27);
-        jToggleButtonsColuna4.add(jToggleButton28);
-        jToggleButtonsColuna4.add(jToggleButton29);
-        jToggleButtonsColuna4.add(jToggleButton30);
-        jToggleButtonsColuna4.add(jToggleButton31);
-        jToggleButtonsColuna4.add(jToggleButton32);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna4 = formarColuna(jToggleButton25, jToggleButton26, jToggleButton27, jToggleButton28,
+                jToggleButton29, jToggleButton30, jToggleButton31, jToggleButton32);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna4);
 
-        List<JToggleButton> jToggleButtonsColuna5 = new ArrayList<>();
-        jToggleButtonsColuna5.add(jToggleButton33);
-        jToggleButtonsColuna5.add(jToggleButton34);
-        jToggleButtonsColuna5.add(jToggleButton35);
-        jToggleButtonsColuna5.add(jToggleButton36);
-        jToggleButtonsColuna5.add(jToggleButton37);
-        jToggleButtonsColuna5.add(jToggleButton38);
-        jToggleButtonsColuna5.add(jToggleButton39);
-        jToggleButtonsColuna5.add(jToggleButton40);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna5 = formarColuna(jToggleButton33, jToggleButton34, jToggleButton35, jToggleButton36,
+                jToggleButton37, jToggleButton38, jToggleButton39, jToggleButton40);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna5);
 
-        List<JToggleButton> jToggleButtonsColuna6 = new ArrayList<>();
-        jToggleButtonsColuna6.add(jToggleButton41);
-        jToggleButtonsColuna6.add(jToggleButton42);
-        jToggleButtonsColuna6.add(jToggleButton43);
-        jToggleButtonsColuna6.add(jToggleButton44);
-        jToggleButtonsColuna6.add(jToggleButton45);
-        jToggleButtonsColuna6.add(jToggleButton46);
-        jToggleButtonsColuna6.add(jToggleButton47);
-        jToggleButtonsColuna6.add(jToggleButton48);
-
-        //Depois com o retorno do metodo abaixo somar na pontuacao
+        List<JToggleButton> jToggleButtonsColuna6 = formarColuna(jToggleButton41, jToggleButton42, jToggleButton43, jToggleButton44,
+                jToggleButton45, jToggleButton46, jToggleButton47, jToggleButton48);
         pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna6);
         
         pontos += funcionalidades.verificarMatchHorizontalColuna(retornarBotoesEmMatriz());
 
         return pontos;
+    }
+    
+    private List<JToggleButton> formarColuna(JToggleButton jToggleButton1, JToggleButton jToggleButton2, JToggleButton jToggleButton3, JToggleButton jToggleButton4,
+            JToggleButton jToggleButton5, JToggleButton jToggleButton6, JToggleButton jToggleButton7, JToggleButton jToggleButton8){
+        
+        return new ArrayList<>(Arrays.asList(jToggleButton1, jToggleButton2, jToggleButton3, jToggleButton4, jToggleButton5, jToggleButton6, jToggleButton7, jToggleButton8));
     }
 
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
