@@ -17,6 +17,8 @@ import com.enums.NomeIconeEnum;
 public class Funcionalidades {
     
     private IconesJogo iconesJogo = new IconesJogo();
+    private static int MATCH4PONTOS = 1000;
+    private static int MATCH3PONTOS = 500;
     
     public String gerarValorRandomico(){
         double resultado = Math.random()*4;
@@ -35,6 +37,7 @@ public class Funcionalidades {
     
     public int verificarMatchVerticalColuna(List<JToggleButton> jToggleButtons){
 
+        //Verificacao match de 4 elementos
         if(verificarQuatroElementos(jToggleButtons.get(4), jToggleButtons.get(5), jToggleButtons.get(6), jToggleButtons.get(7))){
             //verificar elementos 5, 6, 7, 8 dão match
             trocarIcones(jToggleButtons.get(7), jToggleButtons.get(3));
@@ -47,7 +50,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
             
-            return 1000;
+            return MATCH4PONTOS;
         }else if(verificarQuatroElementos(jToggleButtons.get(3), jToggleButtons.get(4), jToggleButtons.get(5), jToggleButtons.get(6))){
             //verificar elementos 4,5,6,7
             trocarIcones(jToggleButtons.get(6), jToggleButtons.get(2));
@@ -57,7 +60,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(0));
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
-            return 1000;
+            return MATCH4PONTOS;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(2), jToggleButtons.get(3), jToggleButtons.get(4), jToggleButtons.get(5))){
             //verificar elementos 3, 4, 5, 6
@@ -68,7 +71,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return 1000;
+            return MATCH4PONTOS;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(1), jToggleButtons.get(2), jToggleButtons.get(3), jToggleButtons.get(4))){
             //verificar elementos 2, 3, 4, 5
@@ -78,7 +81,7 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return 1000;
+            return MATCH4PONTOS;
             
         }else if(verificarQuatroElementos(jToggleButtons.get(0), jToggleButtons.get(1), jToggleButtons.get(2), jToggleButtons.get(3))){
             //verificar elementos 1, 2, 3, 4
@@ -87,9 +90,68 @@ public class Funcionalidades {
             atualizarIcone(jToggleButtons.get(1));
             atualizarIcone(jToggleButtons.get(2));
             atualizarIcone(jToggleButtons.get(3));
-            return 1000;
+            return MATCH4PONTOS;
         }
         
+        //fim verificacao 4 elementos e inicio verificacao 3 elementos
+        else if(verificaTresElementos(jToggleButtons.get(7), jToggleButtons.get(6), jToggleButtons.get(5))){
+            //verificar elementos 5 6 7 dão match
+            trocarIcones(jToggleButtons.get(7), jToggleButtons.get(4));
+            trocarIcones(jToggleButtons.get(6), jToggleButtons.get(3));
+            trocarIcones(jToggleButtons.get(5), jToggleButtons.get(2));
+            trocarIcones(jToggleButtons.get(4), jToggleButtons.get(1));
+            trocarIcones(jToggleButtons.get(3), jToggleButtons.get(0));
+            
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }else if(verificaTresElementos(jToggleButtons.get(6), jToggleButtons.get(5), jToggleButtons.get(4))){
+            //TODO criar funcao verifica 4 5 6
+            trocarIcones(jToggleButtons.get(6), jToggleButtons.get(3));
+            trocarIcones(jToggleButtons.get(5), jToggleButtons.get(2));
+            trocarIcones(jToggleButtons.get(4), jToggleButtons.get(1));
+            trocarIcones(jToggleButtons.get(3), jToggleButtons.get(0));
+            
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }else if(verificaTresElementos(jToggleButtons.get(5), jToggleButtons.get(4), jToggleButtons.get(3))){
+            //TODO criar funcao verifica 3 4 5
+            trocarIcones(jToggleButtons.get(5), jToggleButtons.get(2));
+            trocarIcones(jToggleButtons.get(4), jToggleButtons.get(1));
+            trocarIcones(jToggleButtons.get(3), jToggleButtons.get(0));
+            
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }else if(verificaTresElementos(jToggleButtons.get(4), jToggleButtons.get(3), jToggleButtons.get(2))){
+            //TODO criar funcao verifica 2 3 4
+            trocarIcones(jToggleButtons.get(4), jToggleButtons.get(1));
+            trocarIcones(jToggleButtons.get(3), jToggleButtons.get(0));
+            
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }else if(verificaTresElementos(jToggleButtons.get(3), jToggleButtons.get(2), jToggleButtons.get(1))){
+            //TODO criar funcao verifica 1 2 3
+            trocarIcones(jToggleButtons.get(3), jToggleButtons.get(0));
+            
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }else if(verificaTresElementos(jToggleButtons.get(2), jToggleButtons.get(1), jToggleButtons.get(0))){
+            //TODO criar funcao verifica 0 1 2
+            atualizarIcone(jToggleButtons.get(0));
+            atualizarIcone(jToggleButtons.get(1));
+            atualizarIcone(jToggleButtons.get(2));
+            return MATCH3PONTOS;
+        }
+                
         return 0;
     }
     
