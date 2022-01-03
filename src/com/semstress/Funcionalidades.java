@@ -247,6 +247,8 @@ public class Funcionalidades {
                     botoes[i][j+2].setIcon(iconesJogo.retornarIcone(NomeIconeEnum.FIRE));
                     
                     pontos += 500;
+                    
+                    removeEspacosQueimados(botoes);
                 }
                     
             }
@@ -258,11 +260,24 @@ public class Funcionalidades {
     
     public void removeEspacosQueimados(JToggleButton[][] botoes){
         
-        for(int i = 0 ; i <= 7 ; i++){
-            for(int j = 7 ; j >= 0 ; j--){
-                System.out.println("J="+j+"  I="+i);
+        for(int j = 0 ; j <= 5 ; j++){
+            for(int i = 7 ; i >= 0 ; i--){
+
+                if(botoes[i][j].getText().equals("5")){
+                    eliminaBlocoQuimado(botoes, i, j);
+                }
             }
         }
         
+    }
+    
+    public void eliminaBlocoQuimado(JToggleButton[][] botoes, int linha, int coluna){
+
+        for(int i=linha ; i>0 ; i--){
+
+            botoes[i][coluna].setText(botoes[i-1][coluna].getText());
+            botoes[i][coluna].setIcon(botoes[i-1][coluna].getIcon());
+        }
+        atualizarIcone(botoes[0][coluna]);
     }
 }
