@@ -1,13 +1,10 @@
 package com.semstress;
 
 import java.awt.Image;
-import java.util.List;
-import java.util.ArrayList;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
-import com.enums.NomeIconeEnum;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -23,6 +20,10 @@ public class TelaInicial extends javax.swing.JFrame {
         Image newimg = image.getScaledInstance(80, 80,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
         imageIcon = new ImageIcon(newimg);
         jLabelLogoJogo.setIcon(imageIcon);
+        inicializarGrade();
+        bloquearGrade();
+        jLabelMetaValor.setText(String.valueOf(metaPontos));
+        jLabelMovimentosValor.setText("0");
 
     }
 
@@ -785,534 +786,328 @@ public class TelaInicial extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void atualizarImagens(){
-        atualizarCampoSelecionado(jToggleButton1);
-        atualizarCampoSelecionado(jToggleButton2);
-        atualizarCampoSelecionado(jToggleButton3);
-        atualizarCampoSelecionado(jToggleButton4);
-        atualizarCampoSelecionado(jToggleButton5);
-        atualizarCampoSelecionado(jToggleButton6);
-        atualizarCampoSelecionado(jToggleButton7);
-        atualizarCampoSelecionado(jToggleButton8);
-        atualizarCampoSelecionado(jToggleButton9);
-        atualizarCampoSelecionado(jToggleButton10);
-        atualizarCampoSelecionado(jToggleButton11);
-        atualizarCampoSelecionado(jToggleButton12);
-        atualizarCampoSelecionado(jToggleButton13);
-        atualizarCampoSelecionado(jToggleButton14);
-        atualizarCampoSelecionado(jToggleButton15);
-        atualizarCampoSelecionado(jToggleButton16);
-        atualizarCampoSelecionado(jToggleButton17);
-        atualizarCampoSelecionado(jToggleButton18);
-        atualizarCampoSelecionado(jToggleButton19);
-        atualizarCampoSelecionado(jToggleButton20);
-        atualizarCampoSelecionado(jToggleButton21);
-        atualizarCampoSelecionado(jToggleButton22);
-        atualizarCampoSelecionado(jToggleButton23);
-        atualizarCampoSelecionado(jToggleButton24);
-        atualizarCampoSelecionado(jToggleButton25);
-        atualizarCampoSelecionado(jToggleButton26);
-        atualizarCampoSelecionado(jToggleButton27);
-        atualizarCampoSelecionado(jToggleButton28);
-        atualizarCampoSelecionado(jToggleButton29);
-        atualizarCampoSelecionado(jToggleButton30);
-        atualizarCampoSelecionado(jToggleButton31);
-        atualizarCampoSelecionado(jToggleButton32);
-        atualizarCampoSelecionado(jToggleButton33);
-        atualizarCampoSelecionado(jToggleButton34);
-        atualizarCampoSelecionado(jToggleButton35);
-        atualizarCampoSelecionado(jToggleButton36);
-        atualizarCampoSelecionado(jToggleButton37);
-        atualizarCampoSelecionado(jToggleButton38);
-        atualizarCampoSelecionado(jToggleButton39);
-        atualizarCampoSelecionado(jToggleButton40);
-        atualizarCampoSelecionado(jToggleButton41);
-        atualizarCampoSelecionado(jToggleButton42);
-        atualizarCampoSelecionado(jToggleButton43);
-        atualizarCampoSelecionado(jToggleButton44);
-        atualizarCampoSelecionado(jToggleButton45);
-        atualizarCampoSelecionado(jToggleButton46);
-        atualizarCampoSelecionado(jToggleButton47);
-        atualizarCampoSelecionado(jToggleButton48);
-
-    }
-
-    private void reduzirMovimento(){
-        int movimentos = Integer.parseInt(jLabelMovimentosValor.getText());
-        movimentos--;
-
-        jLabelMovimentosValor.setText(String.valueOf(movimentos));
-
-    }
-
-    private void verificaMovimentosRestantes(){
-        int movimentos = Integer.parseInt(jLabelMovimentosValor.getText());
-        if(movimentos<=0){
-
-            this.setVisible(false);
-
-            GameOver gameOver = new GameOver();
-            gameOver.pontuacaoFinal(jLabelPontosValor.getText());
-            gameOver.setVisible(true);
-
+    private void inicializarGrade() {
+        botoesGrade = retornarBotoesEmMatriz();
+        posicoesPorBotao.clear();
+        for (int row = 0; row < Board.ROWS; row++) {
+            for (int col = 0; col < Board.COLS; col++) {
+                JToggleButton botao = botoesGrade[row][col];
+                botao.setText("");
+                botao.setFocusPainted(false);
+                botao.setSelected(false);
+                posicoesPorBotao.put(botao, new Position(row, col));
+            }
         }
     }
 
-    public void atualizarCampoSelecionado(JToggleButton jToggleButton){
+    private void iniciarNovoJogo() {
+        pontos = 0;
+        movimentosRestantes = movimentosIniciais;
+        selecionado = null;
 
-        switch (jToggleButton.getText()) {
-            case "0":
-                jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_BEANS));
-                break;
-            case "1":
-                jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_BROWN));
-                break;
-            case "2":
-                jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_WHITE));
-                break;
-            case "3":
-                jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_YELLOW));
-                break;
-            case "4":
-                jToggleButton.setIcon(iconesJogo.retornarIcone(NomeIconeEnum.COFFEE_RED));
-                break;
-            default:
-                break;
-        }
+        board.fillRandom();
+        gameEngine.resolveBoard(board);
+        renderizarBoard();
 
+        jLabelPontosValor.setText(String.valueOf(pontos));
+        jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
+        jLabelMetaValor.setText(String.valueOf(metaPontos));
+
+        desbloquearGrade();
+        jButtonIniciar.setEnabled(false);
     }
 
-    //Essa função deverá no futuro vericar se o movimento é válido, caso não seja ele não deverá realizar a troca
+    private void renderizarBoard() {
+        for (int row = 0; row < Board.ROWS; row++) {
+            for (int col = 0; col < Board.COLS; col++) {
+                JToggleButton botao = botoesGrade[row][col];
+                int valor = board.get(row, col);
+                botao.setText(String.valueOf(valor));
+                botao.setIcon(iconesJogo.retornarIconePorValor(valor));
+            }
+        }
+    }
+
+    private void bloquearGrade() {
+        for (int row = 0; row < Board.ROWS; row++) {
+            for (int col = 0; col < Board.COLS; col++) {
+                botoesGrade[row][col].setEnabled(false);
+            }
+        }
+    }
+
+    private void desbloquearGrade() {
+        for (int row = 0; row < Board.ROWS; row++) {
+            for (int col = 0; col < Board.COLS; col++) {
+                botoesGrade[row][col].setEnabled(true);
+            }
+        }
+    }
+
+    private void limparSelecao() {
+        if (selecionado != null) {
+            selecionado.setSelected(false);
+        }
+        selecionado = null;
+    }
+
+    private void onCellClicked(JToggleButton atual) {
+        if (!atual.isEnabled()) {
+            return;
+        }
+
+        if (selecionado == null) {
+            selecionado = atual;
+            selecionado.setSelected(true);
+            return;
+        }
+
+        if (selecionado == atual) {
+            limparSelecao();
+            return;
+        }
+
+        Position origem = posicoesPorBotao.get(selecionado);
+        Position destino = posicoesPorBotao.get(atual);
+        MoveResult resultado = gameEngine.tryMove(board, origem, destino);
+
+        if (resultado.isValid()) {
+            movimentosRestantes--;
+            pontos += resultado.getPoints();
+            renderizarBoard();
+            jLabelPontosValor.setText(String.valueOf(pontos));
+            jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
+            verificarFimDeJogo();
+        }
+
+        atual.setSelected(false);
+        limparSelecao();
+    }
+
+    private void verificarFimDeJogo() {
+        if (pontos >= metaPontos) {
+            encerrarJogo(true);
+            return;
+        }
+
+        if (movimentosRestantes <= 0) {
+            encerrarJogo(false);
+        }
+    }
+
+    private void encerrarJogo(boolean venceu) {
+        bloquearGrade();
+        String titulo = venceu ? "Voce venceu!" : "Fim de jogo";
+        jButtonIniciar.setEnabled(true);
+        new GameOver(titulo, pontos, new Runnable() {
+            @Override
+            public void run() {
+                iniciarNovoJogo();
+            }
+        }).setVisible(true);
+    }
+
+    // Metodo mantido para compatibilidade com handlers gerados.
     public void verificarSeBotaoEstaPrecionado(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho) {
         if (jToggleButtonFilho.isSelected()) {
-            String texto = jToggleButtonFilho.getText();
-            Icon icone = jToggleButtonFilho.getIcon();
-
-            jToggleButtonFilho.setText(jToggleButtonPai.getText());
-            jToggleButtonFilho.setIcon(jToggleButtonPai.getIcon());
-
-            jToggleButtonPai.setText(texto);
-            jToggleButtonPai.setIcon(icone);
-
-            jToggleButtonPai.setSelected(false);
-            jToggleButtonFilho.setSelected(false);
-
-            reduzirMovimento();
-            verificaMovimentosRestantes();
-
-            //verifica e faz o match
-            int pontosGanhos = 0;
-            pontosGanhos += verificarMatchTodaTabela();
-            int pontosAtuais = Integer.parseInt(jLabelPontosValor.getText());
-            pontosAtuais += pontosGanhos;
-            jLabelPontosValor.setText(String.valueOf(pontosAtuais));
-
+            onCellClicked(jToggleButtonPai);
         }
     }
 
     private void jButtonIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonIniciarActionPerformed
-        jToggleButton1.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton2.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton3.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton4.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton5.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton6.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton7.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton8.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton9.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton10.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton11.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton12.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton13.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton14.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton15.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton16.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton17.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton18.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton19.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton20.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton21.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton22.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton23.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton24.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton25.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton26.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton27.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton28.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton29.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton30.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton31.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton32.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton33.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton34.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton35.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton36.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton37.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton38.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton39.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton40.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton41.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton42.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton43.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton44.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton45.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton46.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton47.setText(funcionalidades.gerarValorRandomico());
-        jToggleButton48.setText(funcionalidades.gerarValorRandomico());
-
-        atualizarImagens();
-
-        jLabelMovimentosValor.setText("30");
-        jButtonIniciar.setEnabled(false);
+        iniciarNovoJogo();
 
     }//GEN-LAST:event_jButtonIniciarActionPerformed
-
-    public int verificarMatchTodaTabela() {
-
-        int pontos = 0;
-
-        List<JToggleButton> jToggleButtonsColuna1 = formarColuna(jToggleButton1, jToggleButton2, jToggleButton3, jToggleButton4,
-                jToggleButton5, jToggleButton6, jToggleButton7, jToggleButton8);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna1);
-
-        List<JToggleButton> jToggleButtonsColuna2 = formarColuna(jToggleButton9, jToggleButton10, jToggleButton11, jToggleButton12,
-                jToggleButton13, jToggleButton14, jToggleButton15, jToggleButton16);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna2);
-
-        List<JToggleButton> jToggleButtonsColuna3 = formarColuna(jToggleButton17, jToggleButton18, jToggleButton19, jToggleButton20,
-                jToggleButton21, jToggleButton22, jToggleButton23, jToggleButton24);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna3);
-
-        List<JToggleButton> jToggleButtonsColuna4 = formarColuna(jToggleButton25, jToggleButton26, jToggleButton27, jToggleButton28,
-                jToggleButton29, jToggleButton30, jToggleButton31, jToggleButton32);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna4);
-
-        List<JToggleButton> jToggleButtonsColuna5 = formarColuna(jToggleButton33, jToggleButton34, jToggleButton35, jToggleButton36,
-                jToggleButton37, jToggleButton38, jToggleButton39, jToggleButton40);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna5);
-
-        List<JToggleButton> jToggleButtonsColuna6 = formarColuna(jToggleButton41, jToggleButton42, jToggleButton43, jToggleButton44,
-                jToggleButton45, jToggleButton46, jToggleButton47, jToggleButton48);
-        pontos += funcionalidades.verificarMatchVerticalColuna(jToggleButtonsColuna6);
-        
-        pontos += funcionalidades.verificarMatchHorizontalColuna(retornarBotoesEmMatriz());
-
-        return pontos;
-    }
-    
-    private List<JToggleButton> formarColuna(JToggleButton jToggleButton1, JToggleButton jToggleButton2, JToggleButton jToggleButton3, JToggleButton jToggleButton4,
-            JToggleButton jToggleButton5, JToggleButton jToggleButton6, JToggleButton jToggleButton7, JToggleButton jToggleButton8){
-        
-        return new ArrayList<>(Arrays.asList(jToggleButton1, jToggleButton2, jToggleButton3, jToggleButton4, jToggleButton5, jToggleButton6, jToggleButton7, jToggleButton8));
-    }
-
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton9);
-        verificarSeBotaoEstaPrecionado(jToggleButton1, jToggleButton2);
+        onCellClicked(jToggleButton1);
     }//GEN-LAST:event_jToggleButton1ActionPerformed
 
     private void jToggleButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton2ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton1);
-        verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton10);
-        verificarSeBotaoEstaPrecionado(jToggleButton2, jToggleButton3);
-
+        onCellClicked(jToggleButton2);
     }//GEN-LAST:event_jToggleButton2ActionPerformed
 
     private void jToggleButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton3ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton3, jToggleButton2);
-        verificarSeBotaoEstaPrecionado(jToggleButton3, jToggleButton11);
-        verificarSeBotaoEstaPrecionado(jToggleButton3, jToggleButton4);
+        onCellClicked(jToggleButton3);
     }//GEN-LAST:event_jToggleButton3ActionPerformed
 
     private void jToggleButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton4ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton4, jToggleButton3);
-        verificarSeBotaoEstaPrecionado(jToggleButton4, jToggleButton12);
-        verificarSeBotaoEstaPrecionado(jToggleButton4, jToggleButton5);
+        onCellClicked(jToggleButton4);
     }//GEN-LAST:event_jToggleButton4ActionPerformed
 
     private void jToggleButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton5ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton5, jToggleButton4);
-        verificarSeBotaoEstaPrecionado(jToggleButton5, jToggleButton13);
-        verificarSeBotaoEstaPrecionado(jToggleButton5, jToggleButton6);
+        onCellClicked(jToggleButton5);
     }//GEN-LAST:event_jToggleButton5ActionPerformed
 
     private void jToggleButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton6ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton6, jToggleButton5);
-        verificarSeBotaoEstaPrecionado(jToggleButton6, jToggleButton14);
-        verificarSeBotaoEstaPrecionado(jToggleButton6, jToggleButton7);
+        onCellClicked(jToggleButton6);
     }//GEN-LAST:event_jToggleButton6ActionPerformed
 
     private void jToggleButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton7ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton7, jToggleButton6);
-        verificarSeBotaoEstaPrecionado(jToggleButton7, jToggleButton15);
-        verificarSeBotaoEstaPrecionado(jToggleButton7, jToggleButton8);
+        onCellClicked(jToggleButton7);
     }//GEN-LAST:event_jToggleButton7ActionPerformed
 
     private void jToggleButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton8ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton8, jToggleButton7);
-        verificarSeBotaoEstaPrecionado(jToggleButton8, jToggleButton16);
+        onCellClicked(jToggleButton8);
     }//GEN-LAST:event_jToggleButton8ActionPerformed
 
     private void jToggleButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton9ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton9, jToggleButton1);
-        verificarSeBotaoEstaPrecionado(jToggleButton9, jToggleButton10);
-        verificarSeBotaoEstaPrecionado(jToggleButton9, jToggleButton17);
+        onCellClicked(jToggleButton9);
     }//GEN-LAST:event_jToggleButton9ActionPerformed
 
     private void jToggleButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton10ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton10, jToggleButton9);
-        verificarSeBotaoEstaPrecionado(jToggleButton10, jToggleButton2);
-        verificarSeBotaoEstaPrecionado(jToggleButton10, jToggleButton11);
-        verificarSeBotaoEstaPrecionado(jToggleButton10, jToggleButton18);
+        onCellClicked(jToggleButton10);
     }//GEN-LAST:event_jToggleButton10ActionPerformed
 
     private void jToggleButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton11ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton11, jToggleButton10);
-        verificarSeBotaoEstaPrecionado(jToggleButton11, jToggleButton3);
-        verificarSeBotaoEstaPrecionado(jToggleButton11, jToggleButton12);
-        verificarSeBotaoEstaPrecionado(jToggleButton11, jToggleButton19);
+        onCellClicked(jToggleButton11);
     }//GEN-LAST:event_jToggleButton11ActionPerformed
 
     private void jToggleButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton12ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton12, jToggleButton11);
-        verificarSeBotaoEstaPrecionado(jToggleButton12, jToggleButton4);
-        verificarSeBotaoEstaPrecionado(jToggleButton12, jToggleButton13);
-        verificarSeBotaoEstaPrecionado(jToggleButton12, jToggleButton20);
+        onCellClicked(jToggleButton12);
     }//GEN-LAST:event_jToggleButton12ActionPerformed
 
     private void jToggleButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton13ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton13, jToggleButton12);
-        verificarSeBotaoEstaPrecionado(jToggleButton13, jToggleButton5);
-        verificarSeBotaoEstaPrecionado(jToggleButton13, jToggleButton14);
-        verificarSeBotaoEstaPrecionado(jToggleButton13, jToggleButton21);
+        onCellClicked(jToggleButton13);
     }//GEN-LAST:event_jToggleButton13ActionPerformed
 
     private void jToggleButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton14ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton14, jToggleButton13);
-        verificarSeBotaoEstaPrecionado(jToggleButton14, jToggleButton6);
-        verificarSeBotaoEstaPrecionado(jToggleButton14, jToggleButton15);
-        verificarSeBotaoEstaPrecionado(jToggleButton14, jToggleButton22);
+        onCellClicked(jToggleButton14);
     }//GEN-LAST:event_jToggleButton14ActionPerformed
 
     private void jToggleButton15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton15ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton15, jToggleButton14);
-        verificarSeBotaoEstaPrecionado(jToggleButton15, jToggleButton7);
-        verificarSeBotaoEstaPrecionado(jToggleButton15, jToggleButton16);
-        verificarSeBotaoEstaPrecionado(jToggleButton15, jToggleButton23);
+        onCellClicked(jToggleButton15);
     }//GEN-LAST:event_jToggleButton15ActionPerformed
 
     private void jToggleButton16ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton16ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton16, jToggleButton15);
-        verificarSeBotaoEstaPrecionado(jToggleButton16, jToggleButton8);
-        verificarSeBotaoEstaPrecionado(jToggleButton16, jToggleButton24);
+        onCellClicked(jToggleButton16);
     }//GEN-LAST:event_jToggleButton16ActionPerformed
 
     private void jToggleButton17ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton17ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton17, jToggleButton9);
-        verificarSeBotaoEstaPrecionado(jToggleButton17, jToggleButton18);
-        verificarSeBotaoEstaPrecionado(jToggleButton17, jToggleButton25);
+        onCellClicked(jToggleButton17);
     }//GEN-LAST:event_jToggleButton17ActionPerformed
 
     private void jToggleButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton18ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton18, jToggleButton17);
-        verificarSeBotaoEstaPrecionado(jToggleButton18, jToggleButton10);
-        verificarSeBotaoEstaPrecionado(jToggleButton18, jToggleButton19);
-        verificarSeBotaoEstaPrecionado(jToggleButton18, jToggleButton26);
+        onCellClicked(jToggleButton18);
     }//GEN-LAST:event_jToggleButton18ActionPerformed
 
     private void jToggleButton19ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton19ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton19, jToggleButton18);
-        verificarSeBotaoEstaPrecionado(jToggleButton19, jToggleButton11);
-        verificarSeBotaoEstaPrecionado(jToggleButton19, jToggleButton20);
-        verificarSeBotaoEstaPrecionado(jToggleButton19, jToggleButton27);
+        onCellClicked(jToggleButton19);
     }//GEN-LAST:event_jToggleButton19ActionPerformed
 
     private void jToggleButton20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton20ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton20, jToggleButton19);
-        verificarSeBotaoEstaPrecionado(jToggleButton20, jToggleButton12);
-        verificarSeBotaoEstaPrecionado(jToggleButton20, jToggleButton21);
-        verificarSeBotaoEstaPrecionado(jToggleButton20, jToggleButton28);
+        onCellClicked(jToggleButton20);
     }//GEN-LAST:event_jToggleButton20ActionPerformed
 
     private void jToggleButton21ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton21ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton21, jToggleButton20);
-        verificarSeBotaoEstaPrecionado(jToggleButton21, jToggleButton13);
-        verificarSeBotaoEstaPrecionado(jToggleButton21, jToggleButton22);
-        verificarSeBotaoEstaPrecionado(jToggleButton21, jToggleButton29);
+        onCellClicked(jToggleButton21);
     }//GEN-LAST:event_jToggleButton21ActionPerformed
 
     private void jToggleButton22ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton22ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton22, jToggleButton21);
-        verificarSeBotaoEstaPrecionado(jToggleButton22, jToggleButton14);
-        verificarSeBotaoEstaPrecionado(jToggleButton22, jToggleButton23);
-        verificarSeBotaoEstaPrecionado(jToggleButton22, jToggleButton30);
+        onCellClicked(jToggleButton22);
     }//GEN-LAST:event_jToggleButton22ActionPerformed
 
     private void jToggleButton23ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton23ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton23, jToggleButton22);
-        verificarSeBotaoEstaPrecionado(jToggleButton23, jToggleButton15);
-        verificarSeBotaoEstaPrecionado(jToggleButton23, jToggleButton24);
-        verificarSeBotaoEstaPrecionado(jToggleButton23, jToggleButton31);
+        onCellClicked(jToggleButton23);
     }//GEN-LAST:event_jToggleButton23ActionPerformed
 
     private void jToggleButton24ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton24ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton24, jToggleButton23);
-        verificarSeBotaoEstaPrecionado(jToggleButton24, jToggleButton16);
-        verificarSeBotaoEstaPrecionado(jToggleButton24, jToggleButton32);
+        onCellClicked(jToggleButton24);
     }//GEN-LAST:event_jToggleButton24ActionPerformed
 
     private void jToggleButton25ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton25ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton25, jToggleButton17);
-        verificarSeBotaoEstaPrecionado(jToggleButton25, jToggleButton26);
-        verificarSeBotaoEstaPrecionado(jToggleButton25, jToggleButton33);
+        onCellClicked(jToggleButton25);
     }//GEN-LAST:event_jToggleButton25ActionPerformed
 
     private void jToggleButton26ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton26ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton26, jToggleButton25);
-        verificarSeBotaoEstaPrecionado(jToggleButton26, jToggleButton18);
-        verificarSeBotaoEstaPrecionado(jToggleButton26, jToggleButton27);
-        verificarSeBotaoEstaPrecionado(jToggleButton26, jToggleButton34);
+        onCellClicked(jToggleButton26);
     }//GEN-LAST:event_jToggleButton26ActionPerformed
 
     private void jToggleButton27ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton27ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton27, jToggleButton26);
-        verificarSeBotaoEstaPrecionado(jToggleButton27, jToggleButton19);
-        verificarSeBotaoEstaPrecionado(jToggleButton27, jToggleButton28);
-        verificarSeBotaoEstaPrecionado(jToggleButton27, jToggleButton35);
+        onCellClicked(jToggleButton27);
     }//GEN-LAST:event_jToggleButton27ActionPerformed
 
     private void jToggleButton28ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton28ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton28, jToggleButton27);
-        verificarSeBotaoEstaPrecionado(jToggleButton28, jToggleButton20);
-        verificarSeBotaoEstaPrecionado(jToggleButton28, jToggleButton29);
-        verificarSeBotaoEstaPrecionado(jToggleButton28, jToggleButton36);
+        onCellClicked(jToggleButton28);
     }//GEN-LAST:event_jToggleButton28ActionPerformed
 
     private void jToggleButton29ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton29ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton29, jToggleButton28);
-        verificarSeBotaoEstaPrecionado(jToggleButton29, jToggleButton21);
-        verificarSeBotaoEstaPrecionado(jToggleButton29, jToggleButton30);
-        verificarSeBotaoEstaPrecionado(jToggleButton29, jToggleButton37);
+        onCellClicked(jToggleButton29);
     }//GEN-LAST:event_jToggleButton29ActionPerformed
 
     private void jToggleButton30ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton30ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton30, jToggleButton29);
-        verificarSeBotaoEstaPrecionado(jToggleButton30, jToggleButton31);
-        verificarSeBotaoEstaPrecionado(jToggleButton30, jToggleButton22);
-        verificarSeBotaoEstaPrecionado(jToggleButton30, jToggleButton38);
+        onCellClicked(jToggleButton30);
     }//GEN-LAST:event_jToggleButton30ActionPerformed
 
     private void jToggleButton31ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton31ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton31, jToggleButton30);
-        verificarSeBotaoEstaPrecionado(jToggleButton31, jToggleButton32);
-        verificarSeBotaoEstaPrecionado(jToggleButton31, jToggleButton23);
-        verificarSeBotaoEstaPrecionado(jToggleButton31, jToggleButton39);
+        onCellClicked(jToggleButton31);
     }//GEN-LAST:event_jToggleButton31ActionPerformed
 
     private void jToggleButton32ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton32ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton32, jToggleButton31);
-        verificarSeBotaoEstaPrecionado(jToggleButton32, jToggleButton24);
-        verificarSeBotaoEstaPrecionado(jToggleButton32, jToggleButton40);
+        onCellClicked(jToggleButton32);
     }//GEN-LAST:event_jToggleButton32ActionPerformed
 
     private void jToggleButton33ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton33ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton33, jToggleButton25);
-        verificarSeBotaoEstaPrecionado(jToggleButton33, jToggleButton34);
-        verificarSeBotaoEstaPrecionado(jToggleButton33, jToggleButton41);
+        onCellClicked(jToggleButton33);
     }//GEN-LAST:event_jToggleButton33ActionPerformed
 
     private void jToggleButton34ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton34ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton34, jToggleButton33);
-        verificarSeBotaoEstaPrecionado(jToggleButton34, jToggleButton26);
-        verificarSeBotaoEstaPrecionado(jToggleButton34, jToggleButton35);
-        verificarSeBotaoEstaPrecionado(jToggleButton34, jToggleButton42);
+        onCellClicked(jToggleButton34);
     }//GEN-LAST:event_jToggleButton34ActionPerformed
 
     private void jToggleButton35ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton35ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton35, jToggleButton34);
-        verificarSeBotaoEstaPrecionado(jToggleButton35, jToggleButton36);
-        verificarSeBotaoEstaPrecionado(jToggleButton35, jToggleButton27);
-        verificarSeBotaoEstaPrecionado(jToggleButton35, jToggleButton43);
+        onCellClicked(jToggleButton35);
     }//GEN-LAST:event_jToggleButton35ActionPerformed
 
     private void jToggleButton36ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton36ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton36, jToggleButton35);
-        verificarSeBotaoEstaPrecionado(jToggleButton36, jToggleButton37);
-        verificarSeBotaoEstaPrecionado(jToggleButton36, jToggleButton28);
-        verificarSeBotaoEstaPrecionado(jToggleButton36, jToggleButton44);
+        onCellClicked(jToggleButton36);
     }//GEN-LAST:event_jToggleButton36ActionPerformed
 
     private void jToggleButton37ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton37ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton37, jToggleButton36);
-        verificarSeBotaoEstaPrecionado(jToggleButton37, jToggleButton38);
-        verificarSeBotaoEstaPrecionado(jToggleButton37, jToggleButton29);
-        verificarSeBotaoEstaPrecionado(jToggleButton37, jToggleButton45);
+        onCellClicked(jToggleButton37);
     }//GEN-LAST:event_jToggleButton37ActionPerformed
 
     private void jToggleButton38ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton38ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton38, jToggleButton37);
-        verificarSeBotaoEstaPrecionado(jToggleButton38, jToggleButton39);
-        verificarSeBotaoEstaPrecionado(jToggleButton38, jToggleButton30);
-        verificarSeBotaoEstaPrecionado(jToggleButton38, jToggleButton46);
+        onCellClicked(jToggleButton38);
     }//GEN-LAST:event_jToggleButton38ActionPerformed
 
     private void jToggleButton39ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton39ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton39, jToggleButton38);
-        verificarSeBotaoEstaPrecionado(jToggleButton39, jToggleButton40);
-        verificarSeBotaoEstaPrecionado(jToggleButton39, jToggleButton31);
-        verificarSeBotaoEstaPrecionado(jToggleButton39, jToggleButton47);
+        onCellClicked(jToggleButton39);
     }//GEN-LAST:event_jToggleButton39ActionPerformed
 
     private void jToggleButton40ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton40ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton39);
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton32);
-        verificarSeBotaoEstaPrecionado(jToggleButton40, jToggleButton48);
+        onCellClicked(jToggleButton40);
     }//GEN-LAST:event_jToggleButton40ActionPerformed
 
     private void jToggleButton41ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton41ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton41, jToggleButton33);
-        verificarSeBotaoEstaPrecionado(jToggleButton41, jToggleButton42);
+        onCellClicked(jToggleButton41);
     }//GEN-LAST:event_jToggleButton41ActionPerformed
 
     private void jToggleButton42ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton42ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton42, jToggleButton41);
-        verificarSeBotaoEstaPrecionado(jToggleButton42, jToggleButton34);
-        verificarSeBotaoEstaPrecionado(jToggleButton42, jToggleButton43);
+        onCellClicked(jToggleButton42);
     }//GEN-LAST:event_jToggleButton42ActionPerformed
 
     private void jToggleButton43ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton43ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton43, jToggleButton42);
-        verificarSeBotaoEstaPrecionado(jToggleButton43, jToggleButton44);
-        verificarSeBotaoEstaPrecionado(jToggleButton43, jToggleButton35);
+        onCellClicked(jToggleButton43);
     }//GEN-LAST:event_jToggleButton43ActionPerformed
 
     private void jToggleButton44ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton44ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton44, jToggleButton43);
-        verificarSeBotaoEstaPrecionado(jToggleButton44, jToggleButton45);
-        verificarSeBotaoEstaPrecionado(jToggleButton44, jToggleButton36);
+        onCellClicked(jToggleButton44);
     }//GEN-LAST:event_jToggleButton44ActionPerformed
 
     private void jToggleButton45ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton45ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton44);
-        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton46);
-        verificarSeBotaoEstaPrecionado(jToggleButton45, jToggleButton37);
+        onCellClicked(jToggleButton45);
     }//GEN-LAST:event_jToggleButton45ActionPerformed
 
     private void jToggleButton46ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton46ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton45);
-        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton47);
-        verificarSeBotaoEstaPrecionado(jToggleButton46, jToggleButton38);
+        onCellClicked(jToggleButton46);
     }//GEN-LAST:event_jToggleButton46ActionPerformed
 
     private void jToggleButton47ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton47ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton46);
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton48);
-        verificarSeBotaoEstaPrecionado(jToggleButton47, jToggleButton39);
+        onCellClicked(jToggleButton47);
     }//GEN-LAST:event_jToggleButton47ActionPerformed
 
     private void jToggleButton48ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton48ActionPerformed
-        verificarSeBotaoEstaPrecionado(jToggleButton48, jToggleButton47);
-        verificarSeBotaoEstaPrecionado(jToggleButton48, jToggleButton40);
+        onCellClicked(jToggleButton48);
     }//GEN-LAST:event_jToggleButton48ActionPerformed
 
     public JToggleButton[][] retornarBotoesEmMatriz(){
@@ -1475,6 +1270,16 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JToggleButton jToggleButton8;
     private javax.swing.JToggleButton jToggleButton9;
     // End of variables declaration//GEN-END:variables
-    private Funcionalidades funcionalidades = new Funcionalidades();
-    private IconesJogo iconesJogo = new IconesJogo();
+    private final IconesJogo iconesJogo = new IconesJogo();
+    private final Board board = new Board();
+    private final GameEngine gameEngine = new GameEngine();
+    private final Map<JToggleButton, Position> posicoesPorBotao = new HashMap<>();
+    private JToggleButton[][] botoesGrade;
+    private JToggleButton selecionado;
+    private final int movimentosIniciais = 30;
+    private final int metaPontos = 10000;
+    private int movimentosRestantes = 0;
+    private int pontos = 0;
 }
+
+

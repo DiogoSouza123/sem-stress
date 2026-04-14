@@ -67,5 +67,22 @@ public class IconesJogo {
         return null;
         
     }
+
+    public ImageIcon retornarIconePorValor(int valor) {
+        switch (valor) {
+            case 0:
+                return retornarIcone(NomeIconeEnum.COFFEE_BEANS);
+            case 1:
+                return retornarIcone(NomeIconeEnum.COFFEE_BROWN);
+            case 2:
+                return retornarIcone(NomeIconeEnum.COFFEE_WHITE);
+            case 3:
+                return retornarIcone(NomeIconeEnum.COFFEE_YELLOW);
+            case 4:
+                return retornarIcone(NomeIconeEnum.COFFEE_RED);
+            default:
+                return null;
+        }
+    }
     
 }
