@@ -79,6 +79,9 @@ public class GameEnginePontuacaoCascataTest {
                 false,
                 true,
                 false,
+                false,
+                "/com/semstress/audio/musica-exemplo.wav",
+                0,
                 null
         );
     }

@@ -26,6 +26,9 @@ public class ConfiguracaoJogo {
     private final boolean consumirMovimentoTrocaInvalida;
     private final boolean resolverMatchesIniciais;
     private final boolean exibirNumerosPecas;
+    private final boolean habilitarMusicaFundo;
+    private final String recursoMusicaFundo;
+    private final int volumeMusicaPercentual;
 
     private final Long sementeAleatoria;
 
@@ -45,6 +48,9 @@ public class ConfiguracaoJogo {
             boolean consumirMovimentoTrocaInvalida,
             boolean resolverMatchesIniciais,
             boolean exibirNumerosPecas,
+            boolean habilitarMusicaFundo,
+            String recursoMusicaFundo,
+            int volumeMusicaPercentual,
             Long sementeAleatoria
     ) {
         this.linhasTabuleiro = linhasTabuleiro;
@@ -62,6 +68,9 @@ public class ConfiguracaoJogo {
         this.consumirMovimentoTrocaInvalida = consumirMovimentoTrocaInvalida;
         this.resolverMatchesIniciais = resolverMatchesIniciais;
         this.exibirNumerosPecas = exibirNumerosPecas;
+        this.habilitarMusicaFundo = habilitarMusicaFundo;
+        this.recursoMusicaFundo = recursoMusicaFundo;
+        this.volumeMusicaPercentual = volumeMusicaPercentual;
         this.sementeAleatoria = sementeAleatoria;
     }
 
@@ -94,6 +103,9 @@ public class ConfiguracaoJogo {
         boolean consomeInvalida = bool(props, "regras.consumir_movimento_troca_invalida", false);
         boolean resolveInicio = bool(props, "regras.resolver_matches_iniciais", true);
         boolean exibeNumeros = bool(props, "ui.exibir_numeros_pecas", false);
+        boolean habilitarMusica = bool(props, "audio.habilitar_musica_fundo", true);
+        String recursoMusica = texto(props, "audio.recurso_musica_fundo", "/com/semstress/audio/musica-exemplo.wav");
+        int volumeMusica = inteiro(props, "audio.volume_percentual", 30);
         Long seed = longOpcional(props, "jogo.semente_aleatoria");
 
         return new ConfiguracaoJogo(
@@ -112,6 +124,9 @@ public class ConfiguracaoJogo {
                 consomeInvalida,
                 resolveInicio,
                 exibeNumeros,
+                habilitarMusica,
+                recursoMusica,
+                volumeMusica,
                 seed
         );
     }
@@ -146,6 +161,14 @@ public class ConfiguracaoJogo {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private static String texto(Properties props, String chave, String padrao) {
+        String valor = props.getProperty(chave);
+        if (valor == null || valor.trim().isEmpty()) {
+            return padrao;
+        }
+        return valor.trim();
     }
 
     public Random criarRandom() {
@@ -210,5 +233,17 @@ public class ConfiguracaoJogo {
 
     public boolean isExibirNumerosPecas() {
         return exibirNumerosPecas;
+    }
+
+    public boolean isHabilitarMusicaFundo() {
+        return habilitarMusicaFundo;
+    }
+
+    public String getRecursoMusicaFundo() {
+        return recursoMusicaFundo;
+    }
+
+    public int getVolumeMusicaPercentual() {
+        return volumeMusicaPercentual;
     }
 }

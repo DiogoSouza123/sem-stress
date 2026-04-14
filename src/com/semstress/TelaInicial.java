@@ -1,6 +1,8 @@
 package com.semstress;
 
 import java.awt.Image;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 import java.util.HashMap;
@@ -25,6 +27,13 @@ public class TelaInicial extends javax.swing.JFrame {
         bloquearGrade();
         jLabelMetaValor.setText(String.valueOf(configuracao.getMetaPontos()));
         jLabelMovimentosValor.setText("0");
+        iniciarMusicaFundo();
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                musicaFundoPlayer.parar();
+            }
+        });
 
     }
 
@@ -930,6 +939,16 @@ public class TelaInicial extends javax.swing.JFrame {
         }
     }
 
+    private void iniciarMusicaFundo() {
+        if (!configuracao.isHabilitarMusicaFundo()) {
+            return;
+        }
+        musicaFundoPlayer.tocarEmLoop(
+                configuracao.getRecursoMusicaFundo(),
+                configuracao.getVolumeMusicaPercentual()
+        );
+    }
+
     // Metodo mantido para compatibilidade com handlers gerados.
     public void verificarSeBotaoEstaPrecionado(JToggleButton jToggleButtonPai, JToggleButton jToggleButtonFilho) {
         if (jToggleButtonFilho.isSelected()) {
@@ -1294,6 +1313,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JToggleButton jToggleButton9;
     // End of variables declaration//GEN-END:variables
     private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
+    private final MusicaFundoPlayer musicaFundoPlayer = new MusicaFundoPlayer();
     private final IconesJogo iconesJogo = new IconesJogo();
     private final Board board = new Board(configuracao);
     private final GameEngine gameEngine = new GameEngine(configuracao);
