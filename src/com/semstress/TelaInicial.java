@@ -16,11 +16,13 @@ import java.util.Map;
  * @author DiogoSouza
  */
 public class TelaInicial extends javax.swing.JFrame {
+    private static final int ALTURA_REFERENCIA_LOGO = 160;
+    private static final double PROPORCAO_ALTURA_LOGO_TITULO = 1.10;
 
     public TelaInicial() {
 
         initComponents();
-        jLabelLogoJogo.setIcon(carregarLogoCopo());
+        aplicarLogoPrincipal();
         validarDimensoesTabuleiro();
         inicializarGrade();
         bloquearGrade();
@@ -33,6 +35,7 @@ public class TelaInicial extends javax.swing.JFrame {
                 musicaFundoPlayer.parar();
             }
         });
+        configurarJanelaFixa();
 
     }
 
@@ -738,6 +741,10 @@ public class TelaInicial extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jLabelNomeJogo)
+                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(43, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -745,25 +752,16 @@ public class TelaInicial extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addComponent(jButtonIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabelLogoJogo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addGap(80, 80, 80)
-                                    .addComponent(jLabelNomeJogo))))))
+                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(18, 18, 18))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(36, 36, 36)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabelLogoJogo)
-                    .addComponent(jLabelNomeJogo))
+                .addComponent(jLabelNomeJogo)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -782,14 +780,14 @@ public class TelaInicial extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(70, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(71, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -956,16 +954,35 @@ public class TelaInicial extends javax.swing.JFrame {
         );
     }
 
-    private ImageIcon carregarLogoCopo() {
-        URL recursoGif = getClass().getResource("images/cup.gif");
-        if (recursoGif != null) {
-            return new ImageIcon(recursoGif);
+    private void aplicarLogoPrincipal() {
+        URL recursoTitulo = getClass().getResource("images/coffe-crush-logo.png");
+        if (recursoTitulo == null) {
+            return;
         }
 
-        ImageIcon png = new ImageIcon(getClass().getResource("images/cup.png"));
-        Image imagem = png.getImage();
-        Image imagemRedimensionada = imagem.getScaledInstance(80, 80, java.awt.Image.SCALE_SMOOTH);
-        return new ImageIcon(imagemRedimensionada);
+        ImageIcon logoOriginal = new ImageIcon(recursoTitulo);
+        int alturaTitulo = Math.max(1, (int) Math.round(ALTURA_REFERENCIA_LOGO * PROPORCAO_ALTURA_LOGO_TITULO));
+        int larguraTitulo = Math.max(
+                1,
+                (int) Math.round((double) logoOriginal.getIconWidth() * alturaTitulo / logoOriginal.getIconHeight())
+        );
+
+        Image imagemRedimensionada = logoOriginal
+                .getImage()
+                .getScaledInstance(larguraTitulo, alturaTitulo, java.awt.Image.SCALE_SMOOTH);
+
+        jLabelNomeJogo.setText("");
+        jLabelNomeJogo.setIcon(new ImageIcon(imagemRedimensionada));
+        jLabelNomeJogo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabelLogoJogo.setVisible(false);
+    }
+
+    private void configurarJanelaFixa() {
+        pack();
+        setResizable(false);
+        setLocationRelativeTo(null);
+        setMinimumSize(getSize());
+        setMaximumSize(getSize());
     }
 
     // Metodo mantido para compatibilidade com handlers gerados.
