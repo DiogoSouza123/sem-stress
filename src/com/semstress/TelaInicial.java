@@ -2,12 +2,24 @@ package com.semstress;
 
 import java.awt.Image;
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.awt.Color;
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.JToggleButton;
 import java.util.List;
@@ -24,6 +36,13 @@ public class TelaInicial extends javax.swing.JFrame {
     private static final int EMPTY = -1;
     private static final int ALTURA_REFERENCIA_LOGO = 160;
     private static final double PROPORCAO_ALTURA_LOGO_TITULO = 1.10;
+    private static final int PASSO_PONTO_FLUTUANTE_MS = 20;
+    private static final int QUADROS_PONTO_FLUTUANTE = 18;
+
+    private static final Color COR_BORDA_HOVER_PECA = new Color(199, 130, 88);
+    private static final Color COR_BORDA_SELECAO_PECA = new Color(255, 199, 112);
+    private static final Color COR_FUNDO_HOVER_PECA = new Color(255, 224, 188, 80);
+    private static final Color COR_FUNDO_SELECAO_PECA = new Color(255, 217, 140, 110);
 
     public TelaInicial() {
 
@@ -40,6 +59,11 @@ public class TelaInicial extends javax.swing.JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 musicaFundoPlayer.parar();
+            }
+
+            @Override
+            public void windowOpened(WindowEvent e) {
+                iniciarAnimacaoEntrada();
             }
         });
         configurarJanelaFixa();
@@ -58,6 +82,82 @@ public class TelaInicial extends javax.swing.JFrame {
                 jLabelMovimentosValor
         );
         TemaUI.aplicarTemaBotaoPrimario(jButtonIniciar);
+        configurarCardsIndicadores();
+        instalarAtalhoTema();
+    }
+
+    private void configurarCardsIndicadores() {
+        jPanel4.removeAll();
+        jPanel4.setLayout(new java.awt.GridLayout(3, 1, 0, 12));
+        jPanel4.add(criarCardIndicador(jLabelPontosTitulo, jLabelPontosValor));
+        jPanel4.add(criarCardIndicador(jLabelMetaTitulo, jLabelMetaValor));
+        jPanel4.add(criarCardIndicador(jLabelMovimentosTitulo, jLabelMovimentosValor));
+        jPanel4.revalidate();
+        jPanel4.repaint();
+    }
+
+    private JPanel criarCardIndicador(JLabel titulo, JLabel valor) {
+        JPanel card = new JPanel();
+        card.setOpaque(true);
+        card.setBackground(TemaUI.COR_DQUE_CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(TemaUI.COR_BORDA_PAINEL, 1, true),
+                BorderFactory.createEmptyBorder(12, 10, 12, 10)
+        ));
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(card);
+        card.setLayout(layout);
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(titulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(valor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+                layout.createSequentialGroup()
+                        .addComponent(titulo)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(valor)
+        );
+        return card;
+    }
+
+    private void instalarAtalhoTema() {
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke("F6"), "alternarTema");
+        getRootPane().getActionMap().put("alternarTema", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                temaAlternativoAtivo = !temaAlternativoAtivo;
+                aplicarTemaAlternativo(temaAlternativoAtivo);
+            }
+        });
+    }
+
+    private void aplicarTemaAlternativo(boolean altoContraste) {
+        Color fundoTabuleiro = altoContraste ? new Color(62, 41, 30) : TemaUI.COR_FUNDO_TABULEIRO;
+        Color fundoCards = altoContraste ? new Color(80, 56, 41) : TemaUI.COR_DQUE_CARD;
+        Color textoTitulo = altoContraste ? new Color(255, 232, 210) : TemaUI.COR_TEXTO_TITULO;
+        Color textoValor = altoContraste ? new Color(255, 248, 238) : TemaUI.COR_TEXTO_VALOR;
+        Color textoRodape = altoContraste ? new Color(255, 230, 206) : TemaUI.COR_TEXTO_RODAPE;
+
+        jPanel2.setBackground(fundoTabuleiro);
+        jLabel1.setForeground(textoRodape);
+
+        JLabel[] titulos = {jLabelPontosTitulo, jLabelMetaTitulo, jLabelMovimentosTitulo};
+        JLabel[] valores = {jLabelPontosValor, jLabelMetaValor, jLabelMovimentosValor};
+        for (JLabel titulo : titulos) {
+            titulo.setForeground(textoTitulo);
+        }
+        for (JLabel valor : valores) {
+            valor.setForeground(textoValor);
+        }
+
+        for (java.awt.Component componente : jPanel4.getComponents()) {
+            if (componente instanceof JPanel) {
+                ((JPanel) componente).setBackground(fundoCards);
+            }
+        }
+        jPanel4.repaint();
     }
 
     /**
@@ -70,7 +170,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel4 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new PainelGradiente(TemaUI.COR_GRADIENTE_TOPO, TemaUI.COR_GRADIENTE_BASE);
         jPanel2 = new javax.swing.JPanel();
         jToggleButton1 = new javax.swing.JToggleButton();
         jToggleButton2 = new javax.swing.JToggleButton();
@@ -811,7 +911,7 @@ public class TelaInicial extends javax.swing.JFrame {
         botoesGrade = retornarBotoesEmMatriz();
         posicoesPorBotao.clear();
         jPanel2.setOpaque(true);
-        jPanel2.setBackground(TemaUI.COR_FUNDO_TABULEIRO);
+        jPanel2.setBackground(temaAlternativoAtivo ? new Color(62, 41, 30) : TemaUI.COR_FUNDO_TABULEIRO);
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
@@ -820,13 +920,79 @@ public class TelaInicial extends javax.swing.JFrame {
                 botao.setSelected(false);
                 botao.setOpaque(false);
                 botao.setContentAreaFilled(false);
-                botao.setBorderPainted(false);
+                botao.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
                 botao.setBackground(new Color(0, 0, 0, 0));
                 botao.setPreferredSize(new Dimension(40, 40));
                 botao.setMinimumSize(new Dimension(40, 40));
+                configurarInteracaoPeca(botao);
+                atualizarEstiloPeca(botao);
                 posicoesPorBotao.put(botao, new Position(row, col));
             }
         }
+    }
+
+    private void configurarInteracaoPeca(final JToggleButton botao) {
+        if (Boolean.TRUE.equals(botao.getClientProperty("interacaoConfigurada"))) {
+            return;
+        }
+
+        botao.putClientProperty("interacaoConfigurada", Boolean.TRUE);
+        botao.putClientProperty("hoverAtivo", Boolean.FALSE);
+        botao.putClientProperty("flashMatchAtivo", Boolean.FALSE);
+        botao.setRolloverEnabled(true);
+
+        botao.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                botao.putClientProperty("hoverAtivo", Boolean.TRUE);
+                atualizarEstiloPeca(botao);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                botao.putClientProperty("hoverAtivo", Boolean.FALSE);
+                atualizarEstiloPeca(botao);
+            }
+        });
+    }
+
+    private void atualizarEstiloPeca(JToggleButton botao) {
+        boolean selecionadoAtual = botao.isSelected();
+        boolean hoverAtivo = Boolean.TRUE.equals(botao.getClientProperty("hoverAtivo"));
+        boolean flashMatchAtivo = Boolean.TRUE.equals(botao.getClientProperty("flashMatchAtivo"));
+
+        if (flashMatchAtivo) {
+            botao.setOpaque(true);
+            botao.setContentAreaFilled(true);
+            botao.setBackground(new Color(255, 232, 172, 160));
+            botao.setBorder(BorderFactory.createLineBorder(new Color(255, 204, 120), 2, true));
+            botao.setBorderPainted(true);
+            return;
+        }
+
+        if (selecionadoAtual) {
+            botao.setOpaque(true);
+            botao.setContentAreaFilled(true);
+            botao.setBackground(COR_FUNDO_SELECAO_PECA);
+            botao.setBorder(BorderFactory.createLineBorder(COR_BORDA_SELECAO_PECA, 2, true));
+            botao.setBorderPainted(true);
+            return;
+        }
+
+        if (hoverAtivo && botao.isEnabled() && !animacaoEmAndamento) {
+            botao.setOpaque(true);
+            botao.setContentAreaFilled(true);
+            botao.setBackground(COR_FUNDO_HOVER_PECA);
+            botao.setBorder(BorderFactory.createLineBorder(COR_BORDA_HOVER_PECA, 1, true));
+            botao.setBorderPainted(true);
+            return;
+        }
+
+        botao.setOpaque(false);
+        botao.setContentAreaFilled(false);
+        botao.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        botao.setBorderPainted(false);
+        botao.setBackground(new Color(0, 0, 0, 0));
     }
 
     private void iniciarNovoJogo() {
@@ -861,10 +1027,14 @@ public class TelaInicial extends javax.swing.JFrame {
                 if (valor == EMPTY) {
                     botao.setText("");
                     botao.setIcon(null);
+                    botao.putClientProperty("flashMatchAtivo", Boolean.FALSE);
+                    atualizarEstiloPeca(botao);
                     continue;
                 }
                 botao.setText(configuracao.isExibirNumerosPecas() ? String.valueOf(valor) : "");
                 botao.setIcon(iconesJogo.retornarIconePorValor(valor));
+                botao.putClientProperty("flashMatchAtivo", Boolean.FALSE);
+                atualizarEstiloPeca(botao);
             }
         }
     }
@@ -882,7 +1052,9 @@ public class TelaInicial extends javax.swing.JFrame {
     private void bloquearGrade() {
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
-                botoesGrade[row][col].setEnabled(false);
+                JToggleButton botao = botoesGrade[row][col];
+                botao.setEnabled(false);
+                atualizarEstiloPeca(botao);
             }
         }
     }
@@ -890,7 +1062,9 @@ public class TelaInicial extends javax.swing.JFrame {
     private void desbloquearGrade() {
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
-                botoesGrade[row][col].setEnabled(true);
+                JToggleButton botao = botoesGrade[row][col];
+                botao.setEnabled(true);
+                atualizarEstiloPeca(botao);
             }
         }
     }
@@ -898,6 +1072,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private void limparSelecao() {
         if (selecionado != null) {
             selecionado.setSelected(false);
+            atualizarEstiloPeca(selecionado);
         }
         selecionado = null;
     }
@@ -910,6 +1085,7 @@ public class TelaInicial extends javax.swing.JFrame {
         if (selecionado == null) {
             selecionado = atual;
             selecionado.setSelected(true);
+            atualizarEstiloPeca(selecionado);
             return;
         }
 
@@ -951,6 +1127,7 @@ public class TelaInicial extends javax.swing.JFrame {
         }
 
         atual.setSelected(false);
+        atualizarEstiloPeca(atual);
         limparSelecao();
     }
 
@@ -972,6 +1149,8 @@ public class TelaInicial extends javax.swing.JFrame {
 
         final RodadaAnimacao rodada = rodadas.get(indice);
         renderizarEstado(rodada.getEstadoAntesLimpeza());
+        aplicarFlashMatch(rodada.getPosicoesMatch());
+        mostrarPontosFlutuantes(rodada);
         aplicarIconeExplosao(rodada.getPosicoesMatch());
 
         agendar(configuracao.getDuracaoAnimacaoExplosaoMs(), new Runnable() {
@@ -1026,6 +1205,110 @@ public class TelaInicial extends javax.swing.JFrame {
             botao.setText("");
             botao.setIcon(iconeExplosao);
         }
+    }
+
+    private void aplicarFlashMatch(Set<Position> posicoes) {
+        for (Position posicao : posicoes) {
+            if (!board.posicaoValida(posicao)) {
+                continue;
+            }
+            JToggleButton botao = botoesGrade[posicao.getRow()][posicao.getCol()];
+            botao.putClientProperty("flashMatchAtivo", Boolean.TRUE);
+            atualizarEstiloPeca(botao);
+        }
+    }
+
+    private void mostrarPontosFlutuantes(RodadaAnimacao rodada) {
+        if (rodada.getPontosRodada() <= 0 || rodada.getPosicoesMatch().isEmpty()) {
+            return;
+        }
+
+        Point centro = calcularCentroMatch(rodada.getPosicoesMatch());
+        final JLabel label = new JLabel("+" + rodada.getPontosRodada());
+        label.setFont(TemaUI.FONTE_INDICADOR_VALOR.deriveFont(18f));
+        label.setForeground(new Color(91, 56, 36, 255));
+        label.setSize(label.getPreferredSize());
+        label.setLocation(centro.x - (label.getWidth() / 2), centro.y - label.getHeight());
+
+        final JLayeredPane layeredPane = getLayeredPane();
+        layeredPane.add(label, JLayeredPane.POPUP_LAYER);
+        layeredPane.repaint();
+
+        final int[] quadro = {0};
+        Timer timer = new Timer(PASSO_PONTO_FLUTUANTE_MS, null);
+        timer.addActionListener(e -> {
+            quadro[0]++;
+            int novoY = label.getY() - 2;
+            label.setLocation(label.getX(), novoY);
+
+            float progresso = Math.min(1f, quadro[0] / (float) QUADROS_PONTO_FLUTUANTE);
+            int alpha = Math.max(0, 255 - Math.round(255 * progresso));
+            label.setForeground(new Color(91, 56, 36, alpha));
+
+            if (quadro[0] >= QUADROS_PONTO_FLUTUANTE) {
+                ((Timer) e.getSource()).stop();
+                layeredPane.remove(label);
+                layeredPane.repaint();
+            }
+        });
+        timer.start();
+    }
+
+    private Point calcularCentroMatch(Set<Position> posicoes) {
+        int somaX = 0;
+        int somaY = 0;
+        int total = 0;
+
+        for (Position posicao : posicoes) {
+            if (!board.posicaoValida(posicao)) {
+                continue;
+            }
+            JToggleButton botao = botoesGrade[posicao.getRow()][posicao.getCol()];
+            Point ponto = SwingUtilities.convertPoint(
+                    botao.getParent(),
+                    botao.getX() + (botao.getWidth() / 2),
+                    botao.getY() + (botao.getHeight() / 2),
+                    getLayeredPane()
+            );
+            somaX += ponto.x;
+            somaY += ponto.y;
+            total++;
+        }
+
+        if (total == 0) {
+            return new Point(getWidth() / 2, getHeight() / 2);
+        }
+        return new Point(somaX / total, somaY / total);
+    }
+
+    private void iniciarAnimacaoEntrada() {
+        final float[] alpha = {1f};
+        final JPanel overlay = new JPanel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setColor(new Color(255, 246, 240, Math.round(220 * alpha[0])));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        overlay.setOpaque(false);
+
+        setGlassPane(overlay);
+        overlay.setVisible(true);
+
+        Timer timer = new Timer(25, null);
+        timer.addActionListener(e -> {
+            alpha[0] -= 0.09f;
+            if (alpha[0] <= 0f) {
+                ((Timer) e.getSource()).stop();
+                overlay.setVisible(false);
+                return;
+            }
+            overlay.repaint();
+        });
+        timer.start();
     }
 
     private void agendar(int atrasoMs, final Runnable acao) {
@@ -1115,10 +1398,42 @@ public class TelaInicial extends javax.swing.JFrame {
 
     private void configurarJanelaFixa() {
         pack();
+        aplicarModoCompactoSeNecessario();
         setResizable(false);
         setLocationRelativeTo(null);
         setMinimumSize(getSize());
         setMaximumSize(getSize());
+    }
+
+    private void aplicarModoCompactoSeNecessario() {
+        Dimension tela = Toolkit.getDefaultToolkit().getScreenSize();
+        int margemSeguranca = 90;
+        if (getHeight() + margemSeguranca <= tela.height) {
+            return;
+        }
+
+        aplicarEscalaFontes(0.9f);
+        jButtonIniciar.setPreferredSize(new Dimension(118, 36));
+        jButtonIniciar.setMinimumSize(new Dimension(118, 36));
+
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
+                JToggleButton botao = botoesGrade[row][col];
+                botao.setPreferredSize(new Dimension(36, 36));
+                botao.setMinimumSize(new Dimension(36, 36));
+            }
+        }
+        pack();
+    }
+
+    private void aplicarEscalaFontes(float fator) {
+        jLabelPontosTitulo.setFont(jLabelPontosTitulo.getFont().deriveFont(jLabelPontosTitulo.getFont().getSize2D() * fator));
+        jLabelPontosValor.setFont(jLabelPontosValor.getFont().deriveFont(jLabelPontosValor.getFont().getSize2D() * fator));
+        jLabelMetaTitulo.setFont(jLabelMetaTitulo.getFont().deriveFont(jLabelMetaTitulo.getFont().getSize2D() * fator));
+        jLabelMetaValor.setFont(jLabelMetaValor.getFont().deriveFont(jLabelMetaValor.getFont().getSize2D() * fator));
+        jLabelMovimentosTitulo.setFont(jLabelMovimentosTitulo.getFont().deriveFont(jLabelMovimentosTitulo.getFont().getSize2D() * fator));
+        jLabelMovimentosValor.setFont(jLabelMovimentosValor.getFont().deriveFont(jLabelMovimentosValor.getFont().getSize2D() * fator));
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getSize2D() * fator));
     }
 
     // Metodo mantido para compatibilidade com handlers gerados.
@@ -1493,6 +1808,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private JToggleButton[][] botoesGrade;
     private JToggleButton selecionado;
     private boolean animacaoEmAndamento = false;
+    private boolean temaAlternativoAtivo = false;
     private int movimentosRestantes = 0;
     private int pontos = 0;
 }

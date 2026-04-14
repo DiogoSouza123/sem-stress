@@ -19,6 +19,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 public final class TemaUI {
+    public static final Color COR_GRADIENTE_TOPO = new Color(244, 176, 136);
+    public static final Color COR_GRADIENTE_BASE = new Color(224, 134, 91);
     public static final Color COR_FUNDO_JANELA = new Color(248, 234, 224);
     public static final Color COR_FUNDO_PRINCIPAL = new Color(232, 149, 106);
     public static final Color COR_FUNDO_TABULEIRO = new Color(235, 209, 191);
@@ -35,6 +37,8 @@ public final class TemaUI {
     public static final Color COR_BOTAO_DESABILITADO = new Color(161, 126, 102);
     public static final Color COR_BOTAO_BORDA = new Color(69, 43, 30);
     public static final Color COR_BOTAO_TEXTO = new Color(250, 240, 233);
+    public static final Color COR_BOTAO_SOMBRA = new Color(52, 30, 19, 90);
+    public static final Color COR_DQUE_CARD = new Color(241, 228, 219);
 
     public static final Font FONTE_INDICADOR_TITULO = new Font("Segoe UI Semibold", Font.BOLD, 16);
     public static final Font FONTE_INDICADOR_VALOR = new Font("Segoe UI", Font.BOLD, 22);
@@ -59,10 +63,13 @@ public final class TemaUI {
 
         painelInfo.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(COR_BORDA_PAINEL, 1, true),
-                new EmptyBorder(10, 10, 10, 10)
+                new EmptyBorder(12, 12, 12, 12)
         ));
 
-        painelTabuleiro.setBorder(BorderFactory.createLineBorder(COR_BORDA_TABULEIRO, 1, true));
+        painelTabuleiro.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COR_BORDA_TABULEIRO, 1, true),
+                new EmptyBorder(8, 8, 8, 8)
+        ));
 
         rodape.setForeground(COR_TEXTO_RODAPE);
         rodape.setFont(FONTE_RODAPE);
@@ -96,6 +103,7 @@ public final class TemaUI {
         botao.setUI(new BotaoPrimarioUI());
         botao.setFont(FONTE_BOTAO);
         botao.setForeground(COR_BOTAO_TEXTO);
+        botao.setText("Iniciar");
         botao.setFocusPainted(false);
         botao.setBorder(new EmptyBorder(8, 16, 8, 16));
         botao.setContentAreaFilled(false);
@@ -129,8 +137,10 @@ public final class TemaUI {
             int altura = c.getHeight();
             int raio = 14;
 
+            g2.setColor(COR_BOTAO_SOMBRA);
+            g2.fillRoundRect(2, 3, largura - 3, altura - 2, raio, raio);
             g2.setColor(fundo);
-            g2.fillRoundRect(0, 0, largura, altura, raio, raio);
+            g2.fillRoundRect(0, 0, largura - 1, altura - 1, raio, raio);
             g2.setColor(COR_BOTAO_BORDA);
             g2.drawRoundRect(0, 0, largura - 1, altura - 1, raio, raio);
             g2.dispose();
