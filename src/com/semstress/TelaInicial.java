@@ -41,6 +41,8 @@ public class TelaInicial extends javax.swing.JFrame {
     private static final double PROPORCAO_ALTURA_LOGO_TITULO = 1.10;
     private static final int PASSO_PONTO_FLUTUANTE_MS = 20;
     private static final int QUADROS_PONTO_FLUTUANTE = 18;
+    private static final int PASSO_AVISO_SEM_MOVIMENTOS_MS = 30;
+    private static final int DURACAO_AVISO_SEM_MOVIMENTOS_MS = 1400;
 
     private static final Color COR_BORDA_HOVER_PECA = new Color(199, 130, 88);
     private static final Color COR_BORDA_SELECAO_PECA = new Color(255, 199, 112);
@@ -1079,6 +1081,7 @@ public class TelaInicial extends javax.swing.JFrame {
 
         desbloquearGrade();
         jButtonIniciar.setEnabled(false);
+        processarSemMovimentosSeNecessario();
     }
 
     private void renderizarBoard() {
@@ -1176,20 +1179,32 @@ public class TelaInicial extends javax.swing.JFrame {
                         pontos += resultado.getPoints();
                         jLabelPontosValor.setText(String.valueOf(pontos));
                         renderizarBoard();
+                        if (verificarFimDeJogo()) {
+                            animacaoEmAndamento = false;
+                            return;
+                        }
+                        if (processarSemMovimentosSeNecessario()) {
+                            return;
+                        }
                         animacaoEmAndamento = false;
-                        verificarFimDeJogo();
                     }
                 });
             } else {
                 pontos += resultado.getPoints();
                 renderizarBoard();
                 jLabelPontosValor.setText(String.valueOf(pontos));
-                verificarFimDeJogo();
+                if (!verificarFimDeJogo()) {
+                    processarSemMovimentosSeNecessario();
+                }
             }
         } else if (configuracao.isConsumirMovimentoTrocaInvalida()) {
             movimentosRestantes--;
             jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
-            verificarFimDeJogo();
+            if (!verificarFimDeJogo()) {
+                processarSemMovimentosSeNecessario();
+            }
+        } else {
+            processarSemMovimentosSeNecessario();
         }
 
         atual.setSelected(false);
@@ -1312,6 +1327,77 @@ public class TelaInicial extends javax.swing.JFrame {
             label.setForeground(new Color(91, 56, 36, alpha));
 
             if (quadro[0] >= QUADROS_PONTO_FLUTUANTE) {
+                ((Timer) e.getSource()).stop();
+                layeredPane.remove(label);
+                layeredPane.repaint();
+            }
+        });
+        timer.start();
+    }
+
+    private boolean processarSemMovimentosSeNecessario() {
+        if (gameEngine.temMovimentoDisponivel(board)) {
+            return false;
+        }
+
+        mostrarAvisoSemMovimentos();
+        final ResultadoJogadaAnimada reset = gameEngine.resetarTabuleiroSemMovimentosAnimado(board);
+
+        if (configuracao.isHabilitarAnimacaoExplosao()) {
+            animacaoEmAndamento = true;
+            executarAnimacaoDeJogada(reset, new Runnable() {
+                @Override
+                public void run() {
+                    renderizarBoard();
+                    animacaoEmAndamento = false;
+                    desbloquearGrade();
+                }
+            });
+        } else {
+            renderizarBoard();
+            desbloquearGrade();
+        }
+        return true;
+    }
+
+    private void mostrarAvisoSemMovimentos() {
+        final JLabel label = new JLabel("Sem movimentos! Reembaralhando...");
+        label.setFont(TemaUI.FONTE_INDICADOR_TITULO.deriveFont(18f));
+        label.setForeground(new Color(58, 34, 24, 255));
+        label.setOpaque(true);
+        label.setBackground(new Color(255, 243, 233, 230));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(160, 111, 77), 1, true),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        label.setSize(label.getPreferredSize());
+
+        Point centro = SwingUtilities.convertPoint(
+                jPanel2,
+                jPanel2.getWidth() / 2,
+                Math.max(24, jPanel2.getHeight() / 2),
+                getLayeredPane()
+        );
+        label.setLocation(centro.x - (label.getWidth() / 2), centro.y - (label.getHeight() / 2));
+
+        final JLayeredPane layeredPane = getLayeredPane();
+        layeredPane.add(label, JLayeredPane.POPUP_LAYER);
+        layeredPane.repaint();
+
+        final int totalQuadros = Math.max(1, DURACAO_AVISO_SEM_MOVIMENTOS_MS / PASSO_AVISO_SEM_MOVIMENTOS_MS);
+        final int[] quadro = {0};
+        Timer timer = new Timer(PASSO_AVISO_SEM_MOVIMENTOS_MS, null);
+        timer.addActionListener(e -> {
+            quadro[0]++;
+            int novoY = label.getY() - 1;
+            label.setLocation(label.getX(), novoY);
+
+            float progresso = Math.min(1f, quadro[0] / (float) totalQuadros);
+            int alpha = Math.max(0, 255 - Math.round(255 * progresso));
+            label.setForeground(new Color(58, 34, 24, alpha));
+            label.setBackground(new Color(255, 243, 233, Math.max(0, 230 - Math.round(200 * progresso))));
+
+            if (quadro[0] >= totalQuadros) {
                 ((Timer) e.getSource()).stop();
                 layeredPane.remove(label);
                 layeredPane.repaint();
