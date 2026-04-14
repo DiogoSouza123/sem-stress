@@ -6,6 +6,7 @@
 package com.semstress;
 
 import java.awt.Image;
+import java.net.URL;
 import javax.swing.ImageIcon;
 import com.enums.NomeIconeEnum;
 
@@ -14,52 +15,41 @@ import com.enums.NomeIconeEnum;
  * @author DiogoSouza
  */
 public class IconesJogo {
+    private static final int TAMANHO_PECA = 40;
     
-    private ImageIcon coffeWhite = new ImageIcon(getClass().getResource("images/coffee-white.png"));
-    private ImageIcon coffeBeans = new ImageIcon(getClass().getResource("images/coffee-beans.png"));
-    private ImageIcon coffeBrown = new ImageIcon(getClass().getResource("images/coffee-brown.png"));
-    private ImageIcon coffeYellow = new ImageIcon(getClass().getResource("images/coffee-yellow.png"));
-    private ImageIcon coffeRed = new ImageIcon(getClass().getResource("images/coffee-red.png"));
-    private ImageIcon fire = new ImageIcon(getClass().getResource("images/fire.png"));
+    private ImageIcon coffeWhite = carregarIconePeca("coffee-white");
+    private ImageIcon coffeBeans = carregarIconePeca("coffee-beans");
+    private ImageIcon coffeBrown = carregarIconePeca("coffee-brown");
+    private ImageIcon coffeYellow = carregarIconePeca("coffee-yellow");
+    private ImageIcon coffeRed = carregarIconePeca("coffee-red");
+    private ImageIcon fire = carregarIconePeca("fire");
     
     public ImageIcon retornarIcone(NomeIconeEnum nomeIconeEnum){
         
         switch (nomeIconeEnum) {
             case COFFEE_WHITE:
             {
-                Image coffeImg = coffeWhite.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return coffeWhite = new ImageIcon(coffeImgNew);
+                return coffeWhite;
             }
             case COFFEE_BEANS:
             {
-                Image coffeImg = coffeBeans.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return coffeBeans = new ImageIcon(coffeImgNew);
+                return coffeBeans;
             }
             case COFFEE_BROWN:
             {
-                Image coffeImg = coffeBrown.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return coffeBrown = new ImageIcon(coffeImgNew);
+                return coffeBrown;
             }
             case COFFEE_RED:
             {
-                Image coffeImg = coffeRed.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return coffeRed = new ImageIcon(coffeImgNew);
+                return coffeRed;
             }
             case COFFEE_YELLOW:
             {
-                Image coffeImg = coffeYellow.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return coffeYellow = new ImageIcon(coffeImgNew);
+                return coffeYellow;
             }
             case FIRE:
             {
-                Image coffeImg = fire.getImage();
-                Image coffeImgNew = coffeImg.getScaledInstance(20, 20,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-                return fire = new ImageIcon(coffeImgNew);
+                return fire;
             }
             default:
                 break;
@@ -83,6 +73,22 @@ public class IconesJogo {
             default:
                 return null;
         }
+    }
+
+    private ImageIcon carregarIconePeca(String nomeBase) {
+        URL recursoGif = getClass().getResource("images/" + nomeBase + ".gif");
+        if (recursoGif != null) {
+            return new ImageIcon(recursoGif);
+        }
+
+        URL recursoPng = getClass().getResource("images/" + nomeBase + ".png");
+        if (recursoPng == null) {
+            throw new IllegalStateException("Arquivo de imagem nao encontrado para: " + nomeBase);
+        }
+
+        ImageIcon imagemPng = new ImageIcon(recursoPng);
+        Image imagemRedimensionada = imagemPng.getImage().getScaledInstance(TAMANHO_PECA, TAMANHO_PECA, java.awt.Image.SCALE_SMOOTH);
+        return new ImageIcon(imagemRedimensionada);
     }
     
 }
