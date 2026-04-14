@@ -29,6 +29,11 @@ public class ConfiguracaoJogo {
     private final boolean habilitarMusicaFundo;
     private final String recursoMusicaFundo;
     private final int volumeMusicaPercentual;
+    private final boolean habilitarAnimacaoExplosao;
+    private final String recursoAnimacaoExplosao;
+    private final int duracaoAnimacaoExplosaoMs;
+    private final int intervaloAnimacaoQuedaMs;
+    private final int pausaEntreCascatasMs;
 
     private final Long sementeAleatoria;
 
@@ -53,6 +58,60 @@ public class ConfiguracaoJogo {
             int volumeMusicaPercentual,
             Long sementeAleatoria
     ) {
+        this(
+                linhasTabuleiro,
+                colunasTabuleiro,
+                tiposPeca,
+                tamanhoMinimoMatch,
+                pontuacaoMatch3,
+                pontuacaoMatch4,
+                pontuacaoMatch5OuMais,
+                multiplicadorCascata,
+                pontuarCascata,
+                movimentosIniciais,
+                metaPontos,
+                somenteTrocaAdjacente,
+                consumirMovimentoTrocaInvalida,
+                resolverMatchesIniciais,
+                exibirNumerosPecas,
+                habilitarMusicaFundo,
+                recursoMusicaFundo,
+                volumeMusicaPercentual,
+                true,
+                "/com/semstress/images/grenade.gif",
+                420,
+                80,
+                120,
+                sementeAleatoria
+        );
+    }
+
+    ConfiguracaoJogo(
+            int linhasTabuleiro,
+            int colunasTabuleiro,
+            int tiposPeca,
+            int tamanhoMinimoMatch,
+            int pontuacaoMatch3,
+            int pontuacaoMatch4,
+            int pontuacaoMatch5OuMais,
+            int multiplicadorCascata,
+            boolean pontuarCascata,
+            int movimentosIniciais,
+            int metaPontos,
+            boolean somenteTrocaAdjacente,
+            boolean consumirMovimentoTrocaInvalida,
+            boolean resolverMatchesIniciais,
+            boolean exibirNumerosPecas,
+            boolean habilitarMusicaFundo,
+            String recursoMusicaFundo,
+            int volumeMusicaPercentual,
+            boolean habilitarAnimacaoExplosao,
+            String recursoAnimacaoExplosao,
+            int duracaoAnimacaoExplosaoMs,
+            int intervaloAnimacaoQuedaMs,
+            int pausaEntreCascatasMs,
+            Long sementeAleatoria
+    ) {
         this.linhasTabuleiro = linhasTabuleiro;
         this.colunasTabuleiro = colunasTabuleiro;
         this.tiposPeca = tiposPeca;
@@ -71,6 +130,11 @@ public class ConfiguracaoJogo {
         this.habilitarMusicaFundo = habilitarMusicaFundo;
         this.recursoMusicaFundo = recursoMusicaFundo;
         this.volumeMusicaPercentual = volumeMusicaPercentual;
+        this.habilitarAnimacaoExplosao = habilitarAnimacaoExplosao;
+        this.recursoAnimacaoExplosao = recursoAnimacaoExplosao;
+        this.duracaoAnimacaoExplosaoMs = duracaoAnimacaoExplosaoMs;
+        this.intervaloAnimacaoQuedaMs = intervaloAnimacaoQuedaMs;
+        this.pausaEntreCascatasMs = pausaEntreCascatasMs;
         this.sementeAleatoria = sementeAleatoria;
     }
 
@@ -106,6 +170,11 @@ public class ConfiguracaoJogo {
         boolean habilitarMusica = bool(props, "audio.habilitar_musica_fundo", true);
         String recursoMusica = texto(props, "audio.recurso_musica_fundo", "/com/semstress/audio/musica-exemplo.wav");
         int volumeMusica = inteiro(props, "audio.volume_percentual", 30);
+        boolean habilitarAnimacaoExplosao = bool(props, "animacao.explosao.habilitada", true);
+        String recursoAnimacaoExplosao = texto(props, "animacao.explosao.recurso", "/com/semstress/images/grenade.gif");
+        int duracaoExplosaoMs = inteiro(props, "animacao.explosao.duracao_ms", 420);
+        int intervaloQuedaMs = inteiro(props, "animacao.queda.intervalo_ms", 80);
+        int pausaEntreCascatasMs = inteiro(props, "animacao.cascata.pausa_ms", 120);
         Long seed = longOpcional(props, "jogo.semente_aleatoria");
 
         return new ConfiguracaoJogo(
@@ -127,6 +196,11 @@ public class ConfiguracaoJogo {
                 habilitarMusica,
                 recursoMusica,
                 volumeMusica,
+                habilitarAnimacaoExplosao,
+                recursoAnimacaoExplosao,
+                duracaoExplosaoMs,
+                intervaloQuedaMs,
+                pausaEntreCascatasMs,
                 seed
         );
     }
@@ -245,5 +319,25 @@ public class ConfiguracaoJogo {
 
     public int getVolumeMusicaPercentual() {
         return volumeMusicaPercentual;
+    }
+
+    public boolean isHabilitarAnimacaoExplosao() {
+        return habilitarAnimacaoExplosao;
+    }
+
+    public String getRecursoAnimacaoExplosao() {
+        return recursoAnimacaoExplosao;
+    }
+
+    public int getDuracaoAnimacaoExplosaoMs() {
+        return duracaoAnimacaoExplosaoMs;
+    }
+
+    public int getIntervaloAnimacaoQuedaMs() {
+        return intervaloAnimacaoQuedaMs;
+    }
+
+    public int getPausaEntreCascatasMs() {
+        return pausaEntreCascatasMs;
     }
 }

@@ -6,8 +6,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
 import java.awt.Color;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.Timer;
 import javax.swing.JToggleButton;
+import java.util.List;
+import java.util.Set;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +21,7 @@ import java.util.Map;
  * @author DiogoSouza
  */
 public class TelaInicial extends javax.swing.JFrame {
+    private static final int EMPTY = -1;
     private static final int ALTURA_REFERENCIA_LOGO = 160;
     private static final double PROPORCAO_ALTURA_LOGO_TITULO = 1.10;
 
@@ -819,6 +825,7 @@ public class TelaInicial extends javax.swing.JFrame {
         pontos = 0;
         movimentosRestantes = configuracao.getMovimentosIniciais();
         selecionado = null;
+        animacaoEmAndamento = false;
 
         board.fillRandom();
         if (configuracao.isResolverMatchesIniciais()) {
@@ -835,14 +842,33 @@ public class TelaInicial extends javax.swing.JFrame {
     }
 
     private void renderizarBoard() {
+        renderizarEstado(snapshotBoardAtual());
+    }
+
+    private void renderizarEstado(int[][] estado) {
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
-                int valor = board.get(row, col);
+                int valor = estado[row][col];
+                if (valor == EMPTY) {
+                    botao.setText("");
+                    botao.setIcon(null);
+                    continue;
+                }
                 botao.setText(configuracao.isExibirNumerosPecas() ? String.valueOf(valor) : "");
                 botao.setIcon(iconesJogo.retornarIconePorValor(valor));
             }
         }
+    }
+
+    private int[][] snapshotBoardAtual() {
+        int[][] estado = new int[board.getLinhas()][board.getColunas()];
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
+                estado[row][col] = board.get(row, col);
+            }
+        }
+        return estado;
     }
 
     private void bloquearGrade() {
@@ -869,7 +895,7 @@ public class TelaInicial extends javax.swing.JFrame {
     }
 
     private void onCellClicked(JToggleButton atual) {
-        if (!atual.isEnabled()) {
+        if (!atual.isEnabled() || animacaoEmAndamento) {
             return;
         }
 
@@ -886,15 +912,30 @@ public class TelaInicial extends javax.swing.JFrame {
 
         Position origem = posicoesPorBotao.get(selecionado);
         Position destino = posicoesPorBotao.get(atual);
-        MoveResult resultado = gameEngine.tryMove(board, origem, destino);
+        ResultadoJogadaAnimada resultado = gameEngine.tryMoveAnimado(board, origem, destino);
 
         if (resultado.isValid()) {
             movimentosRestantes--;
-            pontos += resultado.getPoints();
-            renderizarBoard();
-            jLabelPontosValor.setText(String.valueOf(pontos));
             jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
-            verificarFimDeJogo();
+
+            if (configuracao.isHabilitarAnimacaoExplosao()) {
+                animacaoEmAndamento = true;
+                executarAnimacaoDeJogada(resultado, new Runnable() {
+                    @Override
+                    public void run() {
+                        pontos += resultado.getPoints();
+                        jLabelPontosValor.setText(String.valueOf(pontos));
+                        renderizarBoard();
+                        animacaoEmAndamento = false;
+                        verificarFimDeJogo();
+                    }
+                });
+            } else {
+                pontos += resultado.getPoints();
+                renderizarBoard();
+                jLabelPontosValor.setText(String.valueOf(pontos));
+                verificarFimDeJogo();
+            }
         } else if (configuracao.isConsumirMovimentoTrocaInvalida()) {
             movimentosRestantes--;
             jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
@@ -905,15 +946,102 @@ public class TelaInicial extends javax.swing.JFrame {
         limparSelecao();
     }
 
-    private void verificarFimDeJogo() {
+    private void executarAnimacaoDeJogada(final ResultadoJogadaAnimada resultado, final Runnable aoFinal) {
+        final List<RodadaAnimacao> rodadas = new ArrayList<>(resultado.getRodadas());
+        if (rodadas.isEmpty()) {
+            aoFinal.run();
+            return;
+        }
+
+        executarRodadaAnimacao(rodadas, 0, aoFinal);
+    }
+
+    private void executarRodadaAnimacao(final List<RodadaAnimacao> rodadas, final int indice, final Runnable aoFinal) {
+        if (indice >= rodadas.size()) {
+            aoFinal.run();
+            return;
+        }
+
+        final RodadaAnimacao rodada = rodadas.get(indice);
+        renderizarEstado(rodada.getEstadoAntesLimpeza());
+        aplicarIconeExplosao(rodada.getPosicoesMatch());
+
+        agendar(configuracao.getDuracaoAnimacaoExplosaoMs(), new Runnable() {
+            @Override
+            public void run() {
+                renderizarEstado(rodada.getEstadoAposLimpeza());
+                animarQuadrosQueda(
+                        rodada.getQuadrosQueda(),
+                        0,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                agendar(configuracao.getPausaEntreCascatasMs(), new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        executarRodadaAnimacao(rodadas, indice + 1, aoFinal);
+                                    }
+                                });
+                            }
+                        }
+                );
+            }
+        });
+    }
+
+    private void animarQuadrosQueda(final List<int[][]> quadros, final int indice, final Runnable aoFinal) {
+        if (indice >= quadros.size()) {
+            aoFinal.run();
+            return;
+        }
+
+        renderizarEstado(quadros.get(indice));
+        agendar(configuracao.getIntervaloAnimacaoQuedaMs(), new Runnable() {
+            @Override
+            public void run() {
+                animarQuadrosQueda(quadros, indice + 1, aoFinal);
+            }
+        });
+    }
+
+    private void aplicarIconeExplosao(Set<Position> posicoes) {
+        Icon iconeExplosao = iconesJogo.retornarIconeExplosao();
+        if (iconeExplosao == null) {
+            return;
+        }
+
+        for (Position posicao : posicoes) {
+            if (!board.posicaoValida(posicao)) {
+                continue;
+            }
+            JToggleButton botao = botoesGrade[posicao.getRow()][posicao.getCol()];
+            botao.setText("");
+            botao.setIcon(iconeExplosao);
+        }
+    }
+
+    private void agendar(int atrasoMs, final Runnable acao) {
+        int atrasoNormalizado = Math.max(1, atrasoMs);
+        Timer timer = new Timer(atrasoNormalizado, null);
+        timer.setRepeats(false);
+        timer.addActionListener(e -> {
+            timer.stop();
+            acao.run();
+        });
+        timer.start();
+    }
+
+    private boolean verificarFimDeJogo() {
         if (pontos >= configuracao.getMetaPontos()) {
             encerrarJogo(true);
-            return;
+            return true;
         }
 
         if (movimentosRestantes <= 0) {
             encerrarJogo(false);
+            return true;
         }
+        return false;
     }
 
     private void encerrarJogo(boolean venceu) {
@@ -1356,6 +1484,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private final Map<JToggleButton, Position> posicoesPorBotao = new HashMap<>();
     private JToggleButton[][] botoesGrade;
     private JToggleButton selecionado;
+    private boolean animacaoEmAndamento = false;
     private int movimentosRestantes = 0;
     private int pontos = 0;
 }

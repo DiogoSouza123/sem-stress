@@ -7,6 +7,7 @@ package com.semstress;
 
 import java.awt.Image;
 import java.net.URL;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import com.enums.NomeIconeEnum;
 
@@ -16,6 +17,7 @@ import com.enums.NomeIconeEnum;
  */
 public class IconesJogo {
     private static final int TAMANHO_PECA = 40;
+    private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
     
     private ImageIcon coffeWhite = carregarIconePeca("coffee-white");
     private ImageIcon coffeBeans = carregarIconePeca("coffee-beans");
@@ -23,6 +25,7 @@ public class IconesJogo {
     private ImageIcon coffeYellow = carregarIconePeca("coffee-yellow");
     private ImageIcon coffeRed = carregarIconePeca("coffee-red");
     private ImageIcon fire = carregarIconePeca("fire");
+    private ImageIcon explosao = carregarIconeExplosao();
     
     public ImageIcon retornarIcone(NomeIconeEnum nomeIconeEnum){
         
@@ -75,6 +78,10 @@ public class IconesJogo {
         }
     }
 
+    public Icon retornarIconeExplosao() {
+        return explosao;
+    }
+
     private ImageIcon carregarIconePeca(String nomeBase) {
         URL recursoGif = getClass().getResource("images/" + nomeBase + ".gif");
         if (recursoGif != null) {
@@ -89,6 +96,37 @@ public class IconesJogo {
         ImageIcon imagemPng = new ImageIcon(recursoPng);
         Image imagemRedimensionada = imagemPng.getImage().getScaledInstance(TAMANHO_PECA, TAMANHO_PECA, java.awt.Image.SCALE_SMOOTH);
         return new ImageIcon(imagemRedimensionada);
+    }
+
+    private ImageIcon carregarIconeExplosao() {
+        URL recursoConfigurado = resolverRecurso(configuracao.getRecursoAnimacaoExplosao());
+        if (recursoConfigurado != null) {
+            return new ImageIcon(recursoConfigurado);
+        }
+
+        URL recursoPadrao = getClass().getResource("images/grenade.gif");
+        if (recursoPadrao != null) {
+            return new ImageIcon(recursoPadrao);
+        }
+
+        return fire;
+    }
+
+    private URL resolverRecurso(String caminho) {
+        if (caminho == null || caminho.trim().isEmpty()) {
+            return null;
+        }
+
+        URL recurso = getClass().getResource(caminho);
+        if (recurso != null) {
+            return recurso;
+        }
+
+        if (!caminho.startsWith("/")) {
+            return getClass().getResource("/" + caminho);
+        }
+
+        return null;
     }
     
 }

@@ -18,12 +18,17 @@ public class GameEngine {
     }
 
     public MoveResult tryMove(Board board, Position first, Position second) {
+        ResultadoJogadaAnimada resultadoAnimado = tryMoveAnimado(board, first, second);
+        return new MoveResult(resultadoAnimado.isValid(), resultadoAnimado.getPoints());
+    }
+
+    public ResultadoJogadaAnimada tryMoveAnimado(Board board, Position first, Position second) {
         if (!board.posicaoValida(first) || !board.posicaoValida(second)) {
-            return new MoveResult(false, 0);
+            return ResultadoJogadaAnimada.invalido();
         }
 
         if (config.isSomenteTrocaAdjacente() && !isAdjacent(first, second)) {
-            return new MoveResult(false, 0);
+            return ResultadoJogadaAnimada.invalido();
         }
 
         board.swap(first, second);
@@ -31,30 +36,47 @@ public class GameEngine {
         Set<Position> initialMatches = findMatchedCells(board);
         if (initialMatches.isEmpty()) {
             board.swap(first, second);
-            return new MoveResult(false, 0);
+            return ResultadoJogadaAnimada.invalido();
         }
 
-        int points = resolveBoard(board);
-        return new MoveResult(true, points);
+        ResultadoResolucao resultado = resolverBoardComTimeline(board);
+        return new ResultadoJogadaAnimada(true, resultado.pontosTotais, resultado.rodadas);
     }
 
     public int resolveBoard(Board board) {
+        return resolverBoardComTimeline(board).pontosTotais;
+    }
+
+    private ResultadoResolucao resolverBoardComTimeline(Board board) {
         int totalPoints = 0;
         int nivelCascata = 0;
+        List<RodadaAnimacao> rodadas = new ArrayList<>();
 
         while (true) {
             List<Integer> runLengths = findRunLengths(board);
             if (runLengths.isEmpty()) {
-                return totalPoints;
+                return new ResultadoResolucao(totalPoints, rodadas);
             }
 
             nivelCascata++;
             Set<Position> matched = findMatchedCells(board);
+            int pontosRodada = 0;
             if (nivelCascata == 1 || config.isPontuarCascata()) {
-                totalPoints += calculatePoints(runLengths, nivelCascata);
+                pontosRodada = calculatePoints(runLengths, nivelCascata);
+                totalPoints += pontosRodada;
             }
+
+            int[][] estadoAntesLimpeza = snapshot(board);
             clearMatched(board, matched);
-            collapseAndRefill(board);
+            int[][] estadoAposLimpeza = snapshot(board);
+            List<int[][]> quadrosQueda = collapseAndRefillComQuadros(board);
+            rodadas.add(new RodadaAnimacao(
+                    estadoAntesLimpeza,
+                    matched,
+                    estadoAposLimpeza,
+                    quadrosQueda,
+                    pontosRodada
+            ));
         }
     }
 
@@ -88,26 +110,58 @@ public class GameEngine {
     }
 
     private void collapseAndRefill(Board board) {
-        for (int col = 0; col < board.getColunas(); col++) {
-            List<Integer> pieces = new ArrayList<>();
-            for (int row = board.getLinhas() - 1; row >= 0; row--) {
-                int value = board.get(row, col);
-                if (value != EMPTY) {
-                    pieces.add(value);
+        collapseAndRefillComQuadros(board);
+    }
+
+    private List<int[][]> collapseAndRefillComQuadros(Board board) {
+        List<int[][]> quadros = new ArrayList<>();
+
+        while (aplicarQuedaUmPasso(board)) {
+            quadros.add(snapshot(board));
+        }
+
+        preencherVaziosComNovasPecas(board);
+        quadros.add(snapshot(board));
+
+        return quadros;
+    }
+
+    private boolean aplicarQuedaUmPasso(Board board) {
+        boolean houveMovimento = false;
+        for (int row = board.getLinhas() - 2; row >= 0; row--) {
+            for (int col = 0; col < board.getColunas(); col++) {
+                int atual = board.get(row, col);
+                if (atual == EMPTY) {
+                    continue;
+                }
+                if (board.get(row + 1, col) == EMPTY) {
+                    board.set(row + 1, col, atual);
+                    board.set(row, col, EMPTY);
+                    houveMovimento = true;
                 }
             }
+        }
+        return houveMovimento;
+    }
 
-            int row = board.getLinhas() - 1;
-            for (Integer piece : pieces) {
-                board.set(row, col, piece);
-                row--;
-            }
-
-            while (row >= 0) {
-                board.set(row, col, board.nextPiece());
-                row--;
+    private void preencherVaziosComNovasPecas(Board board) {
+        for (int col = 0; col < board.getColunas(); col++) {
+            for (int row = board.getLinhas() - 1; row >= 0; row--) {
+                if (board.get(row, col) == EMPTY) {
+                    board.set(row, col, board.nextPiece());
+                }
             }
         }
+    }
+
+    private int[][] snapshot(Board board) {
+        int[][] estado = new int[board.getLinhas()][board.getColunas()];
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
+                estado[row][col] = board.get(row, col);
+            }
+        }
+        return estado;
     }
 
     private Set<Position> findMatchedCells(Board board) {
@@ -192,5 +246,15 @@ public class GameEngine {
         }
 
         return lengths;
+    }
+
+    private static class ResultadoResolucao {
+        private final int pontosTotais;
+        private final List<RodadaAnimacao> rodadas;
+
+        private ResultadoResolucao(int pontosTotais, List<RodadaAnimacao> rodadas) {
+            this.pontosTotais = pontosTotais;
+            this.rodadas = rodadas;
+        }
     }
 }
