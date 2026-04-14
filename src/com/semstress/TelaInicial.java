@@ -4,8 +4,11 @@ import java.awt.Image;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.Cursor;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
@@ -43,6 +46,11 @@ public class TelaInicial extends javax.swing.JFrame {
     private static final Color COR_BORDA_SELECAO_PECA = new Color(255, 199, 112);
     private static final Color COR_FUNDO_HOVER_PECA = new Color(255, 224, 188, 80);
     private static final Color COR_FUNDO_SELECAO_PECA = new Color(255, 217, 140, 110);
+    private static final int MARGEM_BOTAO_SOM = 12;
+    private static final Color COR_BOTAO_SOM_ATIVO = new Color(255, 245, 235);
+    private static final Color COR_BOTAO_SOM_MUTADO = new Color(231, 214, 200);
+    private static final Color COR_BORDA_BOTAO_SOM = new Color(112, 77, 56);
+    private static final Color COR_TEXTO_BOTAO_SOM = new Color(46, 31, 23);
 
     public TelaInicial() {
 
@@ -54,6 +62,7 @@ public class TelaInicial extends javax.swing.JFrame {
         bloquearGrade();
         jLabelMetaValor.setText(String.valueOf(configuracao.getMetaPontos()));
         jLabelMovimentosValor.setText("0");
+        configurarBotaoSom();
         iniciarMusicaFundo();
         addWindowListener(new WindowAdapter() {
             @Override
@@ -64,6 +73,7 @@ public class TelaInicial extends javax.swing.JFrame {
             @Override
             public void windowOpened(WindowEvent e) {
                 iniciarAnimacaoEntrada();
+                reposicionarBotaoSom();
             }
         });
         configurarJanelaFixa();
@@ -1364,12 +1374,111 @@ public class TelaInicial extends javax.swing.JFrame {
     }
 
     private void iniciarMusicaFundo() {
-        if (!configuracao.isHabilitarMusicaFundo()) {
+        if (!configuracao.isHabilitarMusicaFundo() || musicaMutada) {
+            atualizarBotaoSom();
             return;
         }
         musicaFundoPlayer.tocarEmLoop(
                 configuracao.getRecursoMusicaFundo(),
                 configuracao.getVolumeMusicaPercentual()
+        );
+        atualizarBotaoSom();
+    }
+
+    private void configurarBotaoSom() {
+        botaoSom.setFocusable(false);
+        botaoSom.setOpaque(true);
+        botaoSom.setContentAreaFilled(true);
+        botaoSom.setBorderPainted(true);
+        botaoSom.setFocusPainted(false);
+        botaoSom.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        botaoSom.setFont(new java.awt.Font("Segoe UI Semibold", java.awt.Font.BOLD, 12));
+        botaoSom.setForeground(COR_TEXTO_BOTAO_SOM);
+        botaoSom.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COR_BORDA_BOTAO_SOM, 1, true),
+                BorderFactory.createEmptyBorder(4, 10, 4, 10)
+        ));
+        botaoSom.setToolTipText("Mutar ou desmutar musica");
+        botaoSom.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                alternarSom();
+            }
+        });
+
+        getLayeredPane().add(botaoSom, JLayeredPane.POPUP_LAYER);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                reposicionarBotaoSom();
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                reposicionarBotaoSom();
+            }
+        });
+        jPanel1.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                reposicionarBotaoSom();
+            }
+        });
+
+        atualizarBotaoSom();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                reposicionarBotaoSom();
+            }
+        });
+    }
+
+    private void alternarSom() {
+        if (!configuracao.isHabilitarMusicaFundo()) {
+            return;
+        }
+
+        musicaMutada = !musicaMutada;
+        if (musicaMutada) {
+            musicaFundoPlayer.parar();
+        } else {
+            iniciarMusicaFundo();
+        }
+        atualizarBotaoSom();
+    }
+
+    private void atualizarBotaoSom() {
+        if (!configuracao.isHabilitarMusicaFundo()) {
+            botaoSom.setEnabled(false);
+            botaoSom.setText("Som indisponivel");
+            botaoSom.setBackground(COR_BOTAO_SOM_MUTADO);
+            return;
+        }
+
+        botaoSom.setEnabled(true);
+        if (musicaMutada) {
+            botaoSom.setText("Som: OFF");
+            botaoSom.setBackground(COR_BOTAO_SOM_MUTADO);
+        } else {
+            botaoSom.setText("Som: ON");
+            botaoSom.setBackground(COR_BOTAO_SOM_ATIVO);
+        }
+    }
+
+    private void reposicionarBotaoSom() {
+        if (botaoSom.getParent() != getLayeredPane()) {
+            return;
+        }
+        Dimension tamanho = botaoSom.getPreferredSize();
+        Point origem = SwingUtilities.convertPoint(jPanel1, 0, 0, getLayeredPane());
+        int x = origem.x + jPanel1.getWidth() - tamanho.width - MARGEM_BOTAO_SOM;
+        int y = origem.y + MARGEM_BOTAO_SOM;
+        botaoSom.setBounds(
+                Math.max(0, x),
+                Math.max(0, y),
+                tamanho.width,
+                tamanho.height
         );
     }
 
@@ -1403,6 +1512,7 @@ public class TelaInicial extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setMinimumSize(getSize());
         setMaximumSize(getSize());
+        reposicionarBotaoSom();
     }
 
     private void aplicarModoCompactoSeNecessario() {
@@ -1809,6 +1919,8 @@ public class TelaInicial extends javax.swing.JFrame {
     private JToggleButton selecionado;
     private boolean animacaoEmAndamento = false;
     private boolean temaAlternativoAtivo = false;
+    private final javax.swing.JButton botaoSom = new javax.swing.JButton();
+    private boolean musicaMutada = false;
     private int movimentosRestantes = 0;
     private int pontos = 0;
 }
