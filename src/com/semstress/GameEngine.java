@@ -50,7 +50,9 @@ public class GameEngine {
 
             nivelCascata++;
             Set<Position> matched = findMatchedCells(board);
-            totalPoints += calculatePoints(runLengths, nivelCascata);
+            if (nivelCascata == 1 || config.isPontuarCascata()) {
+                totalPoints += calculatePoints(runLengths, nivelCascata);
+            }
             clearMatched(board, matched);
             collapseAndRefill(board);
         }

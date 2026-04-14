@@ -18,6 +18,7 @@ public class ConfiguracaoJogo {
     private final int pontuacaoMatch4;
     private final int pontuacaoMatch5OuMais;
     private final int multiplicadorCascata;
+    private final boolean pontuarCascata;
 
     private final int movimentosIniciais;
     private final int metaPontos;
@@ -28,7 +29,7 @@ public class ConfiguracaoJogo {
 
     private final Long sementeAleatoria;
 
-    private ConfiguracaoJogo(
+    ConfiguracaoJogo(
             int linhasTabuleiro,
             int colunasTabuleiro,
             int tiposPeca,
@@ -37,6 +38,7 @@ public class ConfiguracaoJogo {
             int pontuacaoMatch4,
             int pontuacaoMatch5OuMais,
             int multiplicadorCascata,
+            boolean pontuarCascata,
             int movimentosIniciais,
             int metaPontos,
             boolean somenteTrocaAdjacente,
@@ -53,6 +55,7 @@ public class ConfiguracaoJogo {
         this.pontuacaoMatch4 = pontuacaoMatch4;
         this.pontuacaoMatch5OuMais = pontuacaoMatch5OuMais;
         this.multiplicadorCascata = multiplicadorCascata;
+        this.pontuarCascata = pontuarCascata;
         this.movimentosIniciais = movimentosIniciais;
         this.metaPontos = metaPontos;
         this.somenteTrocaAdjacente = somenteTrocaAdjacente;
@@ -84,6 +87,7 @@ public class ConfiguracaoJogo {
         int score4 = inteiro(props, "pontuacao.match_4", 1000);
         int score5 = inteiro(props, "pontuacao.match_5_ou_mais", 1500);
         int cascata = inteiro(props, "pontuacao.multiplicador_cascata", 1);
+        boolean pontuarCascata = bool(props, "pontuacao.pontuar_cascata", false);
         int movimentos = inteiro(props, "jogo.movimentos_iniciais", 30);
         int meta = inteiro(props, "jogo.meta_pontos", 10000);
         boolean apenasAdj = bool(props, "regras.somente_troca_adjacente", true);
@@ -101,6 +105,7 @@ public class ConfiguracaoJogo {
                 score4,
                 score5,
                 cascata,
+                pontuarCascata,
                 movimentos,
                 meta,
                 apenasAdj,
@@ -177,6 +182,10 @@ public class ConfiguracaoJogo {
 
     public int getMultiplicadorCascata() {
         return multiplicadorCascata;
+    }
+
+    public boolean isPontuarCascata() {
+        return pontuarCascata;
     }
 
     public int getMovimentosIniciais() {
