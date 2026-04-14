@@ -138,7 +138,7 @@ public class TelaInicial extends javax.swing.JFrame {
         Color fundoCards = altoContraste ? new Color(80, 56, 41) : TemaUI.COR_DQUE_CARD;
         Color textoTitulo = altoContraste ? new Color(255, 232, 210) : TemaUI.COR_TEXTO_TITULO;
         Color textoValor = altoContraste ? new Color(255, 248, 238) : TemaUI.COR_TEXTO_VALOR;
-        Color textoRodape = altoContraste ? new Color(255, 230, 206) : TemaUI.COR_TEXTO_RODAPE;
+        Color textoRodape = Color.BLACK;
 
         jPanel2.setBackground(fundoTabuleiro);
         jLabel1.setForeground(textoRodape);
@@ -170,7 +170,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private void initComponents() {
 
         jLabel4 = new javax.swing.JLabel();
-        jPanel1 = new PainelGradiente(TemaUI.COR_GRADIENTE_TOPO, TemaUI.COR_GRADIENTE_BASE);
+        jPanel1 = new PainelGradiente("/com/semstress/images/background.gif", TemaUI.COR_GRADIENTE_TOPO, TemaUI.COR_GRADIENTE_BASE);
         jPanel2 = new javax.swing.JPanel();
         jToggleButton1 = new javax.swing.JToggleButton();
         jToggleButton2 = new javax.swing.JToggleButton();

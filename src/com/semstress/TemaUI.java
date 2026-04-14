@@ -29,7 +29,9 @@ public final class TemaUI {
     public static final Color COR_BORDA_TABULEIRO = new Color(178, 143, 119);
     public static final Color COR_TEXTO_TITULO = new Color(66, 44, 32);
     public static final Color COR_TEXTO_VALOR = new Color(40, 27, 20);
-    public static final Color COR_TEXTO_RODAPE = new Color(83, 57, 41);
+    public static final Color COR_TEXTO_RODAPE = Color.BLACK;
+    public static final Color COR_FUNDO_RODAPE = new Color(255, 245, 236, 215);
+    public static final Color COR_BORDA_RODAPE = new Color(94, 64, 46, 120);
 
     public static final Color COR_BOTAO_FUNDO = new Color(124, 79, 54);
     public static final Color COR_BOTAO_HOVER = new Color(140, 90, 62);
@@ -42,7 +44,7 @@ public final class TemaUI {
 
     public static final Font FONTE_INDICADOR_TITULO = new Font("Segoe UI Semibold", Font.BOLD, 16);
     public static final Font FONTE_INDICADOR_VALOR = new Font("Segoe UI", Font.BOLD, 22);
-    public static final Font FONTE_RODAPE = new Font("Segoe UI", Font.PLAIN, 16);
+    public static final Font FONTE_RODAPE = new Font("Segoe UI Semibold", Font.BOLD, 17);
     public static final Font FONTE_BOTAO = new Font("Segoe UI Semibold", Font.BOLD, 15);
 
     private TemaUI() {
@@ -73,6 +75,12 @@ public final class TemaUI {
 
         rodape.setForeground(COR_TEXTO_RODAPE);
         rodape.setFont(FONTE_RODAPE);
+        rodape.setOpaque(true);
+        rodape.setBackground(COR_FUNDO_RODAPE);
+        rodape.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COR_BORDA_RODAPE, 1, true),
+                new EmptyBorder(4, 8, 4, 8)
+        ));
     }
 
     public static void aplicarTemaIndicadores(
