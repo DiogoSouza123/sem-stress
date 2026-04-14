@@ -28,6 +28,7 @@ public class TelaInicial extends javax.swing.JFrame {
     public TelaInicial() {
 
         initComponents();
+        aplicarTemaVisual();
         aplicarLogoPrincipal();
         validarDimensoesTabuleiro();
         inicializarGrade();
@@ -43,6 +44,20 @@ public class TelaInicial extends javax.swing.JFrame {
         });
         configurarJanelaFixa();
 
+    }
+
+    private void aplicarTemaVisual() {
+        jLabel1.setText("Desenvolvido por Diogo Souza");
+        TemaUI.aplicarTemaBase(this, jPanel1, jPanel2, jPanel4, jLabel1);
+        TemaUI.aplicarTemaIndicadores(
+                jLabelPontosTitulo,
+                jLabelPontosValor,
+                jLabelMetaTitulo,
+                jLabelMetaValor,
+                jLabelMovimentosTitulo,
+                jLabelMovimentosValor
+        );
+        TemaUI.aplicarTemaBotaoPrimario(jButtonIniciar);
     }
 
     /**
@@ -694,22 +709,15 @@ public class TelaInicial extends javax.swing.JFrame {
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabelPontosTitulo)
-                            .addComponent(jLabelMetaTitulo, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabelMetaValor, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabelPontosValor, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(36, 36, 36)
-                        .addComponent(jLabelMovimentosValor)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addGap(0, 20, Short.MAX_VALUE)
-                .addComponent(jLabelMovimentosTitulo)
-                .addGap(18, 18, 18))
+                    .addComponent(jLabelPontosTitulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabelPontosValor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabelMetaTitulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabelMetaValor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabelMovimentosTitulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabelMovimentosValor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -756,7 +764,7 @@ public class TelaInicial extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jButtonIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButtonIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(jPanel1Layout.createSequentialGroup()
                             .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -803,7 +811,7 @@ public class TelaInicial extends javax.swing.JFrame {
         botoesGrade = retornarBotoesEmMatriz();
         posicoesPorBotao.clear();
         jPanel2.setOpaque(true);
-        jPanel2.setBackground(new Color(235, 209, 191));
+        jPanel2.setBackground(TemaUI.COR_FUNDO_TABULEIRO);
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
