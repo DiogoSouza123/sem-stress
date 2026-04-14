@@ -20,9 +20,10 @@ public class TelaInicial extends javax.swing.JFrame {
         Image newimg = image.getScaledInstance(80, 80,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
         imageIcon = new ImageIcon(newimg);
         jLabelLogoJogo.setIcon(imageIcon);
+        validarDimensoesTabuleiro();
         inicializarGrade();
         bloquearGrade();
-        jLabelMetaValor.setText(String.valueOf(metaPontos));
+        jLabelMetaValor.setText(String.valueOf(configuracao.getMetaPontos()));
         jLabelMovimentosValor.setText("0");
 
     }
@@ -789,8 +790,8 @@ public class TelaInicial extends javax.swing.JFrame {
     private void inicializarGrade() {
         botoesGrade = retornarBotoesEmMatriz();
         posicoesPorBotao.clear();
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
                 botao.setText("");
                 botao.setFocusPainted(false);
@@ -802,43 +803,45 @@ public class TelaInicial extends javax.swing.JFrame {
 
     private void iniciarNovoJogo() {
         pontos = 0;
-        movimentosRestantes = movimentosIniciais;
+        movimentosRestantes = configuracao.getMovimentosIniciais();
         selecionado = null;
 
         board.fillRandom();
-        gameEngine.resolveBoard(board);
+        if (configuracao.isResolverMatchesIniciais()) {
+            gameEngine.resolveBoard(board);
+        }
         renderizarBoard();
 
         jLabelPontosValor.setText(String.valueOf(pontos));
         jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
-        jLabelMetaValor.setText(String.valueOf(metaPontos));
+        jLabelMetaValor.setText(String.valueOf(configuracao.getMetaPontos()));
 
         desbloquearGrade();
         jButtonIniciar.setEnabled(false);
     }
 
     private void renderizarBoard() {
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
                 int valor = board.get(row, col);
-                botao.setText(String.valueOf(valor));
+                botao.setText(configuracao.isExibirNumerosPecas() ? String.valueOf(valor) : "");
                 botao.setIcon(iconesJogo.retornarIconePorValor(valor));
             }
         }
     }
 
     private void bloquearGrade() {
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 botoesGrade[row][col].setEnabled(false);
             }
         }
     }
 
     private void desbloquearGrade() {
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 botoesGrade[row][col].setEnabled(true);
             }
         }
@@ -878,6 +881,10 @@ public class TelaInicial extends javax.swing.JFrame {
             jLabelPontosValor.setText(String.valueOf(pontos));
             jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
             verificarFimDeJogo();
+        } else if (configuracao.isConsumirMovimentoTrocaInvalida()) {
+            movimentosRestantes--;
+            jLabelMovimentosValor.setText(String.valueOf(movimentosRestantes));
+            verificarFimDeJogo();
         }
 
         atual.setSelected(false);
@@ -885,7 +892,7 @@ public class TelaInicial extends javax.swing.JFrame {
     }
 
     private void verificarFimDeJogo() {
-        if (pontos >= metaPontos) {
+        if (pontos >= configuracao.getMetaPontos()) {
             encerrarJogo(true);
             return;
         }
@@ -905,6 +912,22 @@ public class TelaInicial extends javax.swing.JFrame {
                 iniciarNovoJogo();
             }
         }).setVisible(true);
+    }
+
+    private void validarDimensoesTabuleiro() {
+        int linhasTela = 8;
+        int colunasTela = 6;
+        if (!board.dimensoesIguais(linhasTela, colunasTela)) {
+            throw new IllegalStateException(
+                    "A configuracao do tabuleiro deve ser " + linhasTela + "x" + colunasTela
+                            + " para o layout atual da tela."
+            );
+        }
+        if (board.getTiposPeca() != 5) {
+            throw new IllegalStateException(
+                    "A configuracao tabuleiro.tipos_peca deve ser 5 para o conjunto atual de icones."
+            );
+        }
     }
 
     // Metodo mantido para compatibilidade com handlers gerados.
@@ -1270,14 +1293,13 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JToggleButton jToggleButton8;
     private javax.swing.JToggleButton jToggleButton9;
     // End of variables declaration//GEN-END:variables
+    private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
     private final IconesJogo iconesJogo = new IconesJogo();
-    private final Board board = new Board();
-    private final GameEngine gameEngine = new GameEngine();
+    private final Board board = new Board(configuracao);
+    private final GameEngine gameEngine = new GameEngine(configuracao);
     private final Map<JToggleButton, Position> posicoesPorBotao = new HashMap<>();
     private JToggleButton[][] botoesGrade;
     private JToggleButton selecionado;
-    private final int movimentosIniciais = 30;
-    private final int metaPontos = 10000;
     private int movimentosRestantes = 0;
     private int pontos = 0;
 }

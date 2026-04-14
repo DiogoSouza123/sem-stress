@@ -6,12 +6,23 @@ import java.util.List;
 import java.util.Set;
 
 public class GameEngine {
-    private static final int MATCH3_POINTS = 500;
-    private static final int MATCH4_OR_MORE_POINTS = 1000;
     private static final int EMPTY = -1;
+    private final ConfiguracaoJogo config;
+
+    public GameEngine() {
+        this(ConfiguracaoJogo.get());
+    }
+
+    public GameEngine(ConfiguracaoJogo config) {
+        this.config = config;
+    }
 
     public MoveResult tryMove(Board board, Position first, Position second) {
-        if (!isAdjacent(first, second)) {
+        if (!board.posicaoValida(first) || !board.posicaoValida(second)) {
+            return new MoveResult(false, 0);
+        }
+
+        if (config.isSomenteTrocaAdjacente() && !isAdjacent(first, second)) {
             return new MoveResult(false, 0);
         }
 
@@ -29,6 +40,7 @@ public class GameEngine {
 
     public int resolveBoard(Board board) {
         int totalPoints = 0;
+        int nivelCascata = 0;
 
         while (true) {
             List<Integer> runLengths = findRunLengths(board);
@@ -36,19 +48,29 @@ public class GameEngine {
                 return totalPoints;
             }
 
+            nivelCascata++;
             Set<Position> matched = findMatchedCells(board);
-            totalPoints += calculatePoints(runLengths);
+            totalPoints += calculatePoints(runLengths, nivelCascata);
             clearMatched(board, matched);
             collapseAndRefill(board);
         }
     }
 
-    private int calculatePoints(List<Integer> runLengths) {
+    private int calculatePoints(List<Integer> runLengths, int nivelCascata) {
         int points = 0;
         for (Integer runLength : runLengths) {
-            points += runLength >= 4 ? MATCH4_OR_MORE_POINTS : MATCH3_POINTS;
+            if (runLength >= 5) {
+                points += config.getPontuacaoMatch5OuMais();
+            } else if (runLength >= 4) {
+                points += config.getPontuacaoMatch4();
+            } else {
+                points += config.getPontuacaoMatch3();
+            }
         }
-        return points;
+
+        int multiplicadorBase = Math.max(1, config.getMultiplicadorCascata());
+        int multiplicadorRodada = 1 + ((nivelCascata - 1) * (multiplicadorBase - 1));
+        return points * multiplicadorRodada;
     }
 
     private boolean isAdjacent(Position first, Position second) {
@@ -64,16 +86,16 @@ public class GameEngine {
     }
 
     private void collapseAndRefill(Board board) {
-        for (int col = 0; col < Board.COLS; col++) {
+        for (int col = 0; col < board.getColunas(); col++) {
             List<Integer> pieces = new ArrayList<>();
-            for (int row = Board.ROWS - 1; row >= 0; row--) {
+            for (int row = board.getLinhas() - 1; row >= 0; row--) {
                 int value = board.get(row, col);
                 if (value != EMPTY) {
                     pieces.add(value);
                 }
             }
 
-            int row = Board.ROWS - 1;
+            int row = board.getLinhas() - 1;
             for (Integer piece : pieces) {
                 board.set(row, col, piece);
                 row--;
@@ -90,16 +112,16 @@ public class GameEngine {
         Set<Position> matched = new HashSet<>();
 
         // Horizontal runs
-        for (int row = 0; row < Board.ROWS; row++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
             int col = 0;
-            while (col < Board.COLS) {
+            while (col < board.getColunas()) {
                 int start = col;
                 int value = board.get(row, col);
-                while (col + 1 < Board.COLS && board.get(row, col + 1) == value) {
+                while (col + 1 < board.getColunas() && board.get(row, col + 1) == value) {
                     col++;
                 }
                 int length = col - start + 1;
-                if (length >= 3) {
+                if (length >= config.getTamanhoMinimoMatch()) {
                     for (int c = start; c <= col; c++) {
                         matched.add(new Position(row, c));
                     }
@@ -109,16 +131,16 @@ public class GameEngine {
         }
 
         // Vertical runs
-        for (int col = 0; col < Board.COLS; col++) {
+        for (int col = 0; col < board.getColunas(); col++) {
             int row = 0;
-            while (row < Board.ROWS) {
+            while (row < board.getLinhas()) {
                 int start = row;
                 int value = board.get(row, col);
-                while (row + 1 < Board.ROWS && board.get(row + 1, col) == value) {
+                while (row + 1 < board.getLinhas() && board.get(row + 1, col) == value) {
                     row++;
                 }
                 int length = row - start + 1;
-                if (length >= 3) {
+                if (length >= config.getTamanhoMinimoMatch()) {
                     for (int r = start; r <= row; r++) {
                         matched.add(new Position(r, col));
                     }
@@ -134,16 +156,16 @@ public class GameEngine {
         List<Integer> lengths = new ArrayList<>();
 
         // Horizontal runs
-        for (int row = 0; row < Board.ROWS; row++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
             int col = 0;
-            while (col < Board.COLS) {
+            while (col < board.getColunas()) {
                 int start = col;
                 int value = board.get(row, col);
-                while (col + 1 < Board.COLS && board.get(row, col + 1) == value) {
+                while (col + 1 < board.getColunas() && board.get(row, col + 1) == value) {
                     col++;
                 }
                 int length = col - start + 1;
-                if (length >= 3) {
+                if (length >= config.getTamanhoMinimoMatch()) {
                     lengths.add(length);
                 }
                 col++;
@@ -151,16 +173,16 @@ public class GameEngine {
         }
 
         // Vertical runs
-        for (int col = 0; col < Board.COLS; col++) {
+        for (int col = 0; col < board.getColunas(); col++) {
             int row = 0;
-            while (row < Board.ROWS) {
+            while (row < board.getLinhas()) {
                 int start = row;
                 int value = board.get(row, col);
-                while (row + 1 < Board.ROWS && board.get(row + 1, col) == value) {
+                while (row + 1 < board.getLinhas() && board.get(row + 1, col) == value) {
                     row++;
                 }
                 int length = row - start + 1;
-                if (length >= 3) {
+                if (length >= config.getTamanhoMinimoMatch()) {
                     lengths.add(length);
                 }
                 row++;

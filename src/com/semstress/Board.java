@@ -3,25 +3,56 @@ package com.semstress;
 import java.util.Random;
 
 public class Board {
-    public static final int ROWS = 8;
-    public static final int COLS = 6;
-    public static final int PIECE_TYPES = 5;
-
     private final int[][] cells;
     private final Random random;
+    private final int linhas;
+    private final int colunas;
+    private final int tiposPeca;
 
     public Board() {
-        this(new Random());
+        this(ConfiguracaoJogo.get(), null);
     }
 
     public Board(Random random) {
-        this.random = random;
-        this.cells = new int[ROWS][COLS];
+        this(ConfiguracaoJogo.get(), random);
+    }
+
+    public Board(ConfiguracaoJogo config) {
+        this(config, null);
+    }
+
+    public Board(ConfiguracaoJogo config, Random random) {
+        this.linhas = config.getLinhasTabuleiro();
+        this.colunas = config.getColunasTabuleiro();
+        this.tiposPeca = config.getTiposPeca();
+        this.random = random == null ? config.criarRandom() : random;
+        this.cells = new int[linhas][colunas];
+    }
+
+    public int getLinhas() {
+        return linhas;
+    }
+
+    public int getColunas() {
+        return colunas;
+    }
+
+    public int getTiposPeca() {
+        return tiposPeca;
+    }
+
+    public boolean dimensoesIguais(int linhas, int colunas) {
+        return this.linhas == linhas && this.colunas == colunas;
+    }
+
+    public boolean posicaoValida(Position posicao) {
+        return posicao.getRow() >= 0 && posicao.getRow() < linhas
+                && posicao.getCol() >= 0 && posicao.getCol() < colunas;
     }
 
     public void fillRandom() {
-        for (int row = 0; row < ROWS; row++) {
-            for (int col = 0; col < COLS; col++) {
+        for (int row = 0; row < linhas; row++) {
+            for (int col = 0; col < colunas; col++) {
                 cells[row][col] = nextPiece();
             }
         }
@@ -42,6 +73,6 @@ public class Board {
     }
 
     public int nextPiece() {
-        return random.nextInt(PIECE_TYPES);
+        return random.nextInt(tiposPeca);
     }
 }

@@ -43,6 +43,7 @@ public class GameEngineMatchAndCascadeTest {
         board.set(0, 1, 4);
         board.set(0, 2, 4);
         board.set(0, 3, 4);
+        board.set(0, 4, 2);
 
         int points = engine.resolveBoard(board);
 
@@ -64,10 +65,10 @@ public class GameEngineMatchAndCascadeTest {
         int points = engine.resolveBoard(board);
 
         assertTrue(points >= 1500);
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 int value = board.get(row, col);
-                assertTrue("Valor invalido apos cascade: " + value, value >= 0 && value < Board.PIECE_TYPES);
+                assertTrue("Valor invalido apos cascade: " + value, value >= 0 && value < board.getTiposPeca());
             }
         }
     }

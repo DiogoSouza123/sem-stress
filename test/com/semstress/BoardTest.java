@@ -26,10 +26,10 @@ public class BoardTest {
         Board board = new Board(new TestRandom(0, 1, 2, 3, 4));
         board.fillRandom();
 
-        for (int row = 0; row < Board.ROWS; row++) {
-            for (int col = 0; col < Board.COLS; col++) {
+        for (int row = 0; row < board.getLinhas(); row++) {
+            for (int col = 0; col < board.getColunas(); col++) {
                 int value = board.get(row, col);
-                assertTrue("Valor fora da faixa: " + value, value >= 0 && value < Board.PIECE_TYPES);
+                assertTrue("Valor fora da faixa: " + value, value >= 0 && value < board.getTiposPeca());
             }
         }
     }
