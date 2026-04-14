@@ -46,6 +46,12 @@ public class TelaInicial extends javax.swing.JFrame {
     private static final Color COR_BORDA_SELECAO_PECA = new Color(255, 199, 112);
     private static final Color COR_FUNDO_HOVER_PECA = new Color(255, 224, 188, 80);
     private static final Color COR_FUNDO_SELECAO_PECA = new Color(255, 217, 140, 110);
+    private static final int TAMANHO_PADRAO_PECA = 40;
+    private static final int TAMANHO_MINIMO_PECA = 20;
+    private static final int TAMANHO_MAXIMO_PECA = 48;
+    private static final int ESPACAMENTO_PECA = 6;
+    private static final int TAMANHO_MAXIMO_TABULEIRO = 420;
+    private static final int BORDA_TOTAL_PAINEL_TABULEIRO = 16;
     private static final int MARGEM_BOTAO_SOM = 12;
     private static final Color COR_BOTAO_SOM_ATIVO = new Color(255, 245, 235);
     private static final Color COR_BOTAO_SOM_MUTADO = new Color(231, 214, 200);
@@ -918,7 +924,7 @@ public class TelaInicial extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void inicializarGrade() {
-        botoesGrade = retornarBotoesEmMatriz();
+        criarGradeDinamica();
         posicoesPorBotao.clear();
         jPanel2.setOpaque(true);
         jPanel2.setBackground(temaAlternativoAtivo ? new Color(62, 41, 30) : TemaUI.COR_FUNDO_TABULEIRO);
@@ -932,13 +938,63 @@ public class TelaInicial extends javax.swing.JFrame {
                 botao.setContentAreaFilled(false);
                 botao.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
                 botao.setBackground(new Color(0, 0, 0, 0));
-                botao.setPreferredSize(new Dimension(40, 40));
-                botao.setMinimumSize(new Dimension(40, 40));
                 configurarInteracaoPeca(botao);
                 atualizarEstiloPeca(botao);
                 posicoesPorBotao.put(botao, new Position(row, col));
             }
         }
+    }
+
+    private void criarGradeDinamica() {
+        int linhas = board.getLinhas();
+        int colunas = board.getColunas();
+        int tamanhoPeca = calcularTamanhoPeca(linhas, colunas);
+
+        botoesGrade = new JToggleButton[linhas][colunas];
+        jPanel2.removeAll();
+        jPanel2.setLayout(new java.awt.GridLayout(linhas, colunas, ESPACAMENTO_PECA, ESPACAMENTO_PECA));
+
+        for (int row = 0; row < linhas; row++) {
+            for (int col = 0; col < colunas; col++) {
+                final JToggleButton botao = new JToggleButton();
+                botao.setPreferredSize(new Dimension(tamanhoPeca, tamanhoPeca));
+                botao.setMinimumSize(new Dimension(tamanhoPeca, tamanhoPeca));
+                botao.setMaximumSize(new Dimension(tamanhoPeca, tamanhoPeca));
+                botao.addActionListener(new java.awt.event.ActionListener() {
+                    @Override
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        onCellClicked(botao);
+                    }
+                });
+                botoesGrade[row][col] = botao;
+                jPanel2.add(botao);
+            }
+        }
+
+        ajustarTamanhoPainelTabuleiro(linhas, colunas, tamanhoPeca);
+        jPanel2.revalidate();
+        jPanel2.repaint();
+    }
+
+    private int calcularTamanhoPeca(int linhas, int colunas) {
+        int maiorDimensao = Math.max(linhas, colunas);
+        if (maiorDimensao <= 0) {
+            return TAMANHO_PADRAO_PECA;
+        }
+
+        int limitePorLargura = (TAMANHO_MAXIMO_TABULEIRO - Math.max(0, colunas - 1) * ESPACAMENTO_PECA) / colunas;
+        int limitePorAltura = (TAMANHO_MAXIMO_TABULEIRO - Math.max(0, linhas - 1) * ESPACAMENTO_PECA) / linhas;
+        int tamanho = Math.min(TAMANHO_PADRAO_PECA, Math.min(limitePorLargura, limitePorAltura));
+        tamanho = Math.max(TAMANHO_MINIMO_PECA, tamanho);
+        return Math.min(TAMANHO_MAXIMO_PECA, tamanho);
+    }
+
+    private void ajustarTamanhoPainelTabuleiro(int linhas, int colunas, int tamanhoPeca) {
+        int largura = (colunas * tamanhoPeca) + (Math.max(0, colunas - 1) * ESPACAMENTO_PECA) + BORDA_TOTAL_PAINEL_TABULEIRO;
+        int altura = (linhas * tamanhoPeca) + (Math.max(0, linhas - 1) * ESPACAMENTO_PECA) + BORDA_TOTAL_PAINEL_TABULEIRO;
+        Dimension tamanhoPainel = new Dimension(largura, altura);
+        jPanel2.setPreferredSize(tamanhoPainel);
+        jPanel2.setMinimumSize(tamanhoPainel);
     }
 
     private void configurarInteracaoPeca(final JToggleButton botao) {
@@ -1358,12 +1414,13 @@ public class TelaInicial extends javax.swing.JFrame {
     }
 
     private void validarDimensoesTabuleiro() {
-        int linhasTela = 8;
-        int colunasTela = 6;
-        if (!board.dimensoesIguais(linhasTela, colunasTela)) {
+        if (board.getLinhas() <= 0 || board.getColunas() <= 0) {
+            throw new IllegalStateException("tabuleiro.linhas e tabuleiro.colunas devem ser maiores que zero.");
+        }
+        if (board.getLinhas() < configuracao.getTamanhoMinimoMatch()
+                && board.getColunas() < configuracao.getTamanhoMinimoMatch()) {
             throw new IllegalStateException(
-                    "A configuracao do tabuleiro deve ser " + linhasTela + "x" + colunasTela
-                            + " para o layout atual da tela."
+                    "Tabuleiro invalido: ao menos uma dimensao precisa ser >= regras.tamanho_minimo_match."
             );
         }
         if (board.getTiposPeca() != 5) {
@@ -1526,13 +1583,19 @@ public class TelaInicial extends javax.swing.JFrame {
         jButtonIniciar.setPreferredSize(new Dimension(118, 36));
         jButtonIniciar.setMinimumSize(new Dimension(118, 36));
 
+        int tamanhoAtual = botoesGrade.length > 0 && botoesGrade[0].length > 0
+                ? botoesGrade[0][0].getPreferredSize().width
+                : TAMANHO_PADRAO_PECA;
+        int tamanhoCompacto = Math.max(TAMANHO_MINIMO_PECA, Math.min(36, tamanhoAtual));
+
         for (int row = 0; row < board.getLinhas(); row++) {
             for (int col = 0; col < board.getColunas(); col++) {
                 JToggleButton botao = botoesGrade[row][col];
-                botao.setPreferredSize(new Dimension(36, 36));
-                botao.setMinimumSize(new Dimension(36, 36));
+                botao.setPreferredSize(new Dimension(tamanhoCompacto, tamanhoCompacto));
+                botao.setMinimumSize(new Dimension(tamanhoCompacto, tamanhoCompacto));
             }
         }
+        ajustarTamanhoPainelTabuleiro(board.getLinhas(), board.getColunas(), tamanhoCompacto);
         pack();
     }
 
