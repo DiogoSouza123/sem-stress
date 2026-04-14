@@ -17,38 +17,53 @@ import com.enums.NomeIconeEnum;
  */
 public class IconesJogo {
     private static final int TAMANHO_PECA = 40;
+    private static final String[] ORDEM_ICONES_PECAS = {
+            "coffee-beans",
+            "coffee-brown",
+            "coffee-white",
+            "coffee-yellow",
+            "coffee-red",
+            "coffee-green"
+    };
     private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
-    
-    private ImageIcon coffeWhite = carregarIconePeca("coffee-white");
-    private ImageIcon coffeBeans = carregarIconePeca("coffee-beans");
-    private ImageIcon coffeBrown = carregarIconePeca("coffee-brown");
-    private ImageIcon coffeYellow = carregarIconePeca("coffee-yellow");
-    private ImageIcon coffeRed = carregarIconePeca("coffee-red");
-    private ImageIcon fire = carregarIconePeca("fire");
-    private ImageIcon explosao = carregarIconeExplosao();
+    private final ImageIcon[] iconesPecas = carregarIconesPecas();
+    private final ImageIcon fire = carregarIconePeca("fire");
+    private final ImageIcon explosao = carregarIconeExplosao();
+
+    private ImageIcon[] carregarIconesPecas() {
+        ImageIcon[] icones = new ImageIcon[ORDEM_ICONES_PECAS.length];
+        for (int i = 0; i < ORDEM_ICONES_PECAS.length; i++) {
+            icones[i] = carregarIconePeca(ORDEM_ICONES_PECAS[i]);
+        }
+        return icones;
+    }
     
     public ImageIcon retornarIcone(NomeIconeEnum nomeIconeEnum){
         
         switch (nomeIconeEnum) {
             case COFFEE_WHITE:
             {
-                return coffeWhite;
+                return iconePorIndice(2);
             }
             case COFFEE_BEANS:
             {
-                return coffeBeans;
+                return iconePorIndice(0);
             }
             case COFFEE_BROWN:
             {
-                return coffeBrown;
+                return iconePorIndice(1);
             }
             case COFFEE_RED:
             {
-                return coffeRed;
+                return iconePorIndice(4);
             }
             case COFFEE_YELLOW:
             {
-                return coffeYellow;
+                return iconePorIndice(3);
+            }
+            case COFFEE_GREEN:
+            {
+                return iconePorIndice(5);
             }
             case FIRE:
             {
@@ -62,20 +77,18 @@ public class IconesJogo {
     }
 
     public ImageIcon retornarIconePorValor(int valor) {
-        switch (valor) {
-            case 0:
-                return retornarIcone(NomeIconeEnum.COFFEE_BEANS);
-            case 1:
-                return retornarIcone(NomeIconeEnum.COFFEE_BROWN);
-            case 2:
-                return retornarIcone(NomeIconeEnum.COFFEE_WHITE);
-            case 3:
-                return retornarIcone(NomeIconeEnum.COFFEE_YELLOW);
-            case 4:
-                return retornarIcone(NomeIconeEnum.COFFEE_RED);
-            default:
-                return null;
+        return iconePorIndice(valor);
+    }
+
+    public int getQuantidadePecasDisponiveis() {
+        return iconesPecas.length;
+    }
+
+    private ImageIcon iconePorIndice(int indice) {
+        if (indice < 0 || indice >= iconesPecas.length) {
+            return null;
         }
+        return iconesPecas[indice];
     }
 
     public Icon retornarIconeExplosao() {

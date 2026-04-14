@@ -1503,15 +1503,20 @@ public class TelaInicial extends javax.swing.JFrame {
         if (board.getLinhas() <= 0 || board.getColunas() <= 0) {
             throw new IllegalStateException("tabuleiro.linhas e tabuleiro.colunas devem ser maiores que zero.");
         }
+        if (board.getTiposPeca() <= 0) {
+            throw new IllegalStateException("tabuleiro.tipos_peca deve ser maior que zero.");
+        }
         if (board.getLinhas() < configuracao.getTamanhoMinimoMatch()
                 && board.getColunas() < configuracao.getTamanhoMinimoMatch()) {
             throw new IllegalStateException(
                     "Tabuleiro invalido: ao menos uma dimensao precisa ser >= regras.tamanho_minimo_match."
             );
         }
-        if (board.getTiposPeca() != 5) {
+        if (board.getTiposPeca() > iconesJogo.getQuantidadePecasDisponiveis()) {
             throw new IllegalStateException(
-                    "A configuracao tabuleiro.tipos_peca deve ser 5 para o conjunto atual de icones."
+                    "tabuleiro.tipos_peca=" + board.getTiposPeca()
+                            + " excede a quantidade de icones disponiveis ("
+                            + iconesJogo.getQuantidadePecasDisponiveis() + ")."
             );
         }
     }
