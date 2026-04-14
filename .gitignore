@@ -1,3 +1,19 @@
 /nbproject/private/
 /build/
 /dist/
+/lib/
+/tools/
+/*.log
+*.class
+*.exec
+
+# Coverage reports
+/build/jacoco.xml
+/build/jacoco-html/
+
+# IDE / OS
+/.idea/
+/*.iml
+/.vscode/
+.DS_Store
+Thumbs.db
