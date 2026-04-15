@@ -125,6 +125,8 @@ public class TelaInicial extends javax.swing.JFrame {
             setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         }
 
+        iniciarNovoJogo();
+
     }
 
     private void aplicarTemaVisual() {
@@ -139,6 +141,10 @@ public class TelaInicial extends javax.swing.JFrame {
                 jLabelMovimentosValor
         );
         TemaUI.aplicarTemaBotaoPrimario(jButtonIniciar);
+        jButtonIniciar.setText("Voltar ao Inicio");
+        jButtonIniciar.setToolTipText("Voltar ao menu de fases");
+        jButtonIniciar.setPreferredSize(new Dimension(178, 38));
+        jButtonIniciar.setMinimumSize(new Dimension(178, 38));
         configurarCardsIndicadores();
         instalarAtalhoTema();
     }
@@ -900,7 +906,7 @@ public class TelaInicial extends javax.swing.JFrame {
                 .addContainerGap(69, Short.MAX_VALUE))
         );
 
-        jButtonIniciar.setText("Iniciar");
+        jButtonIniciar.setText("Voltar ao Inicio");
         jButtonIniciar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonIniciarActionPerformed(evt);
@@ -927,7 +933,7 @@ public class TelaInicial extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jButtonIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButtonIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(jPanel1Layout.createSequentialGroup()
                             .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1126,7 +1132,6 @@ public class TelaInicial extends javax.swing.JFrame {
         jLabelMetaValor.setText(String.valueOf(configuracao.getMetaPontos()));
 
         desbloquearGrade();
-        jButtonIniciar.setEnabled(false);
         processarSemMovimentosSeNecessario();
     }
 
@@ -1538,7 +1543,6 @@ public class TelaInicial extends javax.swing.JFrame {
         registrarResultadoDaFase(venceu);
         String titulo = venceu ? "Voce venceu!" : "Fim de jogo";
         String textoAcao = aoSairParaMenu != null ? "Voltar ao menu" : "Jogar novamente";
-        jButtonIniciar.setEnabled(true);
 
         Runnable acaoPrincipal;
         if (aoSairParaMenu != null) {
@@ -1748,8 +1752,8 @@ public class TelaInicial extends javax.swing.JFrame {
         }
 
         aplicarEscalaFontes(0.9f);
-        jButtonIniciar.setPreferredSize(new Dimension(118, 36));
-        jButtonIniciar.setMinimumSize(new Dimension(118, 36));
+        jButtonIniciar.setPreferredSize(new Dimension(160, 34));
+        jButtonIniciar.setMinimumSize(new Dimension(160, 34));
 
         int tamanhoAtual = botoesGrade.length > 0 && botoesGrade[0].length > 0
                 ? botoesGrade[0][0].getPreferredSize().width
@@ -1784,8 +1788,24 @@ public class TelaInicial extends javax.swing.JFrame {
         }
     }
 
+    private void voltarAoInicio() {
+        musicaFundoPlayer.parar();
+        if (aoSairParaMenu != null) {
+            dispose();
+            aoSairParaMenu.run();
+            return;
+        }
+        dispose();
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new TelaMenuFases().setVisible(true);
+            }
+        });
+    }
+
     private void jButtonIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonIniciarActionPerformed
-        iniciarNovoJogo();
+        voltarAoInicio();
 
     }//GEN-LAST:event_jButtonIniciarActionPerformed
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
