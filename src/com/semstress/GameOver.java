@@ -13,6 +13,10 @@ import javax.swing.WindowConstants;
 public class GameOver extends JFrame {
 
     public GameOver(String tituloResultado, int pontos, Runnable onRestart) {
+        this(tituloResultado, pontos, "Jogar novamente", onRestart);
+    }
+
+    public GameOver(String tituloResultado, int pontos, String textoAcaoPrincipal, Runnable onRestart) {
         setTitle("Resultado");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(360, 200);
@@ -24,7 +28,11 @@ public class GameOver extends JFrame {
         JLabel pontosLabel = new JLabel("Pontuacao final: " + pontos, SwingConstants.CENTER);
         pontosLabel.setFont(new Font("Tahoma", Font.PLAIN, 15));
 
-        JButton reiniciar = new JButton("Jogar novamente");
+        String textoBotao = textoAcaoPrincipal == null || textoAcaoPrincipal.trim().isEmpty()
+                ? "Jogar novamente"
+                : textoAcaoPrincipal;
+
+        JButton reiniciar = new JButton(textoBotao);
         reiniciar.addActionListener(evt -> {
             if (onRestart != null) {
                 onRestart.run();

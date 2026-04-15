@@ -7,6 +7,7 @@ import java.util.Random;
 
 public class ConfiguracaoJogo {
     private static final String ARQUIVO_CONFIG = "/com/semstress/configuracao-jogo.properties";
+    private static final String RECURSO_BACKGROUND_PADRAO = "/com/semstress/images/background.gif";
     private static final ConfiguracaoJogo INSTANCIA = carregar();
 
     private final int linhasTabuleiro;
@@ -34,6 +35,7 @@ public class ConfiguracaoJogo {
     private final int duracaoAnimacaoExplosaoMs;
     private final int intervaloAnimacaoQuedaMs;
     private final int pausaEntreCascatasMs;
+    private final String recursoBackgroundTela;
 
     private final Long sementeAleatoria;
 
@@ -82,6 +84,7 @@ public class ConfiguracaoJogo {
                 420,
                 80,
                 120,
+                RECURSO_BACKGROUND_PADRAO,
                 sementeAleatoria
         );
     }
@@ -110,6 +113,7 @@ public class ConfiguracaoJogo {
             int duracaoAnimacaoExplosaoMs,
             int intervaloAnimacaoQuedaMs,
             int pausaEntreCascatasMs,
+            String recursoBackgroundTela,
             Long sementeAleatoria
     ) {
         this.linhasTabuleiro = linhasTabuleiro;
@@ -135,11 +139,18 @@ public class ConfiguracaoJogo {
         this.duracaoAnimacaoExplosaoMs = duracaoAnimacaoExplosaoMs;
         this.intervaloAnimacaoQuedaMs = intervaloAnimacaoQuedaMs;
         this.pausaEntreCascatasMs = pausaEntreCascatasMs;
+        this.recursoBackgroundTela = recursoBackgroundTela == null || recursoBackgroundTela.trim().isEmpty()
+                ? RECURSO_BACKGROUND_PADRAO
+                : recursoBackgroundTela.trim();
         this.sementeAleatoria = sementeAleatoria;
     }
 
     public static ConfiguracaoJogo get() {
         return INSTANCIA;
+    }
+
+    public static ConfiguracaoJogo fromProperties(Properties props, ConfiguracaoJogo padrao) {
+        return carregarDeProperties(props, padrao);
     }
 
     private static ConfiguracaoJogo carregar() {
@@ -151,31 +162,51 @@ public class ConfiguracaoJogo {
         } catch (IOException ex) {
             System.err.println("Nao foi possivel carregar configuracao-jogo.properties. Usando padrao.");
         }
+        return carregarDeProperties(props, null);
+    }
 
-        int linhas = inteiro(props, "tabuleiro.linhas", 8);
-        int colunas = inteiro(props, "tabuleiro.colunas", 6);
-        int tipos = inteiro(props, "tabuleiro.tipos_peca", 5);
-        int minMatch = inteiro(props, "regras.tamanho_minimo_match", 3);
-        int score3 = inteiro(props, "pontuacao.match_3", 500);
-        int score4 = inteiro(props, "pontuacao.match_4", 1000);
-        int score5 = inteiro(props, "pontuacao.match_5_ou_mais", 1500);
-        int cascata = inteiro(props, "pontuacao.multiplicador_cascata", 1);
-        boolean pontuarCascata = bool(props, "pontuacao.pontuar_cascata", false);
-        int movimentos = inteiro(props, "jogo.movimentos_iniciais", 30);
-        int meta = inteiro(props, "jogo.meta_pontos", 10000);
-        boolean apenasAdj = bool(props, "regras.somente_troca_adjacente", true);
-        boolean consomeInvalida = bool(props, "regras.consumir_movimento_troca_invalida", false);
-        boolean resolveInicio = bool(props, "regras.resolver_matches_iniciais", true);
-        boolean exibeNumeros = bool(props, "ui.exibir_numeros_pecas", false);
-        boolean habilitarMusica = bool(props, "audio.habilitar_musica_fundo", true);
-        String recursoMusica = texto(props, "audio.recurso_musica_fundo", "/com/semstress/audio/musica-exemplo.wav");
-        int volumeMusica = inteiro(props, "audio.volume_percentual", 30);
-        boolean habilitarAnimacaoExplosao = bool(props, "animacao.explosao.habilitada", true);
-        String recursoAnimacaoExplosao = texto(props, "animacao.explosao.recurso", "/com/semstress/images/grenade.gif");
-        int duracaoExplosaoMs = inteiro(props, "animacao.explosao.duracao_ms", 420);
-        int intervaloQuedaMs = inteiro(props, "animacao.queda.intervalo_ms", 80);
-        int pausaEntreCascatasMs = inteiro(props, "animacao.cascata.pausa_ms", 120);
+    private static ConfiguracaoJogo carregarDeProperties(Properties props, ConfiguracaoJogo padrao) {
+        ConfiguracaoJogo base = padrao == null ? null : padrao;
+        int linhas = inteiro(props, "tabuleiro.linhas", base == null ? 8 : base.getLinhasTabuleiro());
+        int colunas = inteiro(props, "tabuleiro.colunas", base == null ? 6 : base.getColunasTabuleiro());
+        int tipos = inteiro(props, "tabuleiro.tipos_peca", base == null ? 5 : base.getTiposPeca());
+        int minMatch = inteiro(props, "regras.tamanho_minimo_match", base == null ? 3 : base.getTamanhoMinimoMatch());
+        int score3 = inteiro(props, "pontuacao.match_3", base == null ? 500 : base.getPontuacaoMatch3());
+        int score4 = inteiro(props, "pontuacao.match_4", base == null ? 1000 : base.getPontuacaoMatch4());
+        int score5 = inteiro(props, "pontuacao.match_5_ou_mais", base == null ? 1500 : base.getPontuacaoMatch5OuMais());
+        int cascata = inteiro(props, "pontuacao.multiplicador_cascata", base == null ? 1 : base.getMultiplicadorCascata());
+        boolean pontuarCascata = bool(props, "pontuacao.pontuar_cascata", base != null && base.isPontuarCascata());
+        int movimentos = inteiro(props, "jogo.movimentos_iniciais", base == null ? 30 : base.getMovimentosIniciais());
+        int meta = inteiro(props, "jogo.meta_pontos", base == null ? 10000 : base.getMetaPontos());
+        boolean apenasAdj = bool(props, "regras.somente_troca_adjacente", base == null || base.isSomenteTrocaAdjacente());
+        boolean consomeInvalida = bool(props, "regras.consumir_movimento_troca_invalida", base != null && base.isConsumirMovimentoTrocaInvalida());
+        boolean resolveInicio = bool(props, "regras.resolver_matches_iniciais", base == null || base.isResolverMatchesIniciais());
+        boolean exibeNumeros = bool(props, "ui.exibir_numeros_pecas", base != null && base.isExibirNumerosPecas());
+        boolean habilitarMusica = bool(props, "audio.habilitar_musica_fundo", base == null || base.isHabilitarMusicaFundo());
+        String recursoMusica = texto(
+                props,
+                "audio.recurso_musica_fundo",
+                base == null ? "/com/semstress/audio/musica-exemplo.wav" : base.getRecursoMusicaFundo()
+        );
+        int volumeMusica = inteiro(props, "audio.volume_percentual", base == null ? 30 : base.getVolumeMusicaPercentual());
+        boolean habilitarAnimacaoExplosao = bool(props, "animacao.explosao.habilitada", base == null || base.isHabilitarAnimacaoExplosao());
+        String recursoAnimacaoExplosao = texto(
+                props,
+                "animacao.explosao.recurso",
+                base == null ? "/com/semstress/images/grenade.gif" : base.getRecursoAnimacaoExplosao()
+        );
+        int duracaoExplosaoMs = inteiro(props, "animacao.explosao.duracao_ms", base == null ? 420 : base.getDuracaoAnimacaoExplosaoMs());
+        int intervaloQuedaMs = inteiro(props, "animacao.queda.intervalo_ms", base == null ? 80 : base.getIntervaloAnimacaoQuedaMs());
+        int pausaEntreCascatasMs = inteiro(props, "animacao.cascata.pausa_ms", base == null ? 120 : base.getPausaEntreCascatasMs());
+        String recursoBackground = texto(
+                props,
+                "ui.recurso_background",
+                base == null ? RECURSO_BACKGROUND_PADRAO : base.getRecursoBackgroundTela()
+        );
         Long seed = longOpcional(props, "jogo.semente_aleatoria");
+        if (seed == null && base != null) {
+            seed = base.getSementeAleatoria();
+        }
 
         return new ConfiguracaoJogo(
                 linhas,
@@ -201,6 +232,7 @@ public class ConfiguracaoJogo {
                 duracaoExplosaoMs,
                 intervaloQuedaMs,
                 pausaEntreCascatasMs,
+                recursoBackground,
                 seed
         );
     }
@@ -339,5 +371,13 @@ public class ConfiguracaoJogo {
 
     public int getPausaEntreCascatasMs() {
         return pausaEntreCascatasMs;
+    }
+
+    public String getRecursoBackgroundTela() {
+        return recursoBackgroundTela;
+    }
+
+    public Long getSementeAleatoria() {
+        return sementeAleatoria;
     }
 }

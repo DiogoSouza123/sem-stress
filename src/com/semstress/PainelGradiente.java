@@ -13,7 +13,8 @@ import javax.swing.JPanel;
 public class PainelGradiente extends JPanel {
     private final Color topo;
     private final Color base;
-    private final Image imagemFundo;
+    private Image imagemFundo;
+    private String caminhoImagem;
 
     public PainelGradiente(Color topo, Color base) {
         this(null, topo, base);
@@ -22,6 +23,7 @@ public class PainelGradiente extends JPanel {
     public PainelGradiente(String caminhoImagem, Color topo, Color base) {
         this.topo = topo;
         this.base = base;
+        this.caminhoImagem = caminhoImagem;
         this.imagemFundo = carregarImagem(caminhoImagem);
         setOpaque(false);
     }
@@ -52,6 +54,15 @@ public class PainelGradiente extends JPanel {
             return null;
         }
         return new ImageIcon(url).getImage();
+    }
+
+    public void setImagemFundo(String caminhoImagem) {
+        if (caminhoImagem == null ? this.caminhoImagem == null : caminhoImagem.equals(this.caminhoImagem)) {
+            return;
+        }
+        this.caminhoImagem = caminhoImagem;
+        this.imagemFundo = carregarImagem(caminhoImagem);
+        repaint();
     }
 
     private void desenharImagemModoCover(Graphics2D g2) {

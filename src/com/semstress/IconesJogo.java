@@ -25,10 +25,21 @@ public class IconesJogo {
             "coffee-red",
             "coffee-green"
     };
-    private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
-    private final ImageIcon[] iconesPecas = carregarIconesPecas();
-    private final ImageIcon fire = carregarIconePeca("fire");
-    private final ImageIcon explosao = carregarIconeExplosao();
+    private final ConfiguracaoJogo configuracao;
+    private final ImageIcon[] iconesPecas;
+    private final ImageIcon fire;
+    private final ImageIcon explosao;
+
+    public IconesJogo() {
+        this(ConfiguracaoJogo.get());
+    }
+
+    public IconesJogo(ConfiguracaoJogo configuracao) {
+        this.configuracao = configuracao == null ? ConfiguracaoJogo.get() : configuracao;
+        this.iconesPecas = carregarIconesPecas();
+        this.fire = carregarIconePeca("fire");
+        this.explosao = carregarIconeExplosao();
+    }
 
     private ImageIcon[] carregarIconesPecas() {
         ImageIcon[] icones = new ImageIcon[ORDEM_ICONES_PECAS.length];

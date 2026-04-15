@@ -17,7 +17,7 @@ public class MusicaFundoPlayer {
     private volatile boolean pararMp3;
     private Thread threadMp3;
 
-    public void tocarEmLoop(String recurso, int volumePercentual) {
+    public synchronized void tocarEmLoop(String recurso, int volumePercentual) {
         parar();
         if (recurso == null || recurso.trim().isEmpty()) {
             return;
@@ -51,8 +51,9 @@ public class MusicaFundoPlayer {
             @Override
             public void run() {
                 while (!pararMp3) {
+                    BufferedInputStream stream = null;
                     try {
-                        BufferedInputStream stream = new BufferedInputStream(
+                        stream = new BufferedInputStream(
                                 MusicaFundoPlayer.class.getResourceAsStream(recurso)
                         );
                         if (stream == null) {
@@ -68,6 +69,12 @@ public class MusicaFundoPlayer {
                         break;
                     } finally {
                         mp3Player = null;
+                        if (stream != null) {
+                            try {
+                                stream.close();
+                            } catch (IOException ignored) {
+                            }
+                        }
                     }
                 }
             }
@@ -76,7 +83,7 @@ public class MusicaFundoPlayer {
         threadMp3.start();
     }
 
-    public void parar() {
+    public synchronized void parar() {
         if (clip != null) {
             if (clip.isRunning()) {
                 clip.stop();
@@ -88,6 +95,15 @@ public class MusicaFundoPlayer {
         if (mp3Player != null) {
             mp3Player.close();
             mp3Player = null;
+        }
+        Thread threadLocal = threadMp3;
+        threadMp3 = null;
+        if (threadLocal != null && threadLocal != Thread.currentThread()) {
+            try {
+                threadLocal.join(250);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

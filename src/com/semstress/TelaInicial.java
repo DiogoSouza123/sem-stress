@@ -36,6 +36,10 @@ import java.util.Map;
  * @author DiogoSouza
  */
 public class TelaInicial extends javax.swing.JFrame {
+    public interface ResultadoFaseListener {
+        void onResultadoFase(int idFase, int pontuacaoFinal, boolean venceu);
+    }
+
     private static final int EMPTY = -1;
     private static final int ALTURA_REFERENCIA_LOGO = 160;
     private static final double PROPORCAO_ALTURA_LOGO_TITULO = 1.10;
@@ -61,8 +65,34 @@ public class TelaInicial extends javax.swing.JFrame {
     private static final Color COR_TEXTO_BOTAO_SOM = new Color(46, 31, 23);
 
     public TelaInicial() {
+        this(ConfiguracaoJogo.get(), null, null, null);
+    }
+
+    public TelaInicial(ConfiguracaoJogo configuracao) {
+        this(configuracao, null, null, null);
+    }
+
+    public TelaInicial(ConfiguracaoJogo configuracao, Integer idFaseAtual, Runnable aoSairParaMenu) {
+        this(configuracao, idFaseAtual, aoSairParaMenu, null);
+    }
+
+    public TelaInicial(
+            ConfiguracaoJogo configuracao,
+            Integer idFaseAtual,
+            Runnable aoSairParaMenu,
+            ResultadoFaseListener resultadoFaseListener
+    ) {
+        this.configuracao = configuracao == null ? ConfiguracaoJogo.get() : configuracao;
+        this.idFaseAtual = idFaseAtual;
+        this.aoSairParaMenu = aoSairParaMenu;
+        this.resultadoFaseListener = resultadoFaseListener;
+        this.musicaFundoPlayer = new MusicaFundoPlayer();
+        this.iconesJogo = new IconesJogo(this.configuracao);
+        this.board = new Board(this.configuracao);
+        this.gameEngine = new GameEngine(this.configuracao);
 
         initComponents();
+        aplicarBackgroundDaFase();
         aplicarTemaVisual();
         aplicarLogoPrincipal();
         validarDimensoesTabuleiro();
@@ -79,12 +109,21 @@ public class TelaInicial extends javax.swing.JFrame {
             }
 
             @Override
+            public void windowClosed(WindowEvent e) {
+                musicaFundoPlayer.parar();
+            }
+
+            @Override
             public void windowOpened(WindowEvent e) {
                 iniciarAnimacaoEntrada();
                 reposicionarBotaoSom();
             }
         });
         configurarJanelaFixa();
+
+        if (aoSairParaMenu != null) {
+            setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        }
 
     }
 
@@ -102,6 +141,12 @@ public class TelaInicial extends javax.swing.JFrame {
         TemaUI.aplicarTemaBotaoPrimario(jButtonIniciar);
         configurarCardsIndicadores();
         instalarAtalhoTema();
+    }
+
+    private void aplicarBackgroundDaFase() {
+        if (jPanel1 instanceof PainelGradiente) {
+            ((PainelGradiente) jPanel1).setImagemFundo(configuracao.getRecursoBackgroundTela());
+        }
     }
 
     private void configurarCardsIndicadores() {
@@ -1068,6 +1113,7 @@ public class TelaInicial extends javax.swing.JFrame {
         movimentosRestantes = configuracao.getMovimentosIniciais();
         selecionado = null;
         animacaoEmAndamento = false;
+        resultadoFaseRegistrado = false;
 
         board.fillRandom();
         if (configuracao.isResolverMatchesIniciais()) {
@@ -1489,14 +1535,45 @@ public class TelaInicial extends javax.swing.JFrame {
 
     private void encerrarJogo(boolean venceu) {
         bloquearGrade();
+        registrarResultadoDaFase(venceu);
         String titulo = venceu ? "Voce venceu!" : "Fim de jogo";
+        String textoAcao = aoSairParaMenu != null ? "Voltar ao menu" : "Jogar novamente";
         jButtonIniciar.setEnabled(true);
-        new GameOver(titulo, pontos, new Runnable() {
-            @Override
-            public void run() {
-                iniciarNovoJogo();
-            }
-        }).setVisible(true);
+
+        Runnable acaoPrincipal;
+        if (aoSairParaMenu != null) {
+            acaoPrincipal = new Runnable() {
+                @Override
+                public void run() {
+                    dispose();
+                    aoSairParaMenu.run();
+                }
+            };
+        } else {
+            acaoPrincipal = new Runnable() {
+                @Override
+                public void run() {
+                    iniciarNovoJogo();
+                }
+            };
+        }
+
+        new GameOver(titulo, pontos, textoAcao, acaoPrincipal).setVisible(true);
+    }
+
+    private void registrarResultadoDaFase(boolean venceu) {
+        if (idFaseAtual == null || resultadoFaseRegistrado) {
+            return;
+        }
+        List<FaseJogo> fases = CatalogoFases.carregar();
+        ProgressoFases progresso = ProgressoFasesRepositorio.carregar(fases.size());
+        progresso.registrarResultado(idFaseAtual, pontos, venceu, fases.size());
+        progresso.setFaseAtual(idFaseAtual);
+        ProgressoFasesRepositorio.salvar(progresso);
+        if (resultadoFaseListener != null) {
+            resultadoFaseListener.onResultadoFase(idFaseAtual, pontos, venceu);
+        }
+        resultadoFaseRegistrado = true;
     }
 
     private void validarDimensoesTabuleiro() {
@@ -1994,7 +2071,7 @@ public class TelaInicial extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new TelaInicial().setVisible(true);
+                new TelaMenuFases().setVisible(true);
             }
         });
     }
@@ -2063,11 +2140,14 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JToggleButton jToggleButton8;
     private javax.swing.JToggleButton jToggleButton9;
     // End of variables declaration//GEN-END:variables
-    private final ConfiguracaoJogo configuracao = ConfiguracaoJogo.get();
-    private final MusicaFundoPlayer musicaFundoPlayer = new MusicaFundoPlayer();
-    private final IconesJogo iconesJogo = new IconesJogo();
-    private final Board board = new Board(configuracao);
-    private final GameEngine gameEngine = new GameEngine(configuracao);
+    private final ConfiguracaoJogo configuracao;
+    private final MusicaFundoPlayer musicaFundoPlayer;
+    private final IconesJogo iconesJogo;
+    private final Board board;
+    private final GameEngine gameEngine;
+    private final Integer idFaseAtual;
+    private final Runnable aoSairParaMenu;
+    private final ResultadoFaseListener resultadoFaseListener;
     private final Map<JToggleButton, Position> posicoesPorBotao = new HashMap<>();
     private JToggleButton[][] botoesGrade;
     private JToggleButton selecionado;
@@ -2075,6 +2155,7 @@ public class TelaInicial extends javax.swing.JFrame {
     private boolean temaAlternativoAtivo = false;
     private final javax.swing.JButton botaoSom = new javax.swing.JButton();
     private boolean musicaMutada = false;
+    private boolean resultadoFaseRegistrado = false;
     private int movimentosRestantes = 0;
     private int pontos = 0;
 }
