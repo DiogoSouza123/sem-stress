@@ -1,103 +1,76 @@
 # ☕ Coffee Crush (sem-stress)
 
-> Um jogo estilo **match-3** feito em **Java 8 + Swing**, com tema de café, fases configuráveis, animações, música e progressão com desbloqueio.
+> Jogo estilo **match-3** feito em **Java 8 + Swing**, com tema de cafe, fases configuraveis, animacoes, musica e progressao com desbloqueio.
 
 <div align="center">
 
 ![Java](https://img.shields.io/badge/Java-8-orange)
 ![Build](https://img.shields.io/badge/Build-Ant-blue)
 ![UI](https://img.shields.io/badge/UI-Swing-6a5acd)
-![Status](https://img.shields.io/badge/Status-Em%20Evolução-success)
+![Status](https://img.shields.io/badge/Status-Em%20Evolucao-success)
 
 </div>
 
 ---
 
-## ✨ Visão geral
-O **Coffee Crush** nasceu como projeto de estudo de lógica e foi evoluindo para um jogo completo, com:
-- tabuleiro dinâmico
-- fases desbloqueáveis
-- animações de explosão e queda
-- música por fase
-- visual customizado em Swing
-
-Nossa intenção é simples: **aprender, evoluir e divertir**. 🚀
+## ✨ Visao geral
+O Coffee Crush nasceu como projeto de estudo de logica e evoluiu para um fluxo completo de jogo:
+- tabuleiro dinamico
+- fases configuraveis
+- animacoes de explosao e cascata
+- musica por fase
+- menu de fases com bloqueio/desbloqueio e progresso salvo
 
 ---
 
-## 🖼️ Galeria (espaços para suas imagens)
-Use esta seção para encantar quem abrir o repositório.
+## 🖼️ Galeria
 
-### 📸 Menu de fases
-> Coloque sua imagem em: `docs/images/menu-fases.png`
+### 🎬 Fluxo principal da aplicacao (menu -> fase)
+![Fluxo da Aplicacao](docs/images/fluxo-completo.gif)
 
-```md
-![Menu de Fases](docs/images/menu-fases.png)
-```
-
-### 📸 Tela de jogo
-> Coloque sua imagem em: `docs/images/tela-jogo.png`
-
-```md
-![Tela de Jogo](docs/images/tela-jogo.png)
-```
-
-### 📸 Match com explosão
-> Coloque sua imagem em: `docs/images/explosao-match.gif`
-
-```md
-![Explosão de Match](docs/images/explosao-match.gif)
-```
-
-### 📸 Fluxo completo (menu -> fase -> game over)
-> Coloque sua imagem em: `docs/images/fluxo-completo.gif`
-
-```md
-![Fluxo Completo](docs/images/fluxo-completo.gif)
-```
+### 💥 Match com explosao
+![Explosao de Match](docs/images/explosao-match.gif)
 
 ---
 
 ## 🎮 Funcionalidades
-- ✅ Match-3 com pontuação por combo (`match-3`, `match-4`, `match-5+`)
-- ✅ Cascata de peças com animação
-- ✅ Fases configuráveis por arquivo `.properties`
-- ✅ Música de fundo por fase
-- ✅ Menu de fases com bloqueio/desbloqueio
-- ✅ Progresso persistido localmente
-- ✅ Botão de som (ON/OFF)
+- ✅ Pontuacao por combo (`match-3`, `match-4`, `match-5+`)
+- ✅ Resolucao em cascata com animacao
+- ✅ Progressao de fases com desbloqueio
+- ✅ Background e musica por fase via `.properties`
+- ✅ Progresso salvo localmente
+- ✅ Botao de som (ON/OFF)
 
 ---
 
 ## 🧱 Tecnologias
-- **Java 8**
-- **Apache Ant**
-- **Java Swing**
-- **JLayer** (suporte a MP3)
-- **JUnit 4 + Hamcrest** (testes)
+- Java 8
+- Apache Ant
+- Java Swing
+- JLayer (suporte a MP3)
+- JUnit 4 + Hamcrest
 
 ---
 
 ## 📁 Estrutura do projeto
-- `src/com/semstress/` classes principais do jogo e telas
+- `src/com/semstress/` classes principais e telas
 - `src/com/semstress/images/` assets visuais
-- `src/com/semstress/audio/` músicas e sons
-- `src/com/semstress/configuracao-jogo.properties` config base
-- `src/com/semstress/fases.properties` catálogo e parâmetros das fases
+- `src/com/semstress/audio/` musicas e sons
+- `src/com/semstress/configuracao-jogo.properties` configuracao base
+- `src/com/semstress/fases.properties` catalogo e parametros das fases
 - `save/progresso-fases.properties` progresso do jogador (gerado em runtime)
-- `build.xml` build/execução com Ant
+- `build.xml` build e execucao com Ant
 
 ---
 
-## 🛠️ Pré-requisitos
-Antes de rodar:
-- JDK 8 (com `java` e `javac` no PATH)
+## 🛠️ Pre-requisitos
+- JDK 8 (`java` e `javac` no PATH)
 - Apache Ant (`ant` no PATH)
-- libs em `lib/` (`jlayer`, `junit`, `hamcrest`)
+- Bibliotecas em `lib/` (`jlayer`, `junit`, `hamcrest`)
 
 ---
 
-## ⚙️ Instalação pelo terminal (Windows / PowerShell)
+## ⚙️ Instalacao pelo terminal (Windows / PowerShell)
 
 ### 1) Instalar Java 8 (Amazon Corretto)
 ```powershell
@@ -142,7 +115,7 @@ Invoke-WebRequest "https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3
 ---
 
 ## ▶️ Como rodar
-Na raiz do repositório:
+Na raiz do repositorio:
 
 ```powershell
 ant clean
@@ -167,8 +140,8 @@ ant test
 
 ---
 
-## 🎚️ Configuração das fases
-O arquivo `src/com/semstress/fases.properties` controla a progressão.
+## 🎚️ Configuracao de fases
+O arquivo `src/com/semstress/fases.properties` controla as fases.
 
 Exemplo:
 ```properties
@@ -182,16 +155,9 @@ fase.3.audio.recurso_musica_fundo=/com/semstress/audio/fur-elise.wav
 fase.3.audio.volume_percentual=70
 ```
 
-Também é possível sobrescrever por `config/fases.properties` sem recompilar.
-
----
-
-## 💡 Dicas rápidas
-- Trocar música da fase: `fase.<id>.audio.recurso_musica_fundo`
-- Mutar fase específica: `fase.<id>.audio.habilitar_musica_fundo=false`
-- Ajustar dificuldade: `movimentos`, `meta`, `linhas`, `colunas`, `tipos_peca`
+Tambem e possivel sobrescrever por `config/fases.properties` sem recompilar.
 
 ---
 
 ## 👨‍💻 Autor
-Desenvolvido por **Diogo Souza**, com foco em aprendizado prático, evolução contínua e um projeto que dá orgulho de mostrar. 🙌
+Desenvolvido por **Diogo Souza**, com foco em aprendizado pratico e evolucao continua. 🙌
