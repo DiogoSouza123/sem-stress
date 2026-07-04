@@ -1,0 +1,53 @@
+name: Mobile CI
+
+on:
+  pull_request:
+    paths:
+      - "mobile/coffeecrush-mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  push:
+    branches: [master]
+    paths:
+      - "mobile/coffeecrush-mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+
+defaults:
+  run:
+    working-directory: mobile/coffeecrush-mobile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          build-root-directory: mobile/coffeecrush-mobile
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: detekt
+        run: ./gradlew detekt --stacktrace
+
+      - name: lint
+        run: ./gradlew lintDebug --stacktrace
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Assemble debug
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: mobile/coffeecrush-mobile/**/build/reports
