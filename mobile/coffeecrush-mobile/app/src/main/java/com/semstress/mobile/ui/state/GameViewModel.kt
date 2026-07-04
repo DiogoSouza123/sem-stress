@@ -12,6 +12,8 @@ import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.AnimationRound
 import com.semstress.mobile.engine.Match3Board
 import com.semstress.mobile.engine.Match3Engine
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class GameUiState(
     val stageId: Int,
@@ -117,7 +120,8 @@ class GameViewModel(
     private val stage: StageConfig,
     private val totalStages: Int,
     private val progressRepository: ProgressStore,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private var session: GameSession = restoreSession() ?: createFreshSession()
@@ -247,13 +251,15 @@ class GameViewModel(
             currentSession.won = false
         }
         if (currentSession.finished) {
-            val progress = progressRepository.load(totalStages).registerResult(
-                stageId = stage.id,
-                score = currentSession.points,
-                won = currentSession.won,
-                totalStages = totalStages
-            )
-            progressRepository.save(progress)
+            withContext(ioDispatcher) {
+                val progress = progressRepository.load(totalStages).registerResult(
+                    stageId = stage.id,
+                    score = currentSession.points,
+                    won = currentSession.won,
+                    totalStages = totalStages
+                )
+                progressRepository.save(progress)
+            }
         }
     }
 

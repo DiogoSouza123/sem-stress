@@ -3,11 +3,16 @@ package com.semstress.mobile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,8 +42,8 @@ class MainActivity : ComponentActivity() {
 private fun CoffeeCrushApp() {
     val context = LocalContext.current
     val appContext = context.applicationContext
-    val stageCatalog = remember(appContext) {
-        StageRepository(appContext).load()
+    val stageRepository = remember(appContext) {
+        StageRepository(appContext)
     }
     val progressRepository = remember(appContext) {
         ProgressRepository(appContext)
@@ -48,21 +53,28 @@ private fun CoffeeCrushApp() {
     }
 
     val menuViewModel: MenuViewModel = viewModel(
-        factory = MenuViewModel.factory(stageCatalog, progressRepository)
+        factory = MenuViewModel.factory(stageRepository, progressRepository)
     )
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
     val activeGame = menuState.activeGame
 
+    if (menuState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     val musicaAtual = if (activeGame == null) {
-        val menuMusicSilent = stageCatalog.menuMusicVolumePercent <= 0 ||
-            stageCatalog.menuMusicName == StageRepository.SILENT_MUSIC_RESOURCE
+        val menuMusicSilent = menuState.menuMusicVolumePercent <= 0 ||
+            menuState.menuMusicName == StageRepository.SILENT_MUSIC_RESOURCE
         if (menuMusicSilent) {
             null
         } else {
-            Pair(stageCatalog.menuMusicName, stageCatalog.menuMusicVolumePercent)
+            Pair(menuState.menuMusicName, menuState.menuMusicVolumePercent)
         }
     } else {
-        val stage = stageCatalog.stages.firstOrNull { it.id == activeGame.stageId }
+        val stage = menuState.stages.firstOrNull { it.id == activeGame.stageId }
         stage?.let {
             if (it.musicVolumePercent <= 0 || it.musicName == StageRepository.SILENT_MUSIC_RESOURCE) {
                 null
@@ -97,10 +109,10 @@ private fun CoffeeCrushApp() {
             onToggleMusic = { menuViewModel.onAction(MenuAction.ToggleMusic) }
         )
     } else {
-        val stage = stageCatalog.stages.first { it.id == activeGame.stageId }
+        val stage = menuState.stages.first { it.id == activeGame.stageId }
         val gameViewModel: GameViewModel = viewModel(
             key = "game_${activeGame.stageId}_${activeGame.playToken}",
-            factory = GameViewModel.factory(stage, stageCatalog.stages.size, progressRepository)
+            factory = GameViewModel.factory(stage, menuState.stages.size, progressRepository)
         )
         val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
 

@@ -326,6 +326,7 @@ class GameViewModelTest {
         stage = stage,
         totalStages = totalStages,
         progressRepository = progressRepository,
-        savedStateHandle = savedStateHandle
+        savedStateHandle = savedStateHandle,
+        ioDispatcher = testDispatcher
     )
 }

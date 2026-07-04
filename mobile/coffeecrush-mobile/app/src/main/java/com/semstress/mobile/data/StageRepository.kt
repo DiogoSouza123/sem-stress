@@ -4,13 +4,19 @@ import android.content.Context
 import android.util.Log
 import com.semstress.mobile.domain.StageCatalog
 import com.semstress.mobile.domain.StageConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Properties
 import java.util.TreeSet
 
-class StageRepository(private val context: Context) {
-    fun load(): StageCatalog {
-        return runCatching {
+interface StageCatalogSource {
+    suspend fun load(): StageCatalog
+}
+
+class StageRepository(private val context: Context) : StageCatalogSource {
+    override suspend fun load(): StageCatalog = withContext(Dispatchers.IO) {
+        runCatching {
             loadOrThrow()
         }.getOrElse { ex ->
             Log.e("StageRepository", "Falha ao carregar configuracao de fases. Usando fallback.", ex)
