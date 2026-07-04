@@ -54,6 +54,7 @@ Para cada recomendação: **por que usar**, **problema que resolve**, **impacto 
 - **Por quê:** serialização Kotlin-first, multiplataforma, sem reflexão.
 - **Resolve:** RR-16 — `.properties` não expressa o gameplay 2.0 (listas de objetivos, obstáculos por célula, camadas). Também usada nas rotas type-safe.
 - **Impacto:** novo formato `stages.json` com `schemaVersion`; parser com validação e mensagens claras; manter override local em `files/config/`.
+- **Feito em RR-16.** Um único `stages.json` (`schemaVersion`, `menu`, `base`, `stages[]`) substituiu os dois arquivos `.properties` (`configuracao-jogo.properties` + `fases.properties`); campos ausentes por fase herdam de `base`. A lógica de parsing/merge/validação foi extraída para `StageCatalogJsonParser` — um objeto Kotlin puro, sem `Context`/assets — para ser testável sem Robolectric; `StageRepository` ficou responsável só por resolver qual arquivo ler (asset vs. override em `files/config` ou `externalFilesDir/config`, mesma precedência de antes). Fallback local (catálogo de 1 fase) preservado para erro de parsing/IO.
 
 ### 2.6 kotlinx.collections.immutable — `P2`
 - **Por quê:** coleções imutáveis estáveis para Compose (evita recomposições por instabilidade de `List`).

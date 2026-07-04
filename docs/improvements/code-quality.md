@@ -14,7 +14,7 @@ Mapa de renomes principais:
 | `MusicaFundoPlayer` | `BackgroundMusicPlayer` (`play(track, volume)`, `stop()`, `release()`) |
 | `tocarEmLoop/parar/liberar` | `playLooping/stop/release` |
 | mensagens de exceção em pt (ex.: "Snapshot invalido…") | inglês |
-| chaves `fase.N.*` nos configs | manter compatibilidade até RR-16 (JSON) concluir |
+| chaves `fase.N.*` nos configs | **Concluído em RR-16** — substituídas pelo catálogo `stages.json` (`schemaVersion`, `base`, `menu`, `stages[]`); não há mais chaves pt-BR aqui |
 
 ### 1.2 Compose
 - Composables **stateless por padrão**: recebem estado + lambdas (`GameScreen(state, onAction)`); state hoisting sempre.
