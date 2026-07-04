@@ -1,6 +1,5 @@
 package com.semstress.mobile.ui.state
 
-import androidx.lifecycle.SavedStateHandle
 import com.semstress.mobile.data.FakeProgressStore
 import com.semstress.mobile.data.FakeStageCatalogSource
 import com.semstress.mobile.domain.StageCatalog
@@ -14,7 +13,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,7 +21,9 @@ import org.junit.jupiter.api.Test
  * Port of the menu-related `CoffeeCrushControllerTest` (CQ-02) scenarios against [MenuViewModel],
  * the replacement introduced by RR-01. Since RR-02, the catalog/progress load on [ioDispatcher]
  * (here the shared [testDispatcher]), so [MenuUiState.isLoading] starts `true` and tests must
- * advance the scheduler before reading the loaded state.
+ * advance the scheduler before reading the loaded state. Since RR-04, which screen is showing is
+ * owned by the Navigation Compose back stack, not this ViewModel, so there is no more
+ * `activeGame`/`playToken`/`SavedStateHandle` here to test.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MenuViewModelTest {
@@ -47,7 +47,6 @@ class MenuViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isLoading)
-        assertNull(viewModel.uiState.value.activeGame)
         assertEquals(listOf(stage), viewModel.uiState.value.stages)
     }
 
@@ -79,73 +78,40 @@ class MenuViewModelTest {
     }
 
     @Test
-    fun `playSelectedStage aponta a fase selecionada como jogo ativo`() = runTest(testDispatcher) {
-        val stage = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)
-        val viewModel = newMenuViewModel(catalogOf(stage))
+    fun `selectStage aceita fase desbloqueada`() = runTest(testDispatcher) {
+        val stage1 = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)
+        val stage2 = stageConfig(id = 2, rows = 5, cols = 5, pieceTypes = 5)
+        val viewModel = newMenuViewModel(
+            catalogOf(stage1, stage2),
+            progressRepository = FakeProgressStore(progressUnlockingUpTo(2))
+        )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onAction(MenuAction.PlaySelectedStage)
+        viewModel.onAction(MenuAction.SelectStage(2))
 
-        val activeGame = viewModel.uiState.value.activeGame
-        assertEquals(1, activeGame?.stageId)
+        assertEquals(2, viewModel.uiState.value.selectedStageId)
     }
 
     @Test
-    fun `playSelectedStage gera um novo playToken a cada chamada`() = runTest(testDispatcher) {
-        val stage = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)
-        val viewModel = newMenuViewModel(catalogOf(stage))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onAction(MenuAction.PlaySelectedStage)
-        val firstToken = viewModel.uiState.value.activeGame?.playToken
-
-        viewModel.onAction(MenuAction.ReturnToMenu)
-        testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.onAction(MenuAction.PlaySelectedStage)
-        val secondToken = viewModel.uiState.value.activeGame?.playToken
-
-        assertTrue(secondToken != null && secondToken != firstToken)
-    }
-
-    @Test
-    fun `returnToMenu limpa o jogo ativo e recarrega o progresso`() = runTest(testDispatcher) {
+    fun `returnToMenu recarrega o progresso`() = runTest(testDispatcher) {
         val stage = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)
         val store = FakeProgressStore()
         val viewModel = newMenuViewModel(catalogOf(stage), progressRepository = store)
         testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.onAction(MenuAction.PlaySelectedStage)
 
         store.save(store.saved.registerResult(stageId = 1, score = 500, won = true, totalStages = 1))
         viewModel.onAction(MenuAction.ReturnToMenu)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertNull(viewModel.uiState.value.activeGame)
         assertEquals(500, viewModel.uiState.value.progress.scoreFor(1))
     }
 
-    @Test
-    fun `uma nova instancia com o mesmo SavedStateHandle restaura o jogo ativo apos process death`() =
-        runTest(testDispatcher) {
-            val stage = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)
-            val handle = SavedStateHandle()
-            val original = newMenuViewModel(catalogOf(stage), savedStateHandle = handle)
-            testDispatcher.scheduler.advanceUntilIdle()
-            original.onAction(MenuAction.PlaySelectedStage)
-            val beforeDeath = original.uiState.value.activeGame
-
-            val restored = newMenuViewModel(catalogOf(stage), savedStateHandle = handle)
-
-            assertEquals(beforeDeath, restored.uiState.value.activeGame)
-        }
-
     private fun newMenuViewModel(
         catalog: StageCatalog,
-        progressRepository: FakeProgressStore = FakeProgressStore(),
-        savedStateHandle: SavedStateHandle = SavedStateHandle()
+        progressRepository: FakeProgressStore = FakeProgressStore()
     ): MenuViewModel = MenuViewModel(
         stageCatalogSource = FakeStageCatalogSource(catalog),
         progressRepository = progressRepository,
-        savedStateHandle = savedStateHandle,
         ioDispatcher = testDispatcher
     )
 }

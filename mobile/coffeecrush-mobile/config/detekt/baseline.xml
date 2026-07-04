@@ -14,6 +14,8 @@
     <ID>FunctionNaming:GameScreen.kt$@Composable private fun PieceCell( value: Int, selected: Boolean, highlighted: Boolean, exploding: Boolean, spritePack: GameSpritePack?, spriteFrame: Int, size: Dp, onClick: () -&gt; Unit )</ID>
     <ID>FunctionNaming:GameScreen.kt$@Composable private fun Scoreboard(score: Int, target: Int, moves: Int)</ID>
     <ID>FunctionNaming:MainActivity.kt$@Composable private fun CoffeeCrushApp()</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun PlayTrackForMenu(menuState: MenuUiState, musicMuted: Boolean, player: MusicaFundoPlayer)</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun PlayTrackForStage(stage: StageConfig, musicMuted: Boolean, player: MusicaFundoPlayer)</ID>
     <ID>FunctionNaming:StageMenuScreen.kt$@Composable fun StageMenuScreen( stages: List&lt;StageConfig&gt;, progress: PlayerProgress, selectedStageId: Int, isMusicMuted: Boolean, onSelectStage: (Int) -&gt; Unit, onPlaySelectedStage: () -&gt; Unit, onToggleMusic: () -&gt; Unit )</ID>
     <ID>FunctionNaming:StageMenuScreen.kt$@Composable private fun ProgressCard(progress: PlayerProgress, totalStages: Int)</ID>
     <ID>FunctionNaming:StageMenuScreen.kt$@Composable private fun ProgressMetric(title: String, value: String)</ID>
@@ -60,10 +62,7 @@
     <ID>MaxLineLength:StageRepository.kt$StageRepository.BaseConfig.Companion$musicName = normalizedResourceName(text(props, "audio.recurso_musica_fundo", base.musicName), base.musicName)</ID>
     <ID>MaximumLineLength:StageRepository.kt$StageRepository$ </ID>
     <ID>MaximumLineLength:StageRepository.kt$StageRepository.BaseConfig.Companion$ </ID>
-    <ID>NestedBlockDepth:CoffeeCrushController.kt$CoffeeCrushController$private suspend fun performMoveAnimated(currentSession: GameSession, first: Position, second: Position)</ID>
     <ID>NestedBlockDepth:Match3Engine.kt$Match3Engine$private fun findMatches(board: Match3Board): MatchGroup</ID>
-    <ID>ReturnCount:CoffeeCrushController.kt$CoffeeCrushController$fun onCellDragSwap(fromRow: Int, fromCol: Int, toRow: Int, toCol: Int)</ID>
-    <ID>ReturnCount:CoffeeCrushController.kt$CoffeeCrushController$fun onCellTap(row: Int, col: Int)</ID>
     <ID>ReturnCount:GameScreen.kt$private fun resolveCellAtOffset( offset: androidx.compose.ui.geometry.Offset, rows: Int, cols: Int, cellSizePx: Float, spacingPx: Float, boardWidthPx: Float, boardHeightPx: Float ): Position?</ID>
     <ID>ReturnCount:GameSpritePack.kt$BitmapCache$fun getOrLoad(context: Context, assetPath: String): ImageBitmap?</ID>
     <ID>ReturnCount:GameSpritePack.kt$GameSpritePack$fun pieceFrame(value: Int, frameIndex: Int): ImageBitmap?</ID>
@@ -72,7 +71,6 @@
     <ID>ReturnCount:Match3Engine.kt$Match3Engine$private fun createsMatchAt(board: Match3Board, row: Int, col: Int): Boolean</ID>
     <ID>ReturnCount:MusicaFundoPlayer.kt$MusicaFundoPlayer$fun tocarEmLoop(nomeRecursoRaw: String, volumePercentual: Int)</ID>
     <ID>ReturnCount:StageRepository.kt$StageRepository$private fun resolveOverrideFile(fileName: String): File?</ID>
-    <ID>TooManyFunctions:CoffeeCrushController.kt$CoffeeCrushController</ID>
     <ID>TooManyFunctions:Match3Engine.kt$Match3Engine</ID>
     <ID>UseRequire:Match3Board.kt$Match3Board$throw IllegalArgumentException("Snapshot invalido para tabuleiro ${rows}x$cols.")</ID>
     <ID>Wrapping:GameScreen.kt$(</ID>

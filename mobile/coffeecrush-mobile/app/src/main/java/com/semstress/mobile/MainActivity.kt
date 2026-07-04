@@ -16,18 +16,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import com.semstress.mobile.audio.MusicaFundoPlayer
 import com.semstress.mobile.data.ProgressRepository
 import com.semstress.mobile.data.SettingsRepository
 import com.semstress.mobile.data.StageRepository
+import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.ui.navigation.GameRoute
+import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.state.GameAction
 import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.state.MenuAction
+import com.semstress.mobile.ui.state.MenuUiState
 import com.semstress.mobile.ui.state.MenuViewModel
 import com.semstress.mobile.ui.state.SettingsViewModel
 import com.semstress.mobile.ui.theme.CoffeeCrushTheme
+
+private const val GAME_DEEP_LINK_PATTERN = "coffeecrush://game/{stageId}"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,12 +72,17 @@ private fun CoffeeCrushApp() {
         factory = MenuViewModel.factory(stageRepository, progressRepository)
     )
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
-    val activeGame = menuState.activeGame
 
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.factory(settingsRepository)
     )
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+    DisposableEffect(Unit) {
+        onDispose {
+            musicaFundoPlayer.liberar()
+        }
+    }
 
     if (menuState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -75,73 +91,84 @@ private fun CoffeeCrushApp() {
         return
     }
 
-    val musicaAtual = if (activeGame == null) {
-        val menuMusicSilent = menuState.menuMusicVolumePercent <= 0 ||
-            menuState.menuMusicName == StageRepository.SILENT_MUSIC_RESOURCE
-        if (menuMusicSilent) {
-            null
-        } else {
-            Pair(menuState.menuMusicName, menuState.menuMusicVolumePercent)
-        }
-    } else {
-        val stage = menuState.stages.firstOrNull { it.id == activeGame.stageId }
-        stage?.let {
-            if (it.musicVolumePercent <= 0 || it.musicName == StageRepository.SILENT_MUSIC_RESOURCE) {
-                null
-            } else {
-                Pair(it.musicName, it.musicVolumePercent)
-            }
-        }
-    }
+    val navController = rememberNavController()
 
-    LaunchedEffect(musicaAtual?.first, musicaAtual?.second, settingsState.musicMuted) {
-        if (settingsState.musicMuted || musicaAtual == null) {
-            musicaFundoPlayer.parar()
-        } else {
-            musicaFundoPlayer.tocarEmLoop(musicaAtual.first, musicaAtual.second)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            musicaFundoPlayer.liberar()
-        }
-    }
-
-    if (activeGame == null) {
-        StageMenuScreen(
-            stages = menuState.stages,
-            progress = menuState.progress,
-            selectedStageId = menuState.selectedStageId,
-            isMusicMuted = settingsState.musicMuted,
-            onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
-            onPlaySelectedStage = { menuViewModel.onAction(MenuAction.PlaySelectedStage) },
-            onToggleMusic = { settingsViewModel.toggleMusic() }
-        )
-    } else {
-        val stage = menuState.stages.first { it.id == activeGame.stageId }
-        val gameViewModel: GameViewModel = viewModel(
-            key = "game_${activeGame.stageId}_${activeGame.playToken}",
-            factory = GameViewModel.factory(stage, menuState.stages.size, progressRepository)
-        )
-        val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
-
-        LaunchedEffect(gameViewModel) {
-            gameViewModel.backToMenuRequests.collect {
+    NavHost(navController = navController, startDestination = MenuRoute) {
+        composable<MenuRoute> {
+            // Refreshes progress every time the menu becomes the visible destination again
+            // (both the explicit "back to menu" button and the system back gesture from the
+            // game screen land here), since GameViewModel writes progress directly to disk.
+            LaunchedEffect(Unit) {
                 menuViewModel.onAction(MenuAction.ReturnToMenu)
             }
+
+            PlayTrackForMenu(menuState, settingsState.musicMuted, musicaFundoPlayer)
+
+            StageMenuScreen(
+                stages = menuState.stages,
+                progress = menuState.progress,
+                selectedStageId = menuState.selectedStageId,
+                isMusicMuted = settingsState.musicMuted,
+                onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
+                onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
+                onToggleMusic = { settingsViewModel.toggleMusic() }
+            )
         }
 
-        GameScreen(
-            game = gameState,
-            isMusicMuted = settingsState.musicMuted,
-            onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
-            onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
-                gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
-            },
-            onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
-            onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
-            onToggleMusic = { settingsViewModel.toggleMusic() }
-        )
+        composable<GameRoute>(
+            deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
+        ) { backStackEntry ->
+            val route: GameRoute = backStackEntry.toRoute()
+            val stage = menuState.stages.first { it.id == route.stageId }
+            val gameViewModel: GameViewModel = viewModel(
+                factory = GameViewModel.factory(stage, menuState.stages.size, progressRepository)
+            )
+            val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
+
+            PlayTrackForStage(stage, settingsState.musicMuted, musicaFundoPlayer)
+
+            LaunchedEffect(gameViewModel) {
+                gameViewModel.backToMenuRequests.collect {
+                    navController.popBackStack()
+                }
+            }
+
+            GameScreen(
+                game = gameState,
+                isMusicMuted = settingsState.musicMuted,
+                onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
+                onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
+                    gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
+                },
+                onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
+                onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
+                onToggleMusic = { settingsViewModel.toggleMusic() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlayTrackForMenu(menuState: MenuUiState, musicMuted: Boolean, player: MusicaFundoPlayer) {
+    val silent = menuState.menuMusicVolumePercent <= 0 ||
+        menuState.menuMusicName == StageRepository.SILENT_MUSIC_RESOURCE
+    LaunchedEffect(menuState.menuMusicName, menuState.menuMusicVolumePercent, musicMuted) {
+        if (musicMuted || silent) {
+            player.parar()
+        } else {
+            player.tocarEmLoop(menuState.menuMusicName, menuState.menuMusicVolumePercent)
+        }
+    }
+}
+
+@Composable
+private fun PlayTrackForStage(stage: StageConfig, musicMuted: Boolean, player: MusicaFundoPlayer) {
+    val silent = stage.musicVolumePercent <= 0 || stage.musicName == StageRepository.SILENT_MUSIC_RESOURCE
+    LaunchedEffect(stage.musicName, stage.musicVolumePercent, musicMuted) {
+        if (musicMuted || silent) {
+            player.parar()
+        } else {
+            player.tocarEmLoop(stage.musicName, stage.musicVolumePercent)
+        }
     }
 }
