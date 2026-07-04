@@ -8,7 +8,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 
 ## Fase 0 — Higiene e toolchain (P0)
 
-- [ ] **RR-10** `P` — Limpar VCS: ignorar/remover `local.properties`, `.gradle-user/`, `.idea/` volátil, `build/`. *Aceite:* `git status` limpo após build; nenhum path de máquina no repo. ([roadmap](refactoring-roadmap.md))
+- [x] **RR-10** `P` — Limpar VCS: ignorar/remover `local.properties`, `.gradle-user/`, `.idea/` volátil, `build/`. *Aceite:* `git status` limpo após build; nenhum path de máquina no repo. ([roadmap](refactoring-roadmap.md))
 - [ ] **RR-11** `P` — Version catalog `gradle/libs.versions.toml` com todas as dependências. *Aceite:* nenhum literal de versão nos `build.gradle.kts`.
 - [ ] **RR-12** `M` — Kotlin 2.x + plugin Compose do Kotlin + AGP/BOM atualizados. *Aceite:* `composeOptions.kotlinCompilerExtensionVersion` removido; app roda; build verde.
 - [ ] **RR-14** `M` — CI GitHub Actions (build + detekt + lint + unit tests, `working-directory` no projeto mobile). *Aceite:* PR com teste falhando fica vermelho. ([code-quality](code-quality.md) §4)
