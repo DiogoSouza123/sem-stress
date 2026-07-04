@@ -124,19 +124,6 @@ class MenuViewModelTest {
     }
 
     @Test
-    fun `toggleMusic alterna a flag de mudo`() = runTest(testDispatcher) {
-        val viewModel = newMenuViewModel(catalogOf(stageConfig(rows = 5, cols = 5, pieceTypes = 5)))
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.musicMuted)
-
-        viewModel.onAction(MenuAction.ToggleMusic)
-        assertTrue(viewModel.uiState.value.musicMuted)
-
-        viewModel.onAction(MenuAction.ToggleMusic)
-        assertFalse(viewModel.uiState.value.musicMuted)
-    }
-
-    @Test
     fun `uma nova instancia com o mesmo SavedStateHandle restaura o jogo ativo apos process death`() =
         runTest(testDispatcher) {
             val stage = stageConfig(id = 1, rows = 5, cols = 5, pieceTypes = 5)

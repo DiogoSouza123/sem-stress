@@ -27,14 +27,12 @@ data class MenuUiState(
     val selectedStageId: Int = 1,
     val menuMusicName: String = "",
     val menuMusicVolumePercent: Int = 0,
-    val musicMuted: Boolean = false,
     val activeGame: ActiveGameRef? = null
 )
 
 sealed interface MenuAction {
     data class SelectStage(val stageId: Int) : MenuAction
     data object PlaySelectedStage : MenuAction
-    data object ToggleMusic : MenuAction
     data object ReturnToMenu : MenuAction
 }
 
@@ -78,7 +76,6 @@ class MenuViewModel(
         when (action) {
             is MenuAction.SelectStage -> selectStage(action.stageId)
             MenuAction.PlaySelectedStage -> playSelectedStage()
-            MenuAction.ToggleMusic -> toggleMusic()
             MenuAction.ReturnToMenu -> returnToMenu()
         }
     }
@@ -95,10 +92,6 @@ class MenuViewModel(
         val stageId = _uiState.value.selectedStageId
         val token = nextPlayToken()
         updateState { it.copy(activeGame = ActiveGameRef(stageId, token)) }
-    }
-
-    private fun toggleMusic() {
-        updateState { it.copy(musicMuted = !it.musicMuted) }
     }
 
     private fun returnToMenu() {

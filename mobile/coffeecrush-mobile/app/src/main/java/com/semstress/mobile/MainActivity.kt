@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.semstress.mobile.audio.MusicaFundoPlayer
 import com.semstress.mobile.data.ProgressRepository
+import com.semstress.mobile.data.SettingsRepository
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.StageMenuScreen
@@ -25,6 +26,7 @@ import com.semstress.mobile.ui.state.GameAction
 import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.state.MenuAction
 import com.semstress.mobile.ui.state.MenuViewModel
+import com.semstress.mobile.ui.state.SettingsViewModel
 import com.semstress.mobile.ui.theme.CoffeeCrushTheme
 
 class MainActivity : ComponentActivity() {
@@ -48,6 +50,9 @@ private fun CoffeeCrushApp() {
     val progressRepository = remember(appContext) {
         ProgressRepository(appContext)
     }
+    val settingsRepository = remember(appContext) {
+        SettingsRepository(appContext)
+    }
     val musicaFundoPlayer = remember(appContext) {
         MusicaFundoPlayer(appContext)
     }
@@ -57,6 +62,11 @@ private fun CoffeeCrushApp() {
     )
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
     val activeGame = menuState.activeGame
+
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.factory(settingsRepository)
+    )
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
     if (menuState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -84,8 +94,8 @@ private fun CoffeeCrushApp() {
         }
     }
 
-    LaunchedEffect(musicaAtual?.first, musicaAtual?.second, menuState.musicMuted) {
-        if (menuState.musicMuted || musicaAtual == null) {
+    LaunchedEffect(musicaAtual?.first, musicaAtual?.second, settingsState.musicMuted) {
+        if (settingsState.musicMuted || musicaAtual == null) {
             musicaFundoPlayer.parar()
         } else {
             musicaFundoPlayer.tocarEmLoop(musicaAtual.first, musicaAtual.second)
@@ -103,10 +113,10 @@ private fun CoffeeCrushApp() {
             stages = menuState.stages,
             progress = menuState.progress,
             selectedStageId = menuState.selectedStageId,
-            isMusicMuted = menuState.musicMuted,
+            isMusicMuted = settingsState.musicMuted,
             onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
             onPlaySelectedStage = { menuViewModel.onAction(MenuAction.PlaySelectedStage) },
-            onToggleMusic = { menuViewModel.onAction(MenuAction.ToggleMusic) }
+            onToggleMusic = { settingsViewModel.toggleMusic() }
         )
     } else {
         val stage = menuState.stages.first { it.id == activeGame.stageId }
@@ -124,14 +134,14 @@ private fun CoffeeCrushApp() {
 
         GameScreen(
             game = gameState,
-            isMusicMuted = menuState.musicMuted,
+            isMusicMuted = settingsState.musicMuted,
             onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
             onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
                 gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
             },
             onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
             onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
-            onToggleMusic = { menuViewModel.onAction(MenuAction.ToggleMusic) }
+            onToggleMusic = { settingsViewModel.toggleMusic() }
         )
     }
 }
