@@ -2,9 +2,9 @@
 
 ## Contexto
 
-Este é o **coffeecrush-mobile**: jogo match-3 em Kotlin + Jetpack Compose (Material 3, minSdk 26), evolução do projeto desktop legado que vive na raiz do repositório (`../../`, Java 8 + Swing).
+Este é o **coffeecrush-mobile**: jogo match-3 em Kotlin + Jetpack Compose (Material 3, minSdk 26), evolução do projeto desktop legado que vive em `../../desktop/` (Java 8 + Swing).
 
-**Regra de ouro:** o projeto desktop (`../../src`, `../../build.xml`) está CONGELADO. Nunca o modifique. Ele serve apenas como oráculo de comportamento (regras de negócio e testes de engine em `../../test/com/semstress/`).
+**Regra de ouro:** o projeto desktop (`../../desktop/src`, `../../desktop/build.xml`) está CONGELADO. Nunca o modifique. Ele serve apenas como oráculo de comportamento (regras de negócio e testes de engine em `../../desktop/test/com/semstress/`).
 
 ## Fonte do plano de trabalho
 

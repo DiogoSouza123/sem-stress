@@ -12,7 +12,7 @@
 
 | Projeto | Stack | Papel daqui pra frente |
 |---|---|---|
-| `sem-stress` (raiz) | Java 8, Swing, Ant, NetBeans | **Referência funcional congelada.** Não evoluir. Fonte de regras de negócio e dos testes de engine (JUnit 4) a serem portados. |
+| `desktop/` | Java 8, Swing, Ant, NetBeans | **Referência funcional congelada.** Não evoluir. Fonte de regras de negócio e dos testes de engine (JUnit 4) a serem portados. |
 | `mobile/coffeecrush-mobile` | Kotlin 1.9, Jetpack Compose, Material 3, minSdk 26 | **Projeto principal.** Toda a modernização acontece aqui. |
 
 ### O que já está bom no mobile (preservar)
@@ -89,4 +89,4 @@ flowchart LR
     I --> J
 ```
 
-**Regra de ouro:** o desktop Swing nunca é alterado; ele serve apenas de oráculo de comportamento (especialmente os testes em `test/com/semstress/`) até que o mobile tenha paridade + testes próprios. A partir daí, o mobile é a única fonte de verdade.
+**Regra de ouro:** o desktop Swing nunca é alterado; ele serve apenas de oráculo de comportamento (especialmente os testes em `desktop/test/com/semstress/`) até que o mobile tenha paridade + testes próprios. A partir daí, o mobile é a única fonte de verdade.
