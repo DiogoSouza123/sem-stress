@@ -36,6 +36,7 @@ Para cada recomendação: **por que usar**, **problema que resolve**, **impacto 
 - **Por quê:** DI padrão Android com validação em compile time e integração nativa com ViewModel/Navigation.
 - **Resolve:** RR-05 (wiring manual em `MainActivity`, impossibilidade de trocar fakes em teste).
 - **Impacto:** `@HiltAndroidApp`, módulos por camada (`DataModule`, `EngineModule`, `MonetizationModule`), `@HiltViewModel`. Alternativa: **Koin** (mais simples, sem codegen, validação em runtime) — aceitável se preferir menos cerimônia; escolher um e não misturar.
+- **Feito em RR-05.** `com.google.dagger:hilt-android:2.57` + KSP `2.1.21-2.0.2`. `GameViewModel` precisa de `stage`/`totalStages` em tempo de execução (vêm da rota de navegação + catálogo carregado, não do grafo de DI) — resolvido com **assisted injection** (`@AssistedFactory`/`@AssistedInject`), não com `EngineModule`/`MonetizationModule` como o texto acima sugeria; `Match3EngineFactory` cobre o papel de "engine factory". **Atenção de versão (mesma classe de problema do RR-04):** Hilt Gradle plugin 2.60 e `hilt-navigation-compose` 1.4.0 exigem AGP ≥ 9.0 (a segunda via `lifecycle-viewmodel-compose` 2.9+ transitiva) — incompatíveis com o AGP 8.13.2 do RR-12. Fixado em Hilt `2.57` + `hilt-navigation-compose` `1.2.0`. Reavaliar ao atualizar o AGP.
 
 ### 2.3 Navigation Compose (rotas type-safe com kotlinx.serialization) — `P1`
 - **Por quê:** back stack correto, argumentos tipados (`data class Game(val stageId: Int)`), transições, deep links.
