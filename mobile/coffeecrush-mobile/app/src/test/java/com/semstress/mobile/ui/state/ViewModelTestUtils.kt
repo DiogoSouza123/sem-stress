@@ -17,7 +17,7 @@ fun progressUnlockingUpTo(stageId: Int): PlayerProgress = PlayerProgress(highest
 
 /**
  * Finds an adjacent pair of positions on [board] that is valid/invalid under [config]'s rules,
- * using the real engine as ground truth. Needed because the controller creates its board with an
+ * using the real engine as ground truth. Needed because [GameViewModel] creates its board with an
  * unseeded RNG, so the concrete layout is unknown ahead of time.
  */
 fun findMovePair(board: List<List<Int>>, config: StageConfig, wantValid: Boolean): Pair<Position, Position>? {
