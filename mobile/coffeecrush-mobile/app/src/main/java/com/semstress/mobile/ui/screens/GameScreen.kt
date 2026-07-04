@@ -1,5 +1,6 @@
 package com.semstress.mobile.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,9 +18,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -49,14 +50,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.semstress.mobile.R
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.engine.Match3Engine
-import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.sprites.GameSpritePack
 import com.semstress.mobile.ui.sprites.rememberGameSpritePack
+import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.theme.Caramel
 import com.semstress.mobile.ui.theme.CoffeeDark
 import com.semstress.mobile.ui.theme.Cream
@@ -82,6 +85,17 @@ fun GameScreen(
         frameCount = spritePack?.maxFrameCount ?: 1,
         frameDurationMs = 80
     )
+
+    var showExitConfirmation by remember { mutableStateOf(false) }
+    val requestExit: () -> Unit = {
+        if (game.finished) {
+            onBackToMenu()
+        } else {
+            showExitConfirmation = true
+        }
+    }
+
+    BackHandler(enabled = !game.finished, onBack = requestExit)
 
     Column(
         modifier = Modifier
@@ -152,11 +166,32 @@ fun GameScreen(
 
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            onClick = onBackToMenu,
+            onClick = requestExit,
             enabled = !game.animating
         ) {
             Text("Voltar ao menu")
         }
+    }
+
+    if (showExitConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmation = false },
+            title = { Text(stringResource(R.string.exit_game_confirmation_title)) },
+            text = { Text(stringResource(R.string.exit_game_confirmation_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showExitConfirmation = false
+                    onBackToMenu()
+                }) {
+                    Text(stringResource(R.string.exit_game_confirmation_confirm))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExitConfirmation = false }) {
+                    Text(stringResource(R.string.exit_game_confirmation_dismiss))
+                }
+            }
+        )
     }
 
     if (game.finished) {

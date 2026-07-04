@@ -24,6 +24,7 @@ protobufPlugin = "0.9.4"
 robolectric = "4.15.1"
 junit4 = "4.13.2"
 junitVintageEngine = "6.1.1"
+coreSplashscreen = "1.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,6 +55,7 @@ protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junitVintageEngine" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

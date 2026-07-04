@@ -3,8 +3,11 @@ package com.semstress.mobile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -12,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -45,8 +49,13 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var musicaFundoPlayer: MusicaFundoPlayer
 
+    private val menuViewModel: MenuViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setKeepOnScreenCondition { menuViewModel.uiState.value.isLoading }
+        enableEdgeToEdge()
         setContent {
             CoffeeCrushTheme {
                 CoffeeCrushApp(musicaFundoPlayer)
@@ -70,7 +79,7 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer) {
     }
 
     if (menuState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize().safeDrawingPadding(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
@@ -78,7 +87,11 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer) {
 
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = MenuRoute) {
+    NavHost(
+        navController = navController,
+        startDestination = MenuRoute,
+        modifier = Modifier.safeDrawingPadding()
+    ) {
         composable<MenuRoute> {
             MenuDestination(navController, menuViewModel, settingsViewModel, musicaFundoPlayer)
         }

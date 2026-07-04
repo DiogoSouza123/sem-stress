@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cup body -->
+    <path
+        android:fillColor="#FF3E2723"
+        android:pathData="M32,50 L76,50 L71,83 C70.3,87.5 66.8,90 62.5,90 L45.5,90 C41.2,90 37.7,87.5 37,83 Z" />
+    <!-- Handle -->
+    <path
+        android:fillColor="#FF3E2723"
+        android:pathData="M74,58 C89,58 89,79 74,79 L74,71 C81,71 81,66 74,66 Z" />
+    <!-- Saucer -->
+    <path
+        android:fillColor="#FF3E2723"
+        android:pathData="M28,90 L80,90 C80,94.5 76.2,96 72,96 L36,96 C31.8,96 28,94.5 28,90 Z" />
+    <!-- Steam wisps -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E2723"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M42,44 C39,39 45,35 42,30" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E2723"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M54,44 C51,39 57,35 54,30" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF3E2723"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M66,44 C63,39 69,35 66,30" />
+</vector>

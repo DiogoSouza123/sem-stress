@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Coffee Crush Mobile</string>
+
+    <string name="exit_game_confirmation_title">Sair da partida?</string>
+    <string name="exit_game_confirmation_message">Seu progresso nesta fase sera perdido.</string>
+    <string name="exit_game_confirmation_confirm">Sair</string>
+    <string name="exit_game_confirmation_dismiss">Continuar jogando</string>
 </resources>
