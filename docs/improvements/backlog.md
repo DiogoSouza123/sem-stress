@@ -33,7 +33,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 
 ## Fase 3 — Render, mídia e release (P1)
 
-- [ ] **RR-20** `G` — Board em `Canvas` único (ticker via `withFrameMillis` lido no draw; tap/drag no `pointerInput`; flag `NEW_BOARD_RENDERER` para rollout). *Aceite:* 0 recomposições contínuas em idle (verificado com compose metrics/Layout Inspector); paridade funcional. ([performance](performance.md) §2)
+- [x] **RR-20** `G` — Board em `Canvas` único (ticker via `withFrameMillis` lido no draw; tap/drag no `pointerInput`; flag `NEW_BOARD_RENDERER` para rollout). *Aceite:* 0 recomposições contínuas em idle (verificado com compose metrics/Layout Inspector); paridade funcional. ([performance](performance.md) §2)
 - [ ] **RR-21** `M` — Sprites via spritesheet + downsampling para o tamanho da célula; `SpriteAtlas` injetado; pré-carga na splash. *Aceite:* memória de sprites < 20 MB.
 - [ ] **RR-13** `P` — R8 + shrinkResources + keep rules; smoke test de release no CI.
 - [ ] **RR-22 / UX-08** `M` — `SoundPool` para SFX + haptics + toggles separados música/efeitos; música pausa em background; WAV→OGG.

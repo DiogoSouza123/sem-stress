@@ -81,10 +81,6 @@ fun GameScreen(
     onToggleMusic: () -> Unit
 ) {
     val spritePack = rememberGameSpritePack()
-    val spriteFrame = rememberSpriteFrame(
-        frameCount = spritePack?.maxFrameCount ?: 1,
-        frameDurationMs = 80
-    )
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     val requestExit: () -> Unit = {
@@ -151,13 +147,9 @@ fun GameScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        BoardView(
-            board = game.board,
-            selected = game.selected,
-            highlightedMatches = game.highlightedMatches,
-            explodingMatches = game.explodingMatches,
+        BoardSection(
+            game = game,
             spritePack = spritePack,
-            spriteFrame = spriteFrame,
             onCellTap = onCellTap,
             onCellDragSwap = onCellDragSwap
         )
@@ -250,6 +242,42 @@ private fun Metric(label: String, value: String) {
             value,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
+/** RR-20 rollout switch: flip to `false` to fall back to the per-cell Composable board. */
+private const val NEW_BOARD_RENDERER = true
+
+@Composable
+private fun BoardSection(
+    game: GameUiState,
+    spritePack: GameSpritePack?,
+    onCellTap: (row: Int, col: Int) -> Unit,
+    onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit
+) {
+    if (NEW_BOARD_RENDERER) {
+        BoardCanvas(
+            board = game.board,
+            selection = BoardSelectionState(game.selected, game.highlightedMatches, game.explodingMatches),
+            spritePack = spritePack,
+            onCellTap = onCellTap,
+            onCellDragSwap = onCellDragSwap
+        )
+    } else {
+        val spriteFrame = rememberSpriteFrame(
+            frameCount = spritePack?.maxFrameCount ?: 1,
+            frameDurationMs = 80
+        )
+        BoardView(
+            board = game.board,
+            selected = game.selected,
+            highlightedMatches = game.highlightedMatches,
+            explodingMatches = game.explodingMatches,
+            spritePack = spritePack,
+            spriteFrame = spriteFrame,
+            onCellTap = onCellTap,
+            onCellDragSwap = onCellDragSwap
         )
     }
 }
@@ -541,7 +569,7 @@ private fun PieceCell(
     }
 }
 
-private fun fallbackPieceSymbol(value: Int): String {
+internal fun fallbackPieceSymbol(value: Int): String {
     return when ((value % 6 + 6) % 6) {
         0 -> "\u2615"
         1 -> "\uD83E\uDED8"
