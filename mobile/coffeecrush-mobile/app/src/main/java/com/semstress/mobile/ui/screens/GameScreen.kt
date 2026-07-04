@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,12 +29,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
+import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
+import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.theme.Caramel
 import com.semstress.mobile.ui.theme.CoffeeDark
 import com.semstress.mobile.ui.theme.Cream
@@ -42,7 +47,7 @@ import com.semstress.mobile.ui.theme.Latte
 @Composable
 fun GameScreen(
     game: GameUiState,
-    isMusicMuted: Boolean,
+    sound: GameScreenSound,
     spriteAtlas: SpriteAtlas?,
     actions: GameScreenActions
 ) {
@@ -56,6 +61,7 @@ fun GameScreen(
     }
 
     BackHandler(enabled = !game.finished, onBack = requestExit)
+    GameSfxAndHaptics(game, sound)
 
     Column(
         modifier = Modifier
@@ -68,7 +74,7 @@ fun GameScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        GameHeader(game, isMusicMuted, actions.onToggleMusic)
+        GameHeader(game, sound, actions)
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -116,7 +122,7 @@ fun GameScreen(
 }
 
 @Composable
-private fun GameHeader(game: GameUiState, isMusicMuted: Boolean, onToggleMusic: () -> Unit) {
+private fun GameHeader(game: GameUiState, sound: GameScreenSound, actions: GameScreenActions) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -136,8 +142,55 @@ private fun GameHeader(game: GameUiState, isMusicMuted: Boolean, onToggleMusic: 
             )
         }
 
-        OutlinedButton(onClick = onToggleMusic) {
-            Text(if (isMusicMuted) "Som: OFF" else "Som: ON")
+        Column(horizontalAlignment = Alignment.End) {
+            OutlinedButton(onClick = actions.onToggleMusic) {
+                Text(stringResource(if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            OutlinedButton(onClick = actions.onToggleSfx) {
+                Text(stringResource(if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on))
+            }
+        }
+    }
+}
+
+/** RR-22: reacts to game-state transitions with a short SFX + a subtle haptic pulse. */
+@Composable
+private fun GameSfxAndHaptics(game: GameUiState, sound: GameScreenSound) {
+    val haptics = LocalHapticFeedback.current
+
+    LaunchedEffect(game.selected) {
+        if (game.selected != null && !sound.isSfxMuted) {
+            sound.sfxPlayer.play(SfxEffect.SELECT)
+        }
+    }
+    LaunchedEffect(game.animating) {
+        if (game.animating && !sound.isSfxMuted) {
+            sound.sfxPlayer.play(SfxEffect.SWAP)
+        }
+    }
+    LaunchedEffect(game.explodingMatches) {
+        if (game.explodingMatches.isNotEmpty()) {
+            if (!sound.isSfxMuted) {
+                sound.sfxPlayer.play(SfxEffect.MATCH)
+            }
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+    LaunchedEffect(game.message) {
+        if (game.message == GameViewModel.INVALID_MOVE_MESSAGE) {
+            if (!sound.isSfxMuted) {
+                sound.sfxPlayer.play(SfxEffect.INVALID_MOVE)
+            }
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+    LaunchedEffect(game.finished, game.won) {
+        if (game.finished && game.won) {
+            if (!sound.isSfxMuted) {
+                sound.sfxPlayer.play(SfxEffect.VICTORY)
+            }
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
 }

@@ -25,13 +25,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.semstress.mobile.audio.MusicaFundoPlayer
+import com.semstress.mobile.audio.SfxPlayer
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.GameScreenActions
+import com.semstress.mobile.ui.screens.GameScreenSound
 import com.semstress.mobile.ui.screens.StageMenuScreen
+import com.semstress.mobile.ui.screens.StageMenuScreenActions
+import com.semstress.mobile.ui.screens.StageMenuScreenSound
 import com.semstress.mobile.ui.state.GameAction
 import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.state.MenuAction
@@ -44,11 +48,17 @@ import javax.inject.Inject
 
 private const val GAME_DEEP_LINK_PATTERN = "coffeecrush://game/{stageId}"
 
+/** Bundles the app-scoped audio players so [GameDestination] stays under the parameter limit. */
+private data class AudioPlayers(val musicaFundoPlayer: MusicaFundoPlayer, val sfxPlayer: SfxPlayer)
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var musicaFundoPlayer: MusicaFundoPlayer
+
+    @Inject
+    lateinit var sfxPlayer: SfxPlayer
 
     private val menuViewModel: MenuViewModel by viewModels()
 
@@ -59,14 +69,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CoffeeCrushTheme {
-                CoffeeCrushApp(musicaFundoPlayer)
+                CoffeeCrushApp(musicaFundoPlayer, sfxPlayer)
             }
         }
     }
 }
 
 @Composable
-private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer) {
+private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer, sfxPlayer: SfxPlayer) {
     val menuViewModel: MenuViewModel = hiltViewModel()
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -101,7 +111,13 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer) {
             deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
         ) { backStackEntry ->
             val route: GameRoute = backStackEntry.toRoute()
-            GameDestination(route, navController, menuState, settingsViewModel, musicaFundoPlayer)
+            GameDestination(
+                route,
+                navController,
+                menuState,
+                settingsViewModel,
+                AudioPlayers(musicaFundoPlayer, sfxPlayer)
+            )
         }
     }
 }
@@ -129,10 +145,16 @@ private fun MenuDestination(
         stages = menuState.stages,
         progress = menuState.progress,
         selectedStageId = menuState.selectedStageId,
-        isMusicMuted = settingsState.musicMuted,
-        onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
-        onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
-        onToggleMusic = { settingsViewModel.toggleMusic() }
+        sound = StageMenuScreenSound(
+            isMusicMuted = settingsState.musicMuted,
+            isSfxMuted = settingsState.sfxMuted
+        ),
+        actions = StageMenuScreenActions(
+            onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
+            onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
+            onToggleMusic = { settingsViewModel.toggleMusic() },
+            onToggleSfx = { settingsViewModel.toggleSfx() }
+        )
     )
 }
 
@@ -142,7 +164,7 @@ private fun GameDestination(
     navController: NavController,
     menuState: MenuUiState,
     settingsViewModel: SettingsViewModel,
-    musicaFundoPlayer: MusicaFundoPlayer
+    players: AudioPlayers
 ) {
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val stage = menuState.stages.first { it.id == route.stageId }
@@ -151,7 +173,7 @@ private fun GameDestination(
     )
     val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
 
-    PlayTrackForStage(stage, settingsState.musicMuted, musicaFundoPlayer)
+    PlayTrackForStage(stage, settingsState.musicMuted, players.musicaFundoPlayer)
 
     LaunchedEffect(gameViewModel) {
         gameViewModel.backToMenuRequests.collect {
@@ -161,7 +183,11 @@ private fun GameDestination(
 
     GameScreen(
         game = gameState,
-        isMusicMuted = settingsState.musicMuted,
+        sound = GameScreenSound(
+            isMusicMuted = settingsState.musicMuted,
+            isSfxMuted = settingsState.sfxMuted,
+            sfxPlayer = players.sfxPlayer
+        ),
         spriteAtlas = menuState.spriteAtlas,
         actions = GameScreenActions(
             onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
@@ -170,7 +196,8 @@ private fun GameDestination(
             },
             onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
             onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
-            onToggleMusic = { settingsViewModel.toggleMusic() }
+            onToggleMusic = { settingsViewModel.toggleMusic() },
+            onToggleSfx = { settingsViewModel.toggleSfx() }
         )
     )
 }

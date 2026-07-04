@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class SettingsUiState(val musicMuted: Boolean = false)
+data class SettingsUiState(val musicMuted: Boolean = false, val sfxMuted: Boolean = false)
 
 /**
  * Owns audio/settings state shared across screens (RR-03): both the menu and the game screen
@@ -31,15 +31,26 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(ioDispatcher) {
-            _uiState.value = SettingsUiState(musicMuted = settingsRepository.isMusicMuted())
+            _uiState.value = SettingsUiState(
+                musicMuted = settingsRepository.isMusicMuted(),
+                sfxMuted = settingsRepository.isSfxMuted()
+            )
         }
     }
 
     fun toggleMusic() {
         val muted = !_uiState.value.musicMuted
-        _uiState.value = SettingsUiState(musicMuted = muted)
+        _uiState.value = _uiState.value.copy(musicMuted = muted)
         viewModelScope.launch(ioDispatcher) {
             settingsRepository.setMusicMuted(muted)
+        }
+    }
+
+    fun toggleSfx() {
+        val muted = !_uiState.value.sfxMuted
+        _uiState.value = _uiState.value.copy(sfxMuted = muted)
+        viewModelScope.launch(ioDispatcher) {
+            settingsRepository.setSfxMuted(muted)
         }
     }
 }

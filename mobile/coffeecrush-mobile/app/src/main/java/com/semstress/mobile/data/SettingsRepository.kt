@@ -8,6 +8,8 @@ import javax.inject.Inject
 interface SettingsStore {
     fun isMusicMuted(): Boolean
     fun setMusicMuted(muted: Boolean)
+    fun isSfxMuted(): Boolean
+    fun setSfxMuted(muted: Boolean)
 }
 
 class SettingsRepository @Inject constructor(@ApplicationContext context: Context) : SettingsStore {
@@ -19,8 +21,15 @@ class SettingsRepository @Inject constructor(@ApplicationContext context: Contex
         prefs.edit { putBoolean(KEY_MUSIC_MUTED, muted) }
     }
 
+    override fun isSfxMuted(): Boolean = prefs.getBoolean(KEY_SFX_MUTED, false)
+
+    override fun setSfxMuted(muted: Boolean) {
+        prefs.edit { putBoolean(KEY_SFX_MUTED, muted) }
+    }
+
     companion object {
         private const val PREFS_NAME = "coffee_crush_mobile_settings"
         private const val KEY_MUSIC_MUTED = "music_muted"
+        private const val KEY_SFX_MUTED = "sfx_muted"
     }
 }

@@ -89,6 +89,8 @@ Pontos-chave:
 - SFX (novos, RR-22): `SoundPool` com sons pré-carregados; nunca `MediaPlayer` para efeitos curtos (latência).
 - Converter WAV → OGG (os 3 WAVs em `res/raw` são grandes; OGG reduz APK substancialmente sem perda audível).
 
+**Feito em RR-22:** os três pontos acima — `MusicaFundoPlayer.pausar()/retomar()` acionados por `ProcessLifecycleOwner` (pausa em background), `SfxPlayer` com `SoundPool` para os efeitos curtos, e os WAVs convertidos para OGG via `ffmpeg`. Fade de transição de faixa continua pendente (não fazia parte do escopo de RR-22, que focou nos itens do backlog).
+
 ## 6. Build, release e medição
 
 | Item | Ação | Prioridade |

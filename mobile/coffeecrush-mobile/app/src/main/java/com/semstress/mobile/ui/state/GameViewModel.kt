@@ -241,7 +241,7 @@ class GameViewModel @AssistedInject constructor(
             if (stage.consumeInvalidMove) {
                 currentSession.moves -= 1
             }
-            currentSession.message = "Movimento invalido."
+            currentSession.message = INVALID_MOVE_MESSAGE
         }
 
         currentSession.animating = false
@@ -339,6 +339,9 @@ class GameViewModel @AssistedInject constructor(
     }
 
     companion object {
+        /** RR-22: exposed so [com.semstress.mobile.ui.screens.GameScreen] can trigger SFX/haptics on it. */
+        const val INVALID_MOVE_MESSAGE = "Movimento invalido."
+
         private const val NO_SELECTION = -1
 
         private const val KEY_BOARD = "game_board"

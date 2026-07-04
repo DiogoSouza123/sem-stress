@@ -8,7 +8,7 @@
         errorLine2="        ~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="15"
+            line="20"
             column="9"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="10"
+            line="15"
             column="5"/>
     </issue>
 
@@ -69,12 +69,23 @@
 
     <issue
         id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-process than 2.8.6 is available: 2.11.0"
+        errorLine1="lifecycleProcess = &quot;2.8.6&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="7"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
         message="A newer version of androidx.lifecycle:lifecycle-runtime-compose than 2.8.6 is available: 2.11.0"
         errorLine1="lifecycleRuntimeCompose = &quot;2.8.6&quot;"
         errorLine2="                          ~~~~~~~">
         <location
             file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
-            line="7"
+            line="8"
             column="27"/>
     </issue>
 
@@ -85,7 +96,7 @@
         errorLine2="                            ~~~~~~~">
         <location
             file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
-            line="8"
+            line="9"
             column="29"/>
     </issue>
 
@@ -96,7 +107,7 @@
         errorLine2="                  ~~~~~~~">
         <location
             file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
-            line="9"
+            line="10"
             column="19"/>
     </issue>
 
@@ -107,7 +118,7 @@
         errorLine2="           ~~~~~~~~">
         <location
             file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
-            line="10"
+            line="11"
             column="12"/>
     </issue>
 
@@ -118,8 +129,52 @@
         errorLine2="             ~~~~~~~~~~~~">
         <location
             file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
-            line="11"
+            line="12"
             column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.hilt:hilt-navigation-compose than 1.2.0 is available: 1.4.0"
+        errorLine1="hiltNavigationCompose = &quot;1.2.0&quot;"
+        errorLine2="                        ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="20"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.datastore:datastore than 1.1.7 is available: 1.2.1"
+        errorLine1="datastore = &quot;1.1.7&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="22"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-splashscreen than 1.0.1 is available: 1.2.0"
+        errorLine1="coreSplashscreen = &quot;1.0.1&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="28"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="LockedOrientationActivity"
+        message="Expecting `android:screenOrientation=&quot;unspecified&quot;` or `&quot;fullSensor&quot;` for this activity so the user can use the application in any orientation and provide a great experience on Chrome OS devices"
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="14"
+            column="13"/>
     </issue>
 
     <issue
@@ -145,68 +200,198 @@
     </issue>
 
     <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.serialization than 2.1.21 is available: 2.4.0"
+        errorLine1="kotlin = &quot;2.1.21&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlinx:kotlinx-serialization-json than 1.7.3 is available: 1.11.0"
+        errorLine1="kotlinxSerializationJson = &quot;1.7.3&quot;"
+        errorLine2="                           ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="18"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger.hilt.android than 2.57 is available: 2.60"
+        errorLine1="hilt = &quot;2.57&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="19"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-android than 2.57 is available: 2.60"
+        errorLine1="hilt = &quot;2.57&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="19"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.dagger:hilt-android-compiler than 2.57 is available: 2.60"
+        errorLine1="hilt = &quot;2.57&quot;"
+        errorLine2="       ~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="19"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.protobuf:protobuf-javalite than 4.29.5 is available: 4.35.1"
+        errorLine1="protobufJavalite = &quot;4.29.5&quot;"
+        errorLine2="                   ~~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="23"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.protobuf:protoc than 4.29.5 is available: 4.35.1"
+        errorLine1="protobufJavalite = &quot;4.29.5&quot;"
+        errorLine2="                   ~~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="23"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.protobuf than 0.9.4 is available: 0.10.0"
+        errorLine1="protobufPlugin = &quot;0.9.4&quot;"
+        errorLine2="                 ~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="24"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.robolectric:robolectric than 4.15.1 is available: 4.16.1"
+        errorLine1="robolectric = &quot;4.15.1&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/Documents/Github/sem-stress/mobile/coffeecrush-mobile/gradle/libs.versions.toml"
+            line="25"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="DiscouragedApi"
+        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="14"
+            column="13"/>
+    </issue>
+
+    <issue
         id="DiscouragedApi"
         message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
         errorLine1="        val resourceId = context.resources.getIdentifier(nome, &quot;raw&quot;, context.packageName)"
         errorLine2="                                           ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/semstress/mobile/audio/MusicaFundoPlayer.kt"
-            line="28"
+            line="32"
             column="44"/>
     </issue>
 
     <issue
-        id="AutoboxingStateCreation"
-        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
-        errorLine1="    var frame by remember(frameCount) { mutableStateOf(0) }"
-        errorLine2="                                        ~~~~~~~~~~~~~~">
+        id="DiscouragedApi"
+        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
+        errorLine1="        val resourceId = context.resources.getIdentifier(effect.resourceName, &quot;raw&quot;, context.packageName)"
+        errorLine2="                                           ~~~~~~~~~~~~~">
         <location
-            file="src/main/java/com/semstress/mobile/ui/screens/GameScreen.kt"
-            line="371"
-            column="41"/>
+            file="src/main/java/com/semstress/mobile/audio/SfxPlayer.kt"
+            line="45"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.raw.fur_elise` appears to be unused">
         <location
-            file="src/main/res/raw/fur_elise.wav"/>
+            file="src/main/res/raw/fur_elise.ogg"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.raw.luke_bergs_waesto_take_off` appears to be unused">
         <location
-            file="src/main/res/raw/luke_bergs_waesto_take_off.wav"/>
+            file="src/main/res/raw/luke_bergs_waesto_take_off.ogg"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.raw.orchestronika_motivation` appears to be unused">
         <location
-            file="src/main/res/raw/orchestronika_motivation.wav"/>
+            file="src/main/res/raw/orchestronika_motivation.ogg"/>
     </issue>
 
     <issue
-        id="MissingApplicationIcon"
-        message="Should explicitly set `android:icon`, there is no default"
-        errorLine1="    &lt;application"
-        errorLine2="     ~~~~~~~~~~~">
+        id="UnusedResources"
+        message="The resource `R.raw.sfx_invalid` appears to be unused">
         <location
-            file="src/main/AndroidManifest.xml"
-            line="4"
-            column="6"/>
+            file="src/main/res/raw/sfx_invalid.ogg"/>
     </issue>
 
     <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        val editor = prefs.edit()"
-        errorLine2="                     ~~~~~~~~~~~~">
+        id="UnusedResources"
+        message="The resource `R.raw.sfx_match` appears to be unused">
         <location
-            file="src/main/java/com/semstress/mobile/data/ProgressRepository.kt"
-            line="29"
-            column="22"/>
+            file="src/main/res/raw/sfx_match.ogg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.raw.sfx_select` appears to be unused">
+        <location
+            file="src/main/res/raw/sfx_select.ogg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.raw.sfx_swap` appears to be unused">
+        <location
+            file="src/main/res/raw/sfx_swap.ogg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.raw.sfx_victory` appears to be unused">
+        <location
+            file="src/main/res/raw/sfx_victory.ogg"/>
     </issue>
 
 </issues>

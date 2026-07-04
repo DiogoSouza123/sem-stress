@@ -21,18 +21,20 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.semstress.mobile.R
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.theme.Caramel
@@ -46,10 +48,8 @@ fun StageMenuScreen(
     stages: List<StageConfig>,
     progress: PlayerProgress,
     selectedStageId: Int,
-    isMusicMuted: Boolean,
-    onSelectStage: (Int) -> Unit,
-    onPlaySelectedStage: () -> Unit,
-    onToggleMusic: () -> Unit
+    sound: StageMenuScreenSound,
+    actions: StageMenuScreenActions
 ) {
     Column(
         modifier = Modifier
@@ -61,29 +61,7 @@ fun StageMenuScreen(
             )
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column {
-                Text(
-                    text = "Coffee Crush",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = CoffeeDark
-                )
-                Text(
-                    text = "Menu de fases",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = CoffeeDark.copy(alpha = 0.7f)
-                )
-            }
-
-            OutlinedButton(onClick = onToggleMusic) {
-                Text(if (isMusicMuted) "Som: OFF" else "Som: ON")
-            }
-        }
+        StageMenuHeader(sound, actions)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -117,16 +95,49 @@ fun StageMenuScreen(
                     unlocked = unlocked,
                     selected = selected,
                     completed = completed,
-                    onClick = { if (unlocked) onSelectStage(stage.id) }
+                    onClick = { if (unlocked) actions.onSelectStage(stage.id) }
                 )
             }
         }
 
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = onPlaySelectedStage
+            onClick = actions.onPlaySelectedStage
         ) {
             Text("Jogar fase selecionada")
+        }
+    }
+}
+
+@Composable
+private fun StageMenuHeader(sound: StageMenuScreenSound, actions: StageMenuScreenActions) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column {
+            Text(
+                text = "Coffee Crush",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = CoffeeDark
+            )
+            Text(
+                text = "Menu de fases",
+                style = MaterialTheme.typography.titleMedium,
+                color = CoffeeDark.copy(alpha = 0.7f)
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.End) {
+            OutlinedButton(onClick = actions.onToggleMusic) {
+                Text(stringResource(if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            OutlinedButton(onClick = actions.onToggleSfx) {
+                Text(stringResource(if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on))
+            }
         }
     }
 }

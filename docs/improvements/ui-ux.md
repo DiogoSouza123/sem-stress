@@ -66,6 +66,8 @@ Estado atual: peças caem "teleportando" frame a frame (65 ms por passo), explos
 
 Música existe; efeitos, não. Adicionar SFX curtos: seleção (clique de xícara), swap, match (pitch por nível de cascata), peça especial, vitória (sino + vapor), botão. Controles separados de **música** e **efeitos** nas configurações; haptics sutis em match/combo/vitória (com toggle). Som é metade do "juice" de um match-3 — o custo é baixo e o impacto na percepção de qualidade é enorme.
 
+**Feito em RR-22:** `SfxPlayer` (`audio/SfxPlayer.kt`) usa `SoundPool` — pré-carrega os 5 efeitos (`SfxEffect`: `SELECT`/`SWAP`/`INVALID_MOVE`/`MATCH`/`VICTORY`) uma única vez no construtor, evitando a latência de decodificação por toque que um `MediaPlayer` teria. `GameScreen` reage a transições de `GameUiState` (seleção, `animating`, `explodingMatches`, mensagem de movimento invalido, vitória) com `LaunchedEffect` para disparar SFX + `LocalHapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)`; `StageMenuScreen` ganhou o mesmo botão de "Efeitos: ON/OFF" ao lado do de música. Ambos os toggles persistem via `SettingsStore` (chave nova `sfx_muted`, paralela à `music_muted` existente) — nenhuma migração necessária pois é uma chave nova, não uma mudança de formato. Os áudios de SFX de placeholder foram sintetizados (tons curtos gerados por `ffmpeg`/`sine`) até haver arte sonora definitiva; os 3 WAVs de música em `res/raw` foram convertidos para OGG (RR-22, reduz ~1/3 do tamanho sem perda audível perceptível). `MusicaFundoPlayer` ganhou `pausar()`/`retomar()`, acionados por um `DefaultLifecycleObserver` em `ProcessLifecycleOwner` (registrado em `CoffeeCrushApplication.onCreate`) — a música agora pausa quando o app vai para background e retoma ao voltar, em vez de continuar tocando indefinidamente.
+
 ## 7. Novas telas de suporte — `UX-10` (P2, M)
 
 - **Configurações:** música, efeitos, haptics, idioma (futuro), créditos (atribuição das músicas freetouse.com — obrigação de licença), política de privacidade (obrigatória nas lojas), "restaurar progresso" futuro.
@@ -98,7 +100,7 @@ Tom de cafeteria acolhedora, curto e caloroso: "Café coado com perfeição! ☕
 | UX-05 | HUD novo (ProgressCup, feedback in-place) | P1 | M | RR-01 |
 | UX-04a | Menu com estrelas/best score | P1 | M | GP-03 |
 | UX-06 | Animações fluidas (swap/queda/partículas) | P1 | G | RR-20, RR-07 |
-| UX-08 | SFX + haptics + controles separados | P2 | M | RR-22 |
+| UX-08 | SFX + haptics + controles separados | P2 | M | **Feito** |
 | UX-07 | Telas de vitória/derrota | P2 | M | UX-01 |
 | UX-02 | Tipografia própria | P2 | P | UX-01 |
 | UX-10 | Configurações/pausa/créditos | P2 | M | RR-04 |

@@ -6,5 +6,6 @@ data class GameScreenActions(
     val onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit,
     val onBackToMenu: () -> Unit,
     val onReplayStage: () -> Unit,
-    val onToggleMusic: () -> Unit
+    val onToggleMusic: () -> Unit,
+    val onToggleSfx: () -> Unit
 )

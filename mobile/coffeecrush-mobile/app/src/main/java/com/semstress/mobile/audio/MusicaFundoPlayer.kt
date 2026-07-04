@@ -61,6 +61,24 @@ class MusicaFundoPlayer @Inject constructor(@ApplicationContext private val cont
         parar()
     }
 
+    /** RR-22: chamado quando o app vai para background, para a musica nao continuar tocando. */
+    fun pausar() {
+        mediaPlayer?.let { player ->
+            if (player.isPlaying) {
+                player.pause()
+            }
+        }
+    }
+
+    /** RR-22: chamado quando o app volta ao foreground, retomando de onde parou. */
+    fun retomar() {
+        mediaPlayer?.let { player ->
+            if (!player.isPlaying) {
+                player.start()
+            }
+        }
+    }
+
     private fun aplicarVolume() {
         val ganho = (volumeAtualPercentual.coerceIn(0, 100) / 100f)
         mediaPlayer?.setVolume(ganho, ganho)

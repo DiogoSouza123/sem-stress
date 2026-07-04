@@ -58,4 +58,29 @@ class SettingsViewModelTest {
         assertFalse(store.isMusicMuted())
         assertEquals(2, store.saveCount)
     }
+
+    @Test
+    fun `carrega o valor persistido do mudo de efeitos ao iniciar`() = runTest(testDispatcher) {
+        val store = FakeSettingsStore(sfxMuted = true)
+        val viewModel = SettingsViewModel(store, testDispatcher)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.sfxMuted)
+    }
+
+    @Test
+    fun `toggleSfx alterna e persiste a flag de mudo sem afetar a musica`() = runTest(testDispatcher) {
+        val store = FakeSettingsStore()
+        val viewModel = SettingsViewModel(store, testDispatcher)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.toggleSfx()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.sfxMuted)
+        assertFalse(viewModel.uiState.value.musicMuted)
+        assertTrue(store.isSfxMuted())
+        assertFalse(store.isMusicMuted())
+    }
 }
