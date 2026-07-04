@@ -93,15 +93,17 @@ Pontos-chave:
 
 | Item | Ação | Prioridade |
 |---|---|---|
-| R8 (RR-13) | `isMinifyEnabled = true` + `isShrinkResources = true` no release; testar fluxo completo em build release no CI | P1 |
+| R8 (RR-13) | `isMinifyEnabled = true` + `isShrinkResources = true` no release; testar fluxo completo em build release no CI | **Feito** |
 | Baseline Profiles | Gerar com Macrobenchmark (startup + abrir fase + executar jogada); melhora cold start e jank do primeiro uso | P2 |
 | Macrobenchmark | Cenários: cold start → menu; abrir fase; jogada com cascata 3×. Rodar em CI agendado; comparar antes/depois de cada otimização deste doc | P2 |
 | JankStats | Coletar frames lentos em produção (quando houver analytics) com tag da tela | P3 |
 | Compose compiler metrics | Habilitar relatórios de estabilidade ao investigar recomposição (`-P ...compose.compiler.plugin.metricsDestination`) e confirmar que `GameUiState`/`BoardUi` são stable | P2 (durante RR-20) |
 | Configuration cache | Habilitar em `gradle.properties` para DX | P2 |
 
+**Feito em RR-13:** `app/build.gradle.kts` liga `isMinifyEnabled`/`isShrinkResources` no `release`; `proguard-rules.pro` ganhou as regras de manutenção recomendadas pelos próprios projetos para os dois pontos que o R8 não consegue provar sozinho — kotlinx.serialization (`$$serializer`/`Companion` dos DTOs de `StageCatalogJsonParser`) e protobuf-lite (mensagens geradas do DataStore de progresso, RR-06). O CI (`.github/workflows/mobile-ci.yml`) ganhou o job `release-smoke`: `assembleRelease` (exercita o R8) seguido de instalar e abrir o APK unsigned num emulador (`reactivecircus/android-emulator-runner`), falhando se o processo morrer logo após o `am start` — isso pega classes removidas em tempo de execução que o build sozinho não detectaria. `isMinifyEnabled=false` continua sendo o padrão do `debug` (não declarado, então usa o default do AGP).
+
 **Metas mensuráveis:**
 - Cold start (P50, device médio): < 1,5 s até menu interativo.
 - 0 frames > 32 ms durante cascata 3× em board 8×8 (medido no Macrobenchmark).
 - Memória de sprites < 20 MB.
-- APK release < 25 MB (hoje inflado por WAVs e ausência de shrinking).
+- APK release < 25 MB (hoje ~48 MB, inflado pelos WAVs em `res/raw`; RR-22 troca para OGG).
