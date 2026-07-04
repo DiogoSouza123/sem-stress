@@ -1,0 +1,21 @@
+{
+  "packId": "v1-small-64",
+  "frameSize": 64,
+  "framesPerItem": 12,
+  "grid": { "cols": 4, "rows": 3 },
+  "structure": {
+    "itemSheet": "items/<item>/sheet.png",
+    "frames": "items/<item>/frames/frame_00..11.png",
+    "composedA": "composed/spritesheet-a-4itens.png",
+    "composedB": "composed/spritesheet-b-4itens.png"
+  },
+  "items": [
+    { "name": "coffee-red", "frames": 12 },
+    { "name": "coffee-yellow", "frames": 12 },
+    { "name": "coffee-white", "frames": 12 },
+    { "name": "coffee-green", "frames": 12 },
+    { "name": "coffee-brown", "frames": 12 },
+    { "name": "coffee-beans", "frames": 12 },
+    { "name": "fire", "frames": 12 }
+  ]
+}
