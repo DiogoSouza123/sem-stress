@@ -72,9 +72,10 @@ Criar o helper `boardFrom(String)` (equivalente ao `BoardTestUtils` do desktop) 
 
 ### 2.3 Fase 2 — Testes de ViewModel (junto de RR-01)
 
-- `runTest` + `StandardTestDispatcher` controlam o tempo virtual: os delays de animação (140/220/65 ms) tornam-se `advanceTimeBy(...)`, permitindo testar a sequência de estados frame a frame com **Turbine**.
-- Antes de refatorar o controller: escrever testes de caracterização contra `CoffeeCrushController` atual (tap seleciona → segundo tap troca; movimento inválido mostra mensagem; vitória persiste progresso). Depois da migração, os mesmos testes rodam contra `GameViewModel`.
-- Repositórios entram como fakes em memória (não mocks), definidos uma vez em `testFixtures`.
+- `runTest` + `StandardTestDispatcher` controlam o tempo virtual: os delays de animação (140/220/65 ms) tornam-se `advanceTimeBy(...)`/`runCurrent()`, permitindo testar a sequência de estados frame a frame.
+- **Atualização (CQ-02):** Turbine foi avaliado para observar a sequência de estados, mas seu timeout por wall-clock não cooperou bem com um `StandardTestDispatcher` criado manualmente e compartilhado via `runTest(dispatcher)` (necessário porque `CoffeeCrushController` usa `Dispatchers.Main.immediate` internamente). A verificação de estados intermediários (ex.: `animating` durante o highlight do match) foi feita chamando `scheduler.runCurrent()` logo após disparar o movimento e lendo o estado diretamente, sem Flow. Reavaliar Turbine quando o `GameViewModel` (RR-01) expuser o estado como `StateFlow` de fato — nesse caso `Turbine.test { }` sobre o próprio `StateFlow` deve funcionar sem o problema do dispatcher manual.
+- Antes de refatorar o controller: escrever testes de caracterização contra `CoffeeCrushController` atual (tap seleciona → segundo tap troca; movimento inválido mostra mensagem; vitória persiste progresso). Depois da migração, os mesmos testes rodam contra `GameViewModel`. **Feito em CQ-02** (`CoffeeCrushControllerTest`), incluindo o cenário de reembaralhamento por sem-movimentos (estatístico: repete até 300 rodadas frescas, já que o board do controller não é seedável).
+- Repositórios entram como fakes em memória (não mocks), definidos uma vez em `testFixtures`. **Feito parcialmente em CQ-02:** extraída a interface `ProgressStore` de `ProgressRepository` (seam mínimo, sem mudança de lógica) para permitir um `FakeProgressStore` nos testes; ainda não movido para `testFixtures` (só existe um consumidor de teste até agora).
 
 ### 2.4 Integração e UI
 - Parser de fases: JSON válido, campos faltantes (defaults), schema desconhecido, override em disco vencendo asset.

@@ -17,7 +17,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 ## Fase 1 — Rede de segurança (P0)
 
 - [x] **RR-19** `M` — Portar as 6 suítes de teste de engine do desktop para JUnit 5 (cascata, pontuação, validação, shuffle, board/seed) + helper `boardFrom(String)`. *Aceite:* cenários equivalentes ao desktop passando; `:app` (futuro `:core:engine`) ≥ 90% de cobertura na engine. ([code-quality](code-quality.md) §2.2)
-- [ ] **CQ-02** `M` — Testes de caracterização do `CoffeeCrushController` atual (tap/drag/inválido/vitória/derrota/shuffle) com `runTest` + Turbine. *Aceite:* comportamento atual documentado em testes que rodarão contra o ViewModel novo.
+- [x] **CQ-02** `M` — Testes de caracterização do `CoffeeCrushController` atual (tap/drag/inválido/vitória/derrota/shuffle) com `runTest` + Turbine. *Aceite:* comportamento atual documentado em testes que rodarão contra o ViewModel novo.
 
 ## Fase 2 — Estado, navegação e dados (P0/P1)
 
