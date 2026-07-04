@@ -42,6 +42,9 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
+      - name: Engine coverage (>= 90%)
+        run: ./gradlew koverVerifyDebug --stacktrace
+
       - name: Assemble debug
         run: ./gradlew assembleDebug --stacktrace
 

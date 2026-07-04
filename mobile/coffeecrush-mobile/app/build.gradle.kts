@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -62,6 +63,26 @@ detekt {
     baseline = file("$rootDir/config/detekt/baseline.xml")
 }
 
+kover {
+    currentProject {
+        instrumentation {
+            disabledForTestTasks.add("testReleaseUnitTest")
+        }
+    }
+    reports {
+        filters {
+            includes {
+                packages("com.semstress.mobile.engine")
+            }
+        }
+        verify {
+            rule("Engine coverage") {
+                minBound(90)
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -80,5 +101,12 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+
     detektPlugins(libs.detekt.formatting)
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
