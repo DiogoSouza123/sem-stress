@@ -36,6 +36,17 @@ android {
                 "proguard-rules.pro"
             )
         }
+
+        // PF-01: Macrobenchmark needs a non-debuggable-but-installable target close to release
+        // (R8 + resource shrinking on) with profiling hooks enabled (`isProfileable`), signed with
+        // the debug key so `:macrobenchmark` can install it without a release keystore.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+            isProfileable = true
+        }
     }
 
     compileOptions {
@@ -119,6 +130,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.material)
 

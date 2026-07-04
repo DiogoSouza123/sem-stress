@@ -96,13 +96,21 @@ Pontos-chave:
 | Item | Ação | Prioridade |
 |---|---|---|
 | R8 (RR-13) | `isMinifyEnabled = true` + `isShrinkResources = true` no release; testar fluxo completo em build release no CI | **Feito** |
-| Baseline Profiles | Gerar com Macrobenchmark (startup + abrir fase + executar jogada); melhora cold start e jank do primeiro uso | P2 |
-| Macrobenchmark | Cenários: cold start → menu; abrir fase; jogada com cascata 3×. Rodar em CI agendado; comparar antes/depois de cada otimização deste doc | P2 |
+| Baseline Profiles | Gerar com Macrobenchmark (startup + abrir fase + executar jogada); melhora cold start e jank do primeiro uso | **Feito** (infra) |
+| Macrobenchmark | Cenários: cold start → menu; abrir fase; jogada com cascata 3×. Rodar em CI agendado; comparar antes/depois de cada otimização deste doc | **Feito** (infra) |
 | JankStats | Coletar frames lentos em produção (quando houver analytics) com tag da tela | P3 |
 | Compose compiler metrics | Habilitar relatórios de estabilidade ao investigar recomposição (`-P ...compose.compiler.plugin.metricsDestination`) e confirmar que `GameUiState`/`BoardUi` são stable | P2 (durante RR-20) |
 | Configuration cache | Habilitar em `gradle.properties` para DX | P2 |
 
 **Feito em RR-13:** `app/build.gradle.kts` liga `isMinifyEnabled`/`isShrinkResources` no `release`; `proguard-rules.pro` ganhou as regras de manutenção recomendadas pelos próprios projetos para os dois pontos que o R8 não consegue provar sozinho — kotlinx.serialization (`$$serializer`/`Companion` dos DTOs de `StageCatalogJsonParser`) e protobuf-lite (mensagens geradas do DataStore de progresso, RR-06). O CI (`.github/workflows/mobile-ci.yml`) ganhou o job `release-smoke`: `assembleRelease` (exercita o R8) seguido de instalar e abrir o APK unsigned num emulador (`reactivecircus/android-emulator-runner`), falhando se o processo morrer logo após o `am start` — isso pega classes removidas em tempo de execução que o build sozinho não detectaria. `isMinifyEnabled=false` continua sendo o padrão do `debug` (não declarado, então usa o default do AGP).
+
+**Feito em PF-01:** novo módulo `:macrobenchmark` (plugin `com.android.test`, `targetProjectPath = ":app"`) com três suítes JUnit4 rodando via `androidx.benchmark:benchmark-macro-junit4` contra um build type novo `benchmark` (`app/build.gradle.kts`: parte de `release` — R8/shrink ligados — mas `isDebuggable = false` explícito, `isProfileable = true`, assinado com a chave debug para instalar sem keystore de release):
+- `StartupBenchmark.coldStartToMenu` — cold start até o menu ficar interativo (`StartupTimingMetric`), o cenário 1 do backlog.
+- `GameplayBenchmark.openStage` — abrir uma fase a partir do menu (`FrameTimingMetric`), o cenário 2.
+- `GameplayBenchmark.playMovesWithCascades` — uma rajada de toques no tabuleiro medindo `FrameTimingMetric`, aproximando o cenário 3 ("jogada com cascata 3×"). **Limitação conhecida:** o board é um `Canvas` único sem semântica por célula ainda (UX-11 pendente), então o teste não consegue mirar células específicas via `UiAutomator` — ele toca coordenadas relativas à tela em vez de células endereçáveis, o que exercita jogadas/matches reais mas não *garante* uma cascata 3× em toda execução. Revisitar quando UX-11 (semântica no Canvas) ou CQ-03 (painel de debug com seed fixa) existirem, para abrir a fase num board determinístico com cascata garantida.
+- `BaselineProfileGenerator` — usa `BaselineProfileRule` (mesma dependência, sem precisar do plugin Gradle `androidx.baselineprofile` nem de Gradle Managed Devices) para gerar o profile cobrindo cold start + abrir fase; o arquivo resultante deve ser copiado manualmente para `app/src/main/baseline-prof.txt` (consumido automaticamente pelo `androidx.profileinstaller`, já adicionado como dependência do `:app`).
+
+Rodar localmente com um dispositivo/emulador conectado: `./gradlew :macrobenchmark:connectedBenchmarkAndroidTest`. **Importante:** a própria androidx desaconselha medir em emulador (timings não confiáveis) e, neste ambiente, `amStartAndWait()` falhou com `Unable to confirm activity launch completion` num emulador local (Android 16 preview) — isso valida que a infraestrutura builda, instala e roda os testes corretamente, mas os números de `performance.md`'s metas mensuráveis abaixo **ainda não foram coletados** (precisam de um dispositivo físico ou de um device farm em CI, conforme já indicado por "Rodar em CI agendado" nesta tabela — esse agendamento em si fica para uma tarefa futura, fora do escopo do PF-01).
 
 **Metas mensuráveis:**
 - Cold start (P50, device médio): < 1,5 s até menu interativo.
