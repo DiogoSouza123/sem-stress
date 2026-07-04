@@ -4,6 +4,7 @@ import com.semstress.mobile.domain.StageConfig
 
 @Suppress("LongParameterList")
 fun stageConfig(
+    id: Int = 1,
     rows: Int = 8,
     cols: Int = 8,
     pieceTypes: Int = 5,
@@ -18,7 +19,7 @@ fun stageConfig(
     consumeInvalidMove: Boolean = false,
     onlyAdjacentSwap: Boolean = true
 ): StageConfig = StageConfig(
-    id = 0,
+    id = id,
     name = "Test Stage",
     description = "Stage used in unit tests",
     rows = rows,

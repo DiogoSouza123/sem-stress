@@ -9,9 +9,10 @@ lifecycleViewmodelCompose = "2.8.6"
 activityCompose = "1.9.2"
 material = "1.12.0"
 composeBom = "2025.04.01"
-junitJupiter = "5.14.4"
-junitPlatformLauncher = "1.14.4"
+junitJupiter = "6.1.1"
+junitPlatformLauncher = "6.1.1"
 kover = "0.9.8"
+kotlinxCoroutinesTest = "1.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,6 +31,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatformLauncher" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

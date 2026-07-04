@@ -3,7 +3,7 @@ package com.semstress.mobile.ui.state
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.semstress.mobile.data.ProgressRepository
+import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageCatalog
@@ -52,7 +52,7 @@ data class GameUiState(
 
 class CoffeeCrushController(
     private val stageCatalog: StageCatalog,
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressStore
 ) {
     private val stages: List<StageConfig> = stageCatalog.stages
 

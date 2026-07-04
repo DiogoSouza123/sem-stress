@@ -3,10 +3,15 @@ package com.semstress.mobile.data
 import android.content.Context
 import com.semstress.mobile.domain.PlayerProgress
 
-class ProgressRepository(context: Context) {
+interface ProgressStore {
+    fun load(totalStages: Int): PlayerProgress
+    fun save(progress: PlayerProgress)
+}
+
+class ProgressRepository(context: Context) : ProgressStore {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun load(totalStages: Int): PlayerProgress {
+    override fun load(totalStages: Int): PlayerProgress {
         val highestUnlocked = prefs.getInt(KEY_HIGHEST_UNLOCKED, 1).coerceIn(1, totalStages)
         val currentStage = prefs.getInt(KEY_CURRENT_STAGE, 1).coerceIn(1, totalStages)
 
@@ -25,7 +30,7 @@ class ProgressRepository(context: Context) {
         )
     }
 
-    fun save(progress: PlayerProgress) {
+    override fun save(progress: PlayerProgress) {
         val editor = prefs.edit()
         editor.putInt(KEY_HIGHEST_UNLOCKED, progress.highestUnlockedStage)
         editor.putInt(KEY_CURRENT_STAGE, progress.currentStage)
