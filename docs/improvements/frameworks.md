@@ -48,6 +48,7 @@ Para cada recomendação: **por que usar**, **problema que resolve**, **impacto 
 - **Por quê:** persistência assíncrona, transacional, tipada e observável (`Flow`).
 - **Resolve:** RR-06 (`SharedPreferences` síncrono, sem migração, menu que não reage a mudanças de progresso).
 - **Impacto:** definir proto `PlayerProgress`; usar `SharedPreferencesMigration` mapeando as chaves atuais (`highest_unlocked_stage`, `current_stage`, `stage_N_best_score`). **Teste de migração obrigatório** — progresso do jogador não pode ser perdido.
+- **Feito em RR-06.** `androidx.datastore:datastore:1.1.7` + `protobuf-javalite:4.29.5` (plugin `com.google.protobuf:0.9.4`). `ProgressStore.load/save` viraram `suspend` (DataStore é assíncrono); os dois ViewModels já chamavam esses métodos de dentro de corrotinas desde RR-02/RR-03, então não precisou mudar call sites. **Robolectric introduzido antes do previsto** (code-quality.md §2 listava-o só implicitamente via Roborazzi, P2): o teste de migração exige um `SharedPreferences` real, não um fake, para validar o `SharedPreferencesMigration` de verdade — rodado via JUnit4 + `junit-vintage-engine` já que Robolectric não tem suporte nativo a JUnit5/Jupiter.
 
 ### 2.5 kotlinx.serialization — `P1`
 - **Por quê:** serialização Kotlin-first, multiplataforma, sem reflexão.
