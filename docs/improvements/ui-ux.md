@@ -20,6 +20,8 @@ O tema atual (CoffeeDark/Caramel/Latte/Cream + Gold/Mint) é um bom ponto de par
 - Edge-to-edge (`enableEdgeToEdge()`) com insets tratados; hoje o conteúdo usa `padding(16.dp)` fixo e ignora status/navigation bars.
 - Travar orientação retrato na tela de jogo (com RR-01 resolvendo restauração, rotação deixa de ser destrutiva, mas retrato é o formato do gênero).
 
+**Feito em UX-03.** Ícone adaptativo (`mipmap-anydpi-v26/ic_launcher(.xml/_round.xml)` + `drawable/ic_launcher_background` com gradiente caramelo + `drawable/ic_launcher_foreground` com um vetor de xícara/vapor, reaproveitado como camada `monochrome`); como `minSdk` já é 26, não há mipmaps legados de fallback. Splash via `androidx.core:core-splashscreen` (`Theme.CoffeeCrushMobile.Starting` → `postSplashScreenTheme` para o tema normal), com `setKeepOnScreenCondition` ligado a `MenuViewModel.uiState.isLoading` (a mesma instância injetada por Hilt tanto na Activity quanto no Compose, já que `hiltViewModel()` sem rota reutiliza o `ViewModelStore` da Activity). `enableEdgeToEdge()` habilitado e `Modifier.safeDrawingPadding()` aplicado na raiz do `NavHost`/loading — cobre o requisito sem redesenhar o HUD (isso é escopo do UX-05). Orientação travada para o **app inteiro** via `android:screenOrientation="portrait"` na única Activity (não dá para travar só a tela de jogo em uma arquitetura single-Activity sem um comportamento visualmente estranho ao trocar de orientação no meio da navegação); gera os lint warnings esperados `LockedOrientationActivity`/`DiscouragedApi` (Android 16 vai ignorar orientações fixas em telas grandes) — aceito conscientemente pois o gênero match-3 é portrait-only, reavaliar se/quando o app ganhar suporte a tablet.
+
 ## 3. Menu de fases → Mapa de progressão — `UX-04` (P1, G)
 
 O menu atual (grid de cards com cadeado) é funcional, mas genérico.
@@ -40,6 +42,8 @@ Problemas atuais: HUD é um card de 3 números (Pontos/Meta/Mov) sem hierarquia;
 - **Feedback de pontos in-place:** números flutuantes (`+500`) subindo do match, escalando com combo; banner "Combo x3!" com animação de escala/fade em vez de texto estático.
 - **Movimento inválido:** shake horizontal das duas peças + haptic leve (`HapticFeedbackType`), sem texto.
 - Botões de sistema (voltar, som, pausa) como ícones discretos no topo; sair da partida em andamento pede confirmação (`UX-09`, também ligado ao back correto de RR-04).
+
+**Feito em UX-09.** `GameScreen` ganhou `BackHandler(enabled = !game.finished)` e o botão "Voltar ao menu" passou a chamar a mesma função `requestExit`: se a fase já terminou (`game.finished`), sai direto (o dialog de vitória/derrota já é a confirmação); caso contrário, mostra um `AlertDialog` de confirmação (strings em `strings.xml`: `exit_game_confirmation_*`) antes de invocar `onBackToMenu`. O botão de ícone discreto/HUD novo continua para o UX-05; aqui só o comportamento de confirmação foi implementado, reaproveitando o botão texto atual. O back do menu para sair do app já funcionava desde o RR-04 (sem `BackHandler` no `StageMenuScreen`, cai no comportamento padrão do sistema).
 
 ## 5. Animações e efeitos — `UX-06` (P1/P2, G — depende de RR-20/RR-07)
 
