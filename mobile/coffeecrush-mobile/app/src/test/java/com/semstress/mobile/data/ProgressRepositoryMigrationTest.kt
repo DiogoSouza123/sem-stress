@@ -1,0 +1,59 @@
+package com.semstress.mobile.data
+
+import android.content.Context
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+
+/**
+ * RR-06 acceptance: migrating from the legacy `SharedPreferences`-backed progress must preserve
+ * the player's data. Uses a real `SharedPreferences` instance (via Robolectric), not a fake, to
+ * exercise the actual `SharedPreferencesMigration` path.
+ */
+@RunWith(RobolectricTestRunner::class)
+class ProgressRepositoryMigrationTest {
+
+    @Test
+    fun `migra progresso de SharedPreferences reais para o DataStore preservando os valores`() = runTest {
+        val context: Context = RuntimeEnvironment.getApplication()
+        val legacyPrefs = context.getSharedPreferences(LEGACY_PROGRESS_PREFS_NAME, Context.MODE_PRIVATE)
+        legacyPrefs.edit()
+            .putInt("highest_unlocked_stage", 4)
+            .putInt("current_stage", 3)
+            .putInt(legacyScoreKey(1), 1200)
+            .putInt(legacyScoreKey(2), 800)
+            .putInt(legacyScoreKey(3), 0)
+            .commit()
+
+        val repository = ProgressRepository(context)
+        val migrated = repository.load(totalStages = 10)
+
+        assertEquals(4, migrated.highestUnlockedStage)
+        assertEquals(3, migrated.currentStage)
+        assertEquals(1200, migrated.scoreFor(1))
+        assertEquals(800, migrated.scoreFor(2))
+        assertEquals(0, migrated.scoreFor(3))
+    }
+
+    @Test
+    fun `progresso salvo apos a migracao e preservado em leituras seguintes`() = runTest {
+        // ProgressRepository e um @Singleton em producao (Hilt); duas instancias simultaneas
+        // sobre o mesmo arquivo nao e um cenario real (DataStore proibe isso), entao o round-trip
+        // save->load na mesma instancia e o que de fato precisa ser garantido aqui.
+        val context: Context = RuntimeEnvironment.getApplication()
+        val legacyPrefs = context.getSharedPreferences(LEGACY_PROGRESS_PREFS_NAME, Context.MODE_PRIVATE)
+        legacyPrefs.edit().putInt("highest_unlocked_stage", 2).commit()
+
+        val repository = ProgressRepository(context)
+        val afterMigration = repository.load(totalStages = 10)
+        repository.save(afterMigration.registerResult(stageId = 2, score = 999, won = true, totalStages = 10))
+
+        val reloaded = repository.load(totalStages = 10)
+
+        assertEquals(999, reloaded.scoreFor(2))
+        assertEquals(3, reloaded.highestUnlockedStage)
+    }
+}

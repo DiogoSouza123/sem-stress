@@ -8,9 +8,9 @@ class FakeProgressStore(initial: PlayerProgress = PlayerProgress()) : ProgressSt
     var saveCount: Int = 0
         private set
 
-    override fun load(totalStages: Int): PlayerProgress = saved
+    override suspend fun load(totalStages: Int): PlayerProgress = saved
 
-    override fun save(progress: PlayerProgress) {
+    override suspend fun save(progress: PlayerProgress) {
         saved = progress
         saveCount++
     }

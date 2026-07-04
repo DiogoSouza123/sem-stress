@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option java_package = "com.semstress.mobile.data.proto";
+option java_outer_classname = "PlayerProgressProtoOuterClass";
+
+message PlayerProgressProto {
+  int32 highest_unlocked_stage = 1;
+  int32 current_stage = 2;
+  map<int32, int32> best_scores = 3;
+}
