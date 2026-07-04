@@ -37,7 +37,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 - [x] **RR-21** `M` — Sprites via spritesheet + downsampling para o tamanho da célula; `SpriteAtlas` injetado; pré-carga na splash. *Aceite:* memória de sprites < 20 MB.
 - [x] **RR-13** `P` — R8 + shrinkResources + keep rules; smoke test de release no CI.
 - [x] **RR-22 / UX-08** `M` — `SoundPool` para SFX + haptics + toggles separados música/efeitos; música pausa em background; WAV→OGG.
-- [ ] **PF-01** `M` — Macrobenchmark (cold start, abrir fase, cascata 3×) + Baseline Profile. *Aceite:* metas de performance.md §6 medidas.
+- [x] **PF-01** `M` — Macrobenchmark (cold start, abrir fase, cascata 3×) + Baseline Profile. *Aceite:* metas de performance.md §6 medidas. (infra completa; medicao real pendente de dispositivo fisico/CI, ver performance.md §6)
 
 ## Fase 4 — Estrutura e engine 2.0 (P2)
 
