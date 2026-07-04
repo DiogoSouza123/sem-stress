@@ -4,6 +4,7 @@ import com.semstress.mobile.data.FakeProgressStore
 import com.semstress.mobile.data.FakeStageCatalogSource
 import com.semstress.mobile.domain.StageCatalog
 import com.semstress.mobile.engine.stageConfig
+import com.semstress.mobile.ui.sprites.SpriteAtlasSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -112,6 +113,11 @@ class MenuViewModelTest {
     ): MenuViewModel = MenuViewModel(
         stageCatalogSource = FakeStageCatalogSource(catalog),
         progressRepository = progressRepository,
+        spriteAtlasSource = FakeSpriteAtlasSource,
         ioDispatcher = testDispatcher
     )
+
+    private object FakeSpriteAtlasSource : SpriteAtlasSource {
+        override suspend fun load() = null
+    }
 }

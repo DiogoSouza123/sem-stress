@@ -30,6 +30,7 @@ import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.screens.GameScreen
+import com.semstress.mobile.ui.screens.GameScreenActions
 import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.state.GameAction
 import com.semstress.mobile.ui.state.GameViewModel
@@ -161,13 +162,16 @@ private fun GameDestination(
     GameScreen(
         game = gameState,
         isMusicMuted = settingsState.musicMuted,
-        onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
-        onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
-            gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
-        },
-        onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
-        onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
-        onToggleMusic = { settingsViewModel.toggleMusic() }
+        spriteAtlas = menuState.spriteAtlas,
+        actions = GameScreenActions(
+            onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
+            onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
+                gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
+            },
+            onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
+            onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
+            onToggleMusic = { settingsViewModel.toggleMusic() }
+        )
     )
 }
 

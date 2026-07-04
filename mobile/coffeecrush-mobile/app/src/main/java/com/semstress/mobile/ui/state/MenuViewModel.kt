@@ -7,6 +7,8 @@ import com.semstress.mobile.data.StageCatalogSource
 import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.ui.sprites.SpriteAtlas
+import com.semstress.mobile.ui.sprites.SpriteAtlasSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +24,8 @@ data class MenuUiState(
     val progress: PlayerProgress = PlayerProgress(),
     val selectedStageId: Int = 1,
     val menuMusicName: String = "",
-    val menuMusicVolumePercent: Int = 0
+    val menuMusicVolumePercent: Int = 0,
+    val spriteAtlas: SpriteAtlas? = null
 )
 
 sealed interface MenuAction {
@@ -36,14 +39,16 @@ sealed interface MenuAction {
  * owned by the Navigation Compose back stack instead of this ViewModel; `SavedStateHandle` is no
  * longer needed here because that back stack already survives process death on its own.
  *
- * The stage catalog and player progress are loaded on [ioDispatcher] (RR-02): neither
- * [StageCatalogSource.load] nor [ProgressStore.load] are safe to call from the main thread, so
- * [MenuUiState.isLoading] stays `true` until both finish.
+ * The stage catalog, player progress and sprite atlas (RR-21) are loaded on [ioDispatcher]
+ * (RR-02): neither [StageCatalogSource.load] nor [ProgressStore.load] are safe to call from the
+ * main thread, so [MenuUiState.isLoading] stays `true` until all three finish. Loading the sprite
+ * atlas here means it is ready before the splash screen hands off to the menu/game UI.
  */
 @HiltViewModel
 class MenuViewModel @Inject constructor(
     private val stageCatalogSource: StageCatalogSource,
     private val progressRepository: ProgressStore,
+    private val spriteAtlasSource: SpriteAtlasSource,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
@@ -54,13 +59,15 @@ class MenuViewModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             val catalog = stageCatalogSource.load()
             val progress = progressRepository.load(catalog.stages.size)
+            val spriteAtlas = spriteAtlasSource.load()
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 stages = catalog.stages,
                 progress = progress,
                 selectedStageId = progress.currentStage.coerceIn(1, catalog.stages.size),
                 menuMusicName = catalog.menuMusicName,
-                menuMusicVolumePercent = catalog.menuMusicVolumePercent
+                menuMusicVolumePercent = catalog.menuMusicVolumePercent,
+                spriteAtlas = spriteAtlas
             )
         }
     }

@@ -71,6 +71,8 @@ Pontos-chave:
 | Cache singleton global mutável escondido | `SpriteAtlas` carregado por `SpriteRepository` injetado (escopo de app), pré-carregado durante a splash |
 | `AnimatedContent` + slide/fade por célula | Morre junto com a migração para Canvas (§2) |
 
+**Feito em RR-21:** `SpriteRepository` (`ui/sprites/SpriteRepository.kt`) decodifica os 7 `sheet.png` já existentes (grade 4x3 de frames 64x64) com `BitmapFactory.Options.inSampleSize`, escolhendo o menor múltiplo de 2 que ainda cobre uma célula de referência de 56dp × densidade do aparelho — em telas de densidade baixa os frames saem menores que os 64px nativos, em telas densas ficam no tamanho nativo (sem upscale). O resultado é um `SpriteAtlas` imutável (7 bitmaps: 1 por peça + explosão) injetado como `SpriteAtlasSource` via Hilt e pré-carregado dentro do `MenuViewModel.init` (mesmo bloco que já carregava catálogo/progresso em `Dispatchers.IO`), então fica pronto antes da splash liberar a tela. `BoardCanvas` passou a desenhar com `srcOffset`/`srcSize` sobre a sheet em vez de indexar uma lista de `ImageBitmap` por frame. O antigo `GameSpritePack`/`BoardView`/`PieceCell` (fallback per-Composable do board, mantido atrás da flag `NEW_BOARD_RENDERER` desde o RR-20) foi removido: o Canvas já está em paridade e a flag não fazia mais sentido junto da nova API de sprites.
+
 ## 4. Alocações na engine (RR-07/RR-17)
 
 **Onde:** cada rodada de cascata gera `snapshot()` (nova `List<List<Int>>`) antes/depois da limpeza e **um snapshot por passo de queda** (`fallFrames`). Uma cascata 3× em board 8×8 aloca dezenas de listas aninhadas; além disso `syncGameState()` copia o board a cada frame de animação.

@@ -8,6 +8,8 @@ import com.semstress.mobile.data.StageCatalogSource
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.engine.DefaultMatch3EngineFactory
 import com.semstress.mobile.engine.Match3EngineFactory
+import com.semstress.mobile.ui.sprites.SpriteAtlasSource
+import com.semstress.mobile.ui.sprites.SpriteRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,4 +29,7 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindMatch3EngineFactory(impl: DefaultMatch3EngineFactory): Match3EngineFactory
+
+    @Binds
+    abstract fun bindSpriteAtlasSource(impl: SpriteRepository): SpriteAtlasSource
 }

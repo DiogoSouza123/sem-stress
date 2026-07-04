@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.engine.Match3Engine
-import com.semstress.mobile.ui.sprites.GameSpritePack
+import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.theme.Gold
 import com.semstress.mobile.ui.theme.Latte
 import com.semstress.mobile.ui.theme.Mint
@@ -56,7 +56,7 @@ data class BoardSelectionState(
 )
 
 private data class BoardDrawContext(
-    val spritePack: GameSpritePack?,
+    val spriteAtlas: SpriteAtlas?,
     val frame: Int,
     val cellSizePx: Float,
     val pitchPx: Float,
@@ -78,7 +78,7 @@ private data class BoardDrawContext(
 fun BoardCanvas(
     board: List<List<Int>>,
     selection: BoardSelectionState,
-    spritePack: GameSpritePack?,
+    spriteAtlas: SpriteAtlas?,
     onCellTap: (row: Int, col: Int) -> Unit,
     onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit
 ) {
@@ -121,8 +121,8 @@ fun BoardCanvas(
                     .boardGestures(geometry, onCellTap, onCellDragSwap)
             ) {
                 val context = BoardDrawContext(
-                    spritePack = spritePack,
-                    frame = currentSpriteFrame(spritePack, frameTime.value),
+                    spriteAtlas = spriteAtlas,
+                    frame = currentSpriteFrame(spriteAtlas, frameTime.value),
                     cellSizePx = cellSizePx,
                     pitchPx = geometry.pitchPx,
                     textMeasurer = textMeasurer,
@@ -139,8 +139,8 @@ fun BoardCanvas(
     }
 }
 
-private fun currentSpriteFrame(spritePack: GameSpritePack?, frameTimeMs: Long): Int {
-    val frameCount = spritePack?.maxFrameCount ?: 1
+private fun currentSpriteFrame(spriteAtlas: SpriteAtlas?, frameTimeMs: Long): Int {
+    val frameCount = spriteAtlas?.frameCount ?: 1
     if (frameCount <= 1) {
         return 0
     }
@@ -217,9 +217,9 @@ private fun DrawScope.drawSelectionOverlay(
 
 private fun DrawScope.drawPiece(value: Int, topLeft: Offset, context: BoardDrawContext) {
     val inset = PIECE_INSET_DP.dp.toPx()
-    val bitmap = context.spritePack?.pieceFrame(value, context.frame)
-    if (bitmap != null) {
-        drawSpriteFrame(bitmap, topLeft, inset, context.cellSizePx)
+    val sheet = context.spriteAtlas?.pieceSheet(value)
+    if (sheet != null) {
+        drawSpriteFrame(sheet, topLeft, inset, context)
     } else {
         val symbol = fallbackPieceSymbol(value)
         drawCenteredText(context.textMeasurer, symbol, context.pieceTextStyle, topLeft, context.cellSizePx)
@@ -228,18 +228,21 @@ private fun DrawScope.drawPiece(value: Int, topLeft: Offset, context: BoardDrawC
 
 private fun DrawScope.drawExplosion(topLeft: Offset, context: BoardDrawContext) {
     val inset = EXPLOSION_INSET_DP.dp.toPx()
-    val bitmap = context.spritePack?.explosionFrame(context.frame)
-    if (bitmap != null) {
-        drawSpriteFrame(bitmap, topLeft, inset, context.cellSizePx)
+    val sheet = context.spriteAtlas?.explosionSheet()
+    if (sheet != null) {
+        drawSpriteFrame(sheet, topLeft, inset, context)
     } else {
         drawCenteredText(context.textMeasurer, "🔥", context.explosionTextStyle, topLeft, context.cellSizePx)
     }
 }
 
-private fun DrawScope.drawSpriteFrame(bitmap: ImageBitmap, topLeft: Offset, inset: Float, cellSizePx: Float) {
-    val size = (cellSizePx - inset * 2).toInt().coerceAtLeast(1)
+private fun DrawScope.drawSpriteFrame(sheet: ImageBitmap, topLeft: Offset, inset: Float, context: BoardDrawContext) {
+    val atlas = requireNotNull(context.spriteAtlas)
+    val size = (context.cellSizePx - inset * 2).toInt().coerceAtLeast(1)
     drawImage(
-        image = bitmap,
+        image = sheet,
+        srcOffset = atlas.srcOffsetFor(context.frame),
+        srcSize = atlas.frameSize,
         dstOffset = IntOffset((topLeft.x + inset).toInt(), (topLeft.y + inset).toInt()),
         dstSize = IntSize(size, size)
     )
