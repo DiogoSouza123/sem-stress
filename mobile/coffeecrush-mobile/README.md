@@ -47,17 +47,15 @@ Versao mobile do Coffee Crush criada em Kotlin com foco em visual moderno e arqu
 
 ## Fases dinamicas por arquivo (sem hardcode)
 
-O app carrega fases via arquivos `.properties`:
+O app carrega fases via um catalogo JSON versionado (`schemaVersion`, secao `base` com os
+defaults, secao `menu` com a musica do menu, lista `stages` com overrides por fase):
 
-- `app/src/main/assets/config/configuracao-jogo.properties` (base)
-- `app/src/main/assets/config/fases.properties` (catalogo de fases)
+- `app/src/main/assets/config/stages.json`
 
 Se existir override no dispositivo, ele tem prioridade:
 
-- `files/config/configuracao-jogo.properties`
-- `files/config/fases.properties`
-- `externalFilesDir/config/configuracao-jogo.properties`
-- `externalFilesDir/config/fases.properties`
+- `files/config/stages.json`
+- `externalFilesDir/config/stages.json`
 
 Assim, voce pode evoluir e balancear fases sem mexer no codigo fonte.
 

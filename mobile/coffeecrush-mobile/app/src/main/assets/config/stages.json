@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "menu": {
+    "musicName": "luke_bergs_waesto_take_off",
+    "musicVolumePercent": 70
+  },
+  "base": {
+    "rows": 6,
+    "cols": 6,
+    "pieceTypes": 6,
+    "minMatchSize": 3,
+    "scoreMatch3": 500,
+    "scoreMatch4": 1000,
+    "scoreMatch5Plus": 1500,
+    "cascadeMultiplier": 1,
+    "scoreCascade": true,
+    "initialMoves": 20,
+    "targetScore": 5000,
+    "onlyAdjacentSwap": true,
+    "consumeInvalidMove": false,
+    "backgroundName": "coffee_bg",
+    "musicEnabled": true,
+    "musicName": "orchestronika_motivation",
+    "musicVolumePercent": 70
+  },
+  "stages": [
+    {
+      "id": 1,
+      "name": "Fase 1 - Introducao",
+      "description": "Aprenda o basico",
+      "pieceTypes": 5,
+      "initialMoves": 20,
+      "targetScore": 5000
+    },
+    {
+      "id": 2,
+      "name": "Fase 2 - Moagem",
+      "description": "Ritmo crescente",
+      "pieceTypes": 5,
+      "initialMoves": 18,
+      "targetScore": 7000
+    },
+    {
+      "id": 3,
+      "name": "Fase 3 - Torrefacao",
+      "description": "Mais variedade",
+      "initialMoves": 17,
+      "targetScore": 9000
+    },
+    {
+      "id": 4,
+      "name": "Fase 4 - Espresso",
+      "description": "Tabuleiro maior",
+      "rows": 7,
+      "initialMoves": 20,
+      "targetScore": 12000
+    },
+    {
+      "id": 5,
+      "name": "Fase 5 - Cappuccino",
+      "description": "Mais desafio",
+      "rows": 7,
+      "initialMoves": 18,
+      "targetScore": 14000
+    },
+    {
+      "id": 6,
+      "name": "Fase 6 - Latte",
+      "description": "Combos longos",
+      "rows": 7,
+      "cols": 7,
+      "initialMoves": 18,
+      "targetScore": 17000
+    },
+    {
+      "id": 7,
+      "name": "Fase 7 - Graos Nobres",
+      "description": "Ritmo acelerado",
+      "rows": 7,
+      "cols": 7,
+      "initialMoves": 16,
+      "targetScore": 19000
+    },
+    {
+      "id": 8,
+      "name": "Fase 8 - Barista",
+      "description": "Concentracao total",
+      "rows": 8,
+      "cols": 7,
+      "initialMoves": 16,
+      "targetScore": 22000
+    },
+    {
+      "id": 9,
+      "name": "Fase 9 - Cafeteria",
+      "description": "Desafio avancado",
+      "rows": 8,
+      "cols": 7,
+      "initialMoves": 15,
+      "targetScore": 25000
+    },
+    {
+      "id": 10,
+      "name": "Fase 10 - Mestre do Cafe",
+      "description": "Modo elite",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 14,
+      "targetScore": 30000
+    }
+  ]
+}
