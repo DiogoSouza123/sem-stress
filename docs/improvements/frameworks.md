@@ -41,6 +41,7 @@ Para cada recomendação: **por que usar**, **problema que resolve**, **impacto 
 - **Por quê:** back stack correto, argumentos tipados (`data class Game(val stageId: Int)`), transições, deep links.
 - **Resolve:** RR-04 (navegação via `when`, botão voltar fechando o app).
 - **Impacto:** substituir o `when(state.screen)` por `NavHost`; `stageId` passa a chegar pelo `SavedStateHandle` do ViewModel.
+- **Feito em RR-04.** `androidx.navigation:navigation-compose:2.9.8`. **Atenção de versão:** `kotlinx-serialization-json` mais recente (1.11.0 no momento) trava o compilador Kotlin 2.1.21 com um erro interno do checker K2 (`FirIncompatibleClassExpressionChecker`, "source must not be null") — fixado em `1.7.3`, binário-compatível. Reavaliar o pin ao atualizar o Kotlin (RR-12 já em Kotlin 2.1.21; próxima atualização de toolchain deve testar se a versão mais nova de serialization volta a funcionar).
 
 ### 2.4 DataStore (Proto) — `P1`
 - **Por quê:** persistência assíncrona, transacional, tipada e observável (`Flow`).

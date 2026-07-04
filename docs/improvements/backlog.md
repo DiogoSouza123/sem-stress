@@ -24,7 +24,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 - [x] **RR-01** `G` — `GameViewModel` + `MenuViewModel` (StateFlow, `viewModelScope`, `SavedStateHandle`); controller eliminado. *Aceite:* rotação/process death preservam a partida; testes de CQ-02 passam. ([architecture](architecture.md) §2.3)
 - [x] **RR-02** `M` — Carregamento de fases/progresso assíncrono (IO dispatcher) + estado `Loading`; StrictMode em debug. *Aceite:* zero disk reads na main thread no fluxo de abertura.
 - [x] **RR-03** `M` — Separar deus-estado em `UiState` por tela; música/settings em repositório próprio.
-- [ ] **RR-04** `M` — Navigation Compose com rotas type-safe; back correto. *Aceite:* voltar do jogo → menu; menu → sair do app; deep link `game/{stageId}` funcional.
+- [x] **RR-04** `M` — Navigation Compose com rotas type-safe; back correto. *Aceite:* voltar do jogo → menu; menu → sair do app; deep link `game/{stageId}` funcional.
 - [ ] **RR-05** `M` — Hilt em toda a árvore (repos, engine factory, players).
 - [ ] **RR-06** `M` — Proto DataStore + `SharedPreferencesMigration`. *Aceite:* teste automatizado de migração com prefs reais; progresso preservado.
 - [ ] **RR-16** `M` — Fases em JSON (kotlinx.serialization, `schemaVersion`, defaults, validação) + override local mantido; testes de parser. *Aceite:* paridade com as 10 fases atuais.
