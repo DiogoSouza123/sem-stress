@@ -2,16 +2,19 @@ package com.semstress.mobile.ui.state
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.semstress.mobile.data.ProgressStore
+import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.AnimationRound
 import com.semstress.mobile.engine.Match3Board
 import com.semstress.mobile.engine.Match3Engine
+import com.semstress.mobile.engine.Match3EngineFactory
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -116,12 +119,14 @@ private suspend fun GameSession.applyRound(round: AnimationRound, onChanged: () 
  * `onCleared`) and the durable parts of the session are mirrored into [SavedStateHandle] so a
  * process death restores the same board/points/moves instead of starting over.
  */
-class GameViewModel(
-    private val stage: StageConfig,
-    private val totalStages: Int,
+@HiltViewModel(assistedFactory = GameViewModel.Factory::class)
+class GameViewModel @AssistedInject constructor(
+    @Assisted private val stage: StageConfig,
+    @Assisted private val totalStages: Int,
     private val progressRepository: ProgressStore,
+    private val engineFactory: Match3EngineFactory,
     private val savedStateHandle: SavedStateHandle,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private var session: GameSession = restoreSession() ?: createFreshSession()
@@ -271,7 +276,7 @@ class GameViewModel(
 
     private fun createFreshSession(): GameSession {
         val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes)
-        val engine = Match3Engine(stage)
+        val engine = engineFactory.create(stage)
         board.fillRandom()
         engine.ensurePlayableBoard(board)
         engine.resolveBoard(board)
@@ -323,7 +328,7 @@ class GameViewModel(
 
         return GameSession(
             board = board,
-            engine = Match3Engine(stage),
+            engine = engineFactory.create(stage),
             selected = selected,
             points = savedStateHandle.get<Int>(KEY_POINTS) ?: 0,
             moves = savedStateHandle.get<Int>(KEY_MOVES) ?: stage.initialMoves,
@@ -344,20 +349,10 @@ class GameViewModel(
         private const val KEY_MESSAGE = "game_message"
         private const val KEY_SELECTED_ROW = "game_selected_row"
         private const val KEY_SELECTED_COL = "game_selected_col"
+    }
 
-        fun factory(
-            stage: StageConfig,
-            totalStages: Int,
-            progressRepository: ProgressStore
-        ) = viewModelFactory {
-            initializer {
-                GameViewModel(
-                    stage = stage,
-                    totalStages = totalStages,
-                    progressRepository = progressRepository,
-                    savedStateHandle = createSavedStateHandle()
-                )
-            }
-        }
+    @AssistedFactory
+    interface Factory {
+        fun create(stage: StageConfig, totalStages: Int): GameViewModel
     }
 }

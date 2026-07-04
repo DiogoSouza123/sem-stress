@@ -2,18 +2,19 @@ package com.semstress.mobile.ui.state
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.data.StageCatalogSource
+import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class MenuUiState(
     val isLoading: Boolean = true,
@@ -39,10 +40,11 @@ sealed interface MenuAction {
  * [StageCatalogSource.load] nor [ProgressStore.load] are safe to call from the main thread, so
  * [MenuUiState.isLoading] stays `true` until both finish.
  */
-class MenuViewModel(
+@HiltViewModel
+class MenuViewModel @Inject constructor(
     private val stageCatalogSource: StageCatalogSource,
     private val progressRepository: ProgressStore,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MenuUiState())
@@ -83,20 +85,6 @@ class MenuViewModel(
             val totalStages = _uiState.value.stages.size
             val progress = progressRepository.load(totalStages)
             _uiState.value = _uiState.value.copy(progress = progress)
-        }
-    }
-
-    companion object {
-        fun factory(
-            stageCatalogSource: StageCatalogSource,
-            progressRepository: ProgressStore
-        ) = viewModelFactory {
-            initializer {
-                MenuViewModel(
-                    stageCatalogSource = stageCatalogSource,
-                    progressRepository = progressRepository
-                )
-            }
         }
     }
 }

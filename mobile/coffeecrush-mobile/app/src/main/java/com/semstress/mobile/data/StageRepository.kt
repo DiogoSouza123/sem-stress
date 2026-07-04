@@ -4,17 +4,19 @@ import android.content.Context
 import android.util.Log
 import com.semstress.mobile.domain.StageCatalog
 import com.semstress.mobile.domain.StageConfig
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Properties
 import java.util.TreeSet
+import javax.inject.Inject
 
 interface StageCatalogSource {
     suspend fun load(): StageCatalog
 }
 
-class StageRepository(private val context: Context) : StageCatalogSource {
+class StageRepository @Inject constructor(@ApplicationContext private val context: Context) : StageCatalogSource {
     override suspend fun load(): StageCatalog = withContext(Dispatchers.IO) {
         runCatching {
             loadOrThrow()

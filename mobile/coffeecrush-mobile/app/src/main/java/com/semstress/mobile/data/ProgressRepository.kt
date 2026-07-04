@@ -2,13 +2,15 @@ package com.semstress.mobile.data
 
 import android.content.Context
 import com.semstress.mobile.domain.PlayerProgress
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
 interface ProgressStore {
     fun load(totalStages: Int): PlayerProgress
     fun save(progress: PlayerProgress)
 }
 
-class ProgressRepository(context: Context) : ProgressStore {
+class ProgressRepository @Inject constructor(@ApplicationContext context: Context) : ProgressStore {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     override fun load(totalStages: Int): PlayerProgress {

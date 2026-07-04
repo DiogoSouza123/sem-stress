@@ -2,7 +2,9 @@ package com.semstress.mobile
 
 import android.app.Application
 import android.os.StrictMode
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class CoffeeCrushApplication : Application() {
     override fun onCreate() {
         super.onCreate()

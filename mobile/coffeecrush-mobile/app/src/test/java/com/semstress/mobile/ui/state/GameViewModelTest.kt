@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.semstress.mobile.data.FakeProgressStore
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.engine.DefaultMatch3EngineFactory
 import com.semstress.mobile.engine.stageConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -326,6 +327,7 @@ class GameViewModelTest {
         stage = stage,
         totalStages = totalStages,
         progressRepository = progressRepository,
+        engineFactory = DefaultMatch3EngineFactory(),
         savedStateHandle = savedStateHandle,
         ioDispatcher = testDispatcher
     )

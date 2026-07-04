@@ -10,20 +10,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.semstress.mobile.audio.MusicaFundoPlayer
-import com.semstress.mobile.data.ProgressRepository
-import com.semstress.mobile.data.SettingsRepository
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.navigation.GameRoute
@@ -37,45 +34,33 @@ import com.semstress.mobile.ui.state.MenuUiState
 import com.semstress.mobile.ui.state.MenuViewModel
 import com.semstress.mobile.ui.state.SettingsViewModel
 import com.semstress.mobile.ui.theme.CoffeeCrushTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 private const val GAME_DEEP_LINK_PATTERN = "coffeecrush://game/{stageId}"
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var musicaFundoPlayer: MusicaFundoPlayer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CoffeeCrushTheme {
-                CoffeeCrushApp()
+                CoffeeCrushApp(musicaFundoPlayer)
             }
         }
     }
 }
 
 @Composable
-private fun CoffeeCrushApp() {
-    val context = LocalContext.current
-    val appContext = context.applicationContext
-    val stageRepository = remember(appContext) {
-        StageRepository(appContext)
-    }
-    val progressRepository = remember(appContext) {
-        ProgressRepository(appContext)
-    }
-    val settingsRepository = remember(appContext) {
-        SettingsRepository(appContext)
-    }
-    val musicaFundoPlayer = remember(appContext) {
-        MusicaFundoPlayer(appContext)
-    }
-
-    val menuViewModel: MenuViewModel = viewModel(
-        factory = MenuViewModel.factory(stageRepository, progressRepository)
-    )
+private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer) {
+    val menuViewModel: MenuViewModel = hiltViewModel()
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
 
-    val settingsViewModel: SettingsViewModel = viewModel(
-        factory = SettingsViewModel.factory(settingsRepository)
-    )
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
     DisposableEffect(Unit) {
@@ -95,57 +80,82 @@ private fun CoffeeCrushApp() {
 
     NavHost(navController = navController, startDestination = MenuRoute) {
         composable<MenuRoute> {
-            // Refreshes progress every time the menu becomes the visible destination again
-            // (both the explicit "back to menu" button and the system back gesture from the
-            // game screen land here), since GameViewModel writes progress directly to disk.
-            LaunchedEffect(Unit) {
-                menuViewModel.onAction(MenuAction.ReturnToMenu)
-            }
-
-            PlayTrackForMenu(menuState, settingsState.musicMuted, musicaFundoPlayer)
-
-            StageMenuScreen(
-                stages = menuState.stages,
-                progress = menuState.progress,
-                selectedStageId = menuState.selectedStageId,
-                isMusicMuted = settingsState.musicMuted,
-                onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
-                onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
-                onToggleMusic = { settingsViewModel.toggleMusic() }
-            )
+            MenuDestination(navController, menuViewModel, settingsViewModel, musicaFundoPlayer)
         }
 
         composable<GameRoute>(
             deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
         ) { backStackEntry ->
             val route: GameRoute = backStackEntry.toRoute()
-            val stage = menuState.stages.first { it.id == route.stageId }
-            val gameViewModel: GameViewModel = viewModel(
-                factory = GameViewModel.factory(stage, menuState.stages.size, progressRepository)
-            )
-            val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
-
-            PlayTrackForStage(stage, settingsState.musicMuted, musicaFundoPlayer)
-
-            LaunchedEffect(gameViewModel) {
-                gameViewModel.backToMenuRequests.collect {
-                    navController.popBackStack()
-                }
-            }
-
-            GameScreen(
-                game = gameState,
-                isMusicMuted = settingsState.musicMuted,
-                onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
-                onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
-                    gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
-                },
-                onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
-                onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
-                onToggleMusic = { settingsViewModel.toggleMusic() }
-            )
+            GameDestination(route, navController, menuState, settingsViewModel, musicaFundoPlayer)
         }
     }
+}
+
+@Composable
+private fun MenuDestination(
+    navController: NavController,
+    menuViewModel: MenuViewModel,
+    settingsViewModel: SettingsViewModel,
+    musicaFundoPlayer: MusicaFundoPlayer
+) {
+    val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Refreshes progress every time the menu becomes the visible destination again (both the
+    // explicit "back to menu" button and the system back gesture from the game screen land
+    // here), since GameViewModel writes progress directly to disk.
+    LaunchedEffect(Unit) {
+        menuViewModel.onAction(MenuAction.ReturnToMenu)
+    }
+
+    PlayTrackForMenu(menuState, settingsState.musicMuted, musicaFundoPlayer)
+
+    StageMenuScreen(
+        stages = menuState.stages,
+        progress = menuState.progress,
+        selectedStageId = menuState.selectedStageId,
+        isMusicMuted = settingsState.musicMuted,
+        onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
+        onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
+        onToggleMusic = { settingsViewModel.toggleMusic() }
+    )
+}
+
+@Composable
+private fun GameDestination(
+    route: GameRoute,
+    navController: NavController,
+    menuState: MenuUiState,
+    settingsViewModel: SettingsViewModel,
+    musicaFundoPlayer: MusicaFundoPlayer
+) {
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val stage = menuState.stages.first { it.id == route.stageId }
+    val gameViewModel: GameViewModel = hiltViewModel<GameViewModel, GameViewModel.Factory>(
+        creationCallback = { factory -> factory.create(stage, menuState.stages.size) }
+    )
+    val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
+
+    PlayTrackForStage(stage, settingsState.musicMuted, musicaFundoPlayer)
+
+    LaunchedEffect(gameViewModel) {
+        gameViewModel.backToMenuRequests.collect {
+            navController.popBackStack()
+        }
+    }
+
+    GameScreen(
+        game = gameState,
+        isMusicMuted = settingsState.musicMuted,
+        onCellTap = { row, col -> gameViewModel.onAction(GameAction.CellTapped(row, col)) },
+        onCellDragSwap = { fromRow, fromCol, toRow, toCol ->
+            gameViewModel.onAction(GameAction.CellDragSwapped(fromRow, fromCol, toRow, toCol))
+        },
+        onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
+        onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
+        onToggleMusic = { settingsViewModel.toggleMusic() }
+    )
 }
 
 @Composable

@@ -3,8 +3,12 @@ package com.semstress.mobile.audio
 import android.content.Context
 import android.media.MediaPlayer
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MusicaFundoPlayer(private val context: Context) {
+@Singleton
+class MusicaFundoPlayer @Inject constructor(@ApplicationContext private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
     private var musicaAtual: String? = null
     private var volumeAtualPercentual: Int = 70

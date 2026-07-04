@@ -13,7 +13,9 @@
     <ID>FunctionNaming:GameScreen.kt$@Composable private fun Metric(label: String, value: String)</ID>
     <ID>FunctionNaming:GameScreen.kt$@Composable private fun PieceCell( value: Int, selected: Boolean, highlighted: Boolean, exploding: Boolean, spritePack: GameSpritePack?, spriteFrame: Int, size: Dp, onClick: () -&gt; Unit )</ID>
     <ID>FunctionNaming:GameScreen.kt$@Composable private fun Scoreboard(score: Int, target: Int, moves: Int)</ID>
-    <ID>FunctionNaming:MainActivity.kt$@Composable private fun CoffeeCrushApp()</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer)</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun GameDestination( route: GameRoute, navController: NavController, menuState: MenuUiState, settingsViewModel: SettingsViewModel, musicaFundoPlayer: MusicaFundoPlayer )</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun MenuDestination( navController: NavController, menuViewModel: MenuViewModel, settingsViewModel: SettingsViewModel, musicaFundoPlayer: MusicaFundoPlayer )</ID>
     <ID>FunctionNaming:MainActivity.kt$@Composable private fun PlayTrackForMenu(menuState: MenuUiState, musicMuted: Boolean, player: MusicaFundoPlayer)</ID>
     <ID>FunctionNaming:MainActivity.kt$@Composable private fun PlayTrackForStage(stage: StageConfig, musicMuted: Boolean, player: MusicaFundoPlayer)</ID>
     <ID>FunctionNaming:StageMenuScreen.kt$@Composable fun StageMenuScreen( stages: List&lt;StageConfig&gt;, progress: PlayerProgress, selectedStageId: Int, isMusicMuted: Boolean, onSelectStage: (Int) -&gt; Unit, onPlaySelectedStage: () -&gt; Unit, onToggleMusic: () -&gt; Unit )</ID>
@@ -27,7 +29,6 @@
     <ID>LongMethod:GameScreen.kt$@Composable fun GameScreen( game: GameUiState, isMusicMuted: Boolean, onCellTap: (row: Int, col: Int) -&gt; Unit, onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -&gt; Unit, onBackToMenu: () -&gt; Unit, onReplayStage: () -&gt; Unit, onToggleMusic: () -&gt; Unit )</ID>
     <ID>LongMethod:GameScreen.kt$@Composable private fun BoardView( board: List&lt;List&lt;Int&gt;&gt;, selected: Position?, highlightedMatches: Set&lt;Position&gt;, explodingMatches: Set&lt;Position&gt;, spritePack: GameSpritePack?, spriteFrame: Int, onCellTap: (row: Int, col: Int) -&gt; Unit, onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -&gt; Unit )</ID>
     <ID>LongMethod:GameScreen.kt$@Composable private fun PieceCell( value: Int, selected: Boolean, highlighted: Boolean, exploding: Boolean, spritePack: GameSpritePack?, spriteFrame: Int, size: Dp, onClick: () -&gt; Unit )</ID>
-    <ID>LongMethod:MainActivity.kt$@Composable private fun CoffeeCrushApp()</ID>
     <ID>LongMethod:StageMenuScreen.kt$@Composable fun StageMenuScreen( stages: List&lt;StageConfig&gt;, progress: PlayerProgress, selectedStageId: Int, isMusicMuted: Boolean, onSelectStage: (Int) -&gt; Unit, onPlaySelectedStage: () -&gt; Unit, onToggleMusic: () -&gt; Unit )</ID>
     <ID>LongMethod:StageRepository.kt$StageRepository$private fun loadOrThrow(): StageCatalog</ID>
     <ID>LongParameterList:GameScreen.kt$( board: List&lt;List&lt;Int&gt;&gt;, selected: Position?, highlightedMatches: Set&lt;Position&gt;, explodingMatches: Set&lt;Position&gt;, spritePack: GameSpritePack?, spriteFrame: Int, onCellTap: (row: Int, col: Int) -&gt; Unit, onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -&gt; Unit )</ID>
