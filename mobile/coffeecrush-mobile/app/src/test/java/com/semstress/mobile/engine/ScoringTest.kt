@@ -34,25 +34,25 @@ class ScoringTest {
 
     @Test
     fun `pontua mais quando cascata esta habilitada`() {
-        val configSemCascata = stageConfig(
+        val configWithoutCascade = stageConfig(
             pieceTypes = 2,
             scoreMatch3 = 100,
             cascadeMultiplier = 2,
             scoreCascade = false
         )
-        val configComCascata = stageConfig(
+        val configWithCascade = stageConfig(
             pieceTypes = 2,
             scoreMatch3 = 100,
             cascadeMultiplier = 2,
             scoreCascade = true
         )
 
-        val pontosSemCascata = Match3Engine(configSemCascata).resolveBoard(cascadeBoard()).points
-        val pontosComCascata = Match3Engine(configComCascata).resolveBoard(cascadeBoard()).points
+        val pointsWithoutCascade = Match3Engine(configWithoutCascade).resolveBoard(cascadeBoard()).points
+        val pointsWithCascade = Match3Engine(configWithCascade).resolveBoard(cascadeBoard()).points
 
-        assertEquals(100, pontosSemCascata)
-        assertEquals(300, pontosComCascata)
-        assertTrue(pontosComCascata > pontosSemCascata)
+        assertEquals(100, pointsWithoutCascade)
+        assertEquals(300, pointsWithCascade)
+        assertTrue(pointsWithCascade > pointsWithoutCascade)
     }
 
     @Test

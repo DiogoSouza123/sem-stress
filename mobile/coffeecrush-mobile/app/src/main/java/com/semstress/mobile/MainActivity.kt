@@ -24,7 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
-import com.semstress.mobile.audio.MusicaFundoPlayer
+import com.semstress.mobile.audio.BackgroundMusicPlayer
 import com.semstress.mobile.audio.SfxPlayer
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.domain.StageConfig
@@ -49,13 +49,13 @@ import javax.inject.Inject
 private const val GAME_DEEP_LINK_PATTERN = "coffeecrush://game/{stageId}"
 
 /** Bundles the app-scoped audio players so [GameDestination] stays under the parameter limit. */
-private data class AudioPlayers(val musicaFundoPlayer: MusicaFundoPlayer, val sfxPlayer: SfxPlayer)
+private data class AudioPlayers(val backgroundMusicPlayer: BackgroundMusicPlayer, val sfxPlayer: SfxPlayer)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var musicaFundoPlayer: MusicaFundoPlayer
+    lateinit var backgroundMusicPlayer: BackgroundMusicPlayer
 
     @Inject
     lateinit var sfxPlayer: SfxPlayer
@@ -69,14 +69,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CoffeeCrushTheme {
-                CoffeeCrushApp(musicaFundoPlayer, sfxPlayer)
+                CoffeeCrushApp(backgroundMusicPlayer, sfxPlayer)
             }
         }
     }
 }
 
 @Composable
-private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer, sfxPlayer: SfxPlayer) {
+private fun CoffeeCrushApp(backgroundMusicPlayer: BackgroundMusicPlayer, sfxPlayer: SfxPlayer) {
     val menuViewModel: MenuViewModel = hiltViewModel()
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -85,7 +85,7 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer, sfxPlayer: SfxP
 
     DisposableEffect(Unit) {
         onDispose {
-            musicaFundoPlayer.liberar()
+            backgroundMusicPlayer.release()
         }
     }
 
@@ -104,7 +104,7 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer, sfxPlayer: SfxP
         modifier = Modifier.safeDrawingPadding()
     ) {
         composable<MenuRoute> {
-            MenuDestination(navController, menuViewModel, settingsViewModel, musicaFundoPlayer)
+            MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
         }
 
         composable<GameRoute>(
@@ -116,7 +116,7 @@ private fun CoffeeCrushApp(musicaFundoPlayer: MusicaFundoPlayer, sfxPlayer: SfxP
                 navController,
                 menuState,
                 settingsViewModel,
-                AudioPlayers(musicaFundoPlayer, sfxPlayer)
+                AudioPlayers(backgroundMusicPlayer, sfxPlayer)
             )
         }
     }
@@ -127,7 +127,7 @@ private fun MenuDestination(
     navController: NavController,
     menuViewModel: MenuViewModel,
     settingsViewModel: SettingsViewModel,
-    musicaFundoPlayer: MusicaFundoPlayer
+    backgroundMusicPlayer: BackgroundMusicPlayer
 ) {
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
@@ -139,7 +139,7 @@ private fun MenuDestination(
         menuViewModel.onAction(MenuAction.ReturnToMenu)
     }
 
-    PlayTrackForMenu(menuState, settingsState.musicMuted, musicaFundoPlayer)
+    PlayTrackForMenu(menuState, settingsState.musicMuted, backgroundMusicPlayer)
 
     StageMenuScreen(
         stages = menuState.stages,
@@ -173,7 +173,7 @@ private fun GameDestination(
     )
     val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
 
-    PlayTrackForStage(stage, settingsState.musicMuted, players.musicaFundoPlayer)
+    PlayTrackForStage(stage, settingsState.musicMuted, players.backgroundMusicPlayer)
 
     LaunchedEffect(gameViewModel) {
         gameViewModel.backToMenuRequests.collect {
@@ -203,26 +203,26 @@ private fun GameDestination(
 }
 
 @Composable
-private fun PlayTrackForMenu(menuState: MenuUiState, musicMuted: Boolean, player: MusicaFundoPlayer) {
+private fun PlayTrackForMenu(menuState: MenuUiState, musicMuted: Boolean, player: BackgroundMusicPlayer) {
     val silent = menuState.menuMusicVolumePercent <= 0 ||
         menuState.menuMusicName == StageRepository.SILENT_MUSIC_RESOURCE
     LaunchedEffect(menuState.menuMusicName, menuState.menuMusicVolumePercent, musicMuted) {
         if (musicMuted || silent) {
-            player.parar()
+            player.stop()
         } else {
-            player.tocarEmLoop(menuState.menuMusicName, menuState.menuMusicVolumePercent)
+            player.playLooping(menuState.menuMusicName, menuState.menuMusicVolumePercent)
         }
     }
 }
 
 @Composable
-private fun PlayTrackForStage(stage: StageConfig, musicMuted: Boolean, player: MusicaFundoPlayer) {
+private fun PlayTrackForStage(stage: StageConfig, musicMuted: Boolean, player: BackgroundMusicPlayer) {
     val silent = stage.musicVolumePercent <= 0 || stage.musicName == StageRepository.SILENT_MUSIC_RESOURCE
     LaunchedEffect(stage.musicName, stage.musicVolumePercent, musicMuted) {
         if (musicMuted || silent) {
-            player.parar()
+            player.stop()
         } else {
-            player.tocarEmLoop(stage.musicName, stage.musicVolumePercent)
+            player.playLooping(stage.musicName, stage.musicVolumePercent)
         }
     }
 }

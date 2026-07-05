@@ -14,7 +14,7 @@ object PlayerProgressSerializer : Serializer<PlayerProgressProto> {
         return try {
             PlayerProgressProto.parseFrom(input)
         } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Nao foi possivel ler o progresso persistido.", exception)
+            throw CorruptionException("Could not read persisted progress.", exception)
         }
     }
 

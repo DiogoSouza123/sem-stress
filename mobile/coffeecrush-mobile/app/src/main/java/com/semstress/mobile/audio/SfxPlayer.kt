@@ -15,7 +15,7 @@ private const val DEFAULT_VOLUME_PERCENT = 100
 private const val MIN_VOLUME_PERCENT = 0
 private const val MAX_VOLUME_PERCENT = 100
 
-/** Short sound effects (RR-22), distinct from the looping background track in [MusicaFundoPlayer]. */
+/** Short sound effects (RR-22), distinct from the looping background track in [BackgroundMusicPlayer]. */
 enum class SfxEffect(val resourceName: String) {
     SELECT("sfx_select"),
     SWAP("sfx_swap"),
@@ -26,7 +26,7 @@ enum class SfxEffect(val resourceName: String) {
 
 /**
  * `SoundPool` is the right tool for short, latency-sensitive one-shots (performance.md §5) —
- * unlike [MusicaFundoPlayer]'s `MediaPlayer`, sounds are decoded once up front and played with
+ * unlike [BackgroundMusicPlayer]'s `MediaPlayer`, sounds are decoded once up front and played with
  * near-zero start latency. All [SfxEffect] sounds are preloaded eagerly since they are tiny.
  */
 @Singleton

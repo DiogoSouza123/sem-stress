@@ -95,7 +95,7 @@ class StageCatalogJsonParserTest {
             StageCatalogJsonParser.parse("{ nao e json valido")
         }
 
-        assertTrue(exception.message!!.contains("JSON de fases invalido"))
+        assertTrue(exception.message!!.contains("Invalid stages JSON"))
     }
 
     @Test
@@ -117,7 +117,7 @@ class StageCatalogJsonParserTest {
             StageCatalogJsonParser.parse(json)
         }
 
-        assertTrue(exception.message!!.contains("Fase 3"))
+        assertTrue(exception.message!!.contains("Stage 3"))
     }
 
     @Test

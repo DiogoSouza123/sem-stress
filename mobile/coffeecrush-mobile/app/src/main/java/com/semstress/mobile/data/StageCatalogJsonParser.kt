@@ -85,7 +85,7 @@ object StageCatalogJsonParser {
 
         if (file.schemaVersion != SUPPORTED_SCHEMA_VERSION) {
             throw StageConfigParsingException(
-                "schemaVersion ${file.schemaVersion} nao suportado (esperado $SUPPORTED_SCHEMA_VERSION)."
+                "schemaVersion ${file.schemaVersion} not supported (expected $SUPPORTED_SCHEMA_VERSION)."
             )
         }
 
@@ -105,7 +105,7 @@ object StageCatalogJsonParser {
     private fun decodeOrThrow(text: String): StageCatalogFileDto = try {
         json.decodeFromString(StageCatalogFileDto.serializer(), text)
     } catch (exception: IllegalArgumentException) {
-        throw StageConfigParsingException("JSON de fases invalido: ${exception.message}", exception)
+        throw StageConfigParsingException("Invalid stages JSON: ${exception.message}", exception)
     }
 
     private fun fallbackStage(base: StageDefaultsDto): StageConfig = StageConfig(
@@ -166,25 +166,25 @@ object StageCatalogJsonParser {
     }
 
     private fun validateStage(stage: StageConfig) {
-        requireStage(stage.rows > 0, stage.id) { "rows deve ser maior que zero" }
-        requireStage(stage.cols > 0, stage.id) { "cols deve ser maior que zero" }
-        requireStage(stage.pieceTypes > 0, stage.id) { "pieceTypes deve ser maior que zero" }
+        requireStage(stage.rows > 0, stage.id) { "rows must be greater than zero" }
+        requireStage(stage.cols > 0, stage.id) { "cols must be greater than zero" }
+        requireStage(stage.pieceTypes > 0, stage.id) { "pieceTypes must be greater than zero" }
         requireStage(stage.minMatchSize >= MIN_MATCH_SIZE_FLOOR, stage.id) {
-            "minMatchSize deve ser >= $MIN_MATCH_SIZE_FLOOR"
+            "minMatchSize must be >= $MIN_MATCH_SIZE_FLOOR"
         }
         requireStage(stage.rows >= stage.minMatchSize || stage.cols >= stage.minMatchSize, stage.id) {
-            "ao menos uma dimensao do tabuleiro deve ser >= minMatchSize"
+            "at least one board dimension must be >= minMatchSize"
         }
-        requireStage(stage.initialMoves > 0, stage.id) { "initialMoves deve ser maior que zero" }
-        requireStage(stage.targetScore >= 0, stage.id) { "targetScore nao pode ser negativo" }
+        requireStage(stage.initialMoves > 0, stage.id) { "initialMoves must be greater than zero" }
+        requireStage(stage.targetScore >= 0, stage.id) { "targetScore cannot be negative" }
         requireStage(stage.musicVolumePercent in 0..MAX_MUSIC_VOLUME_PERCENT, stage.id) {
-            "musicVolumePercent deve estar entre 0 e $MAX_MUSIC_VOLUME_PERCENT"
+            "musicVolumePercent must be between 0 and $MAX_MUSIC_VOLUME_PERCENT"
         }
     }
 
     private inline fun requireStage(condition: Boolean, stageId: Int, lazyMessage: () -> String) {
         if (!condition) {
-            throw StageConfigParsingException("Fase $stageId invalida: ${lazyMessage()}")
+            throw StageConfigParsingException("Stage $stageId invalid: ${lazyMessage()}")
         }
     }
 }

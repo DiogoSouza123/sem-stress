@@ -26,7 +26,7 @@ class StageRepository @Inject constructor(@ApplicationContext private val contex
         runCatching {
             StageCatalogJsonParser.parse(readConfigText())
         }.getOrElse { ex ->
-            Log.e("StageRepository", "Falha ao carregar configuracao de fases. Usando fallback.", ex)
+            Log.e("StageRepository", "Failed to load stage configuration. Using fallback.", ex)
             fallbackCatalog()
         }
     }

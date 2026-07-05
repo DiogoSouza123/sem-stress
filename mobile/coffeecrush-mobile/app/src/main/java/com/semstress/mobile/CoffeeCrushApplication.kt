@@ -5,7 +5,7 @@ import android.os.StrictMode
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.semstress.mobile.audio.MusicaFundoPlayer
+import com.semstress.mobile.audio.BackgroundMusicPlayer
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -13,23 +13,23 @@ import javax.inject.Inject
 class CoffeeCrushApplication : Application() {
 
     @Inject
-    lateinit var musicaFundoPlayer: MusicaFundoPlayer
+    lateinit var backgroundMusicPlayer: BackgroundMusicPlayer
 
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
             enableStrictMode()
         }
-        // RR-22: a musica continuava tocando com o app em background; pausa/retoma com o ciclo
-        // de vida do processo inteiro em vez de depender de uma tela especifica estar visivel.
+        // RR-22: music kept playing with the app in background; pause/resume with the whole
+        // process lifecycle instead of depending on a specific screen being visible.
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStop(owner: LifecycleOwner) {
-                    musicaFundoPlayer.pausar()
+                    backgroundMusicPlayer.pause()
                 }
 
                 override fun onStart(owner: LifecycleOwner) {
-                    musicaFundoPlayer.retomar()
+                    backgroundMusicPlayer.resume()
                 }
             }
         )

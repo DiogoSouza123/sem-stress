@@ -11,10 +11,12 @@ Mapa de renomes principais:
 
 | Atual | Alvo |
 |---|---|
-| `MusicaFundoPlayer` | `BackgroundMusicPlayer` (`play(track, volume)`, `stop()`, `release()`) |
+| `MusicaFundoPlayer` | `BackgroundMusicPlayer` (`playLooping(track, volume)`, `stop()`, `release()`, `pause()`, `resume()`) |
 | `tocarEmLoop/parar/liberar` | `playLooping/stop/release` |
 | mensagens de exceção em pt (ex.: "Snapshot invalido…") | inglês |
 | chaves `fase.N.*` nos configs | **Concluído em RR-16** — substituídas pelo catálogo `stages.json` (`schemaVersion`, `base`, `menu`, `stages[]`); não há mais chaves pt-BR aqui |
+
+**Fora do escopo de RR-09** (para não misturar renomeação com mudança de lógica): as duas mensagens em `GameViewModel` (`"Sem movimentos disponiveis..."`, `"Movimento invalido."`) são exibidas ao jogador via `GameUiState.message` e deveriam migrar para `strings.xml`, mas isso exige o ViewModel resolver recursos (mudança de forma de acesso, não só de nome) — tratar como item futuro. Os nomes de teste em backtick (`` `pontua...` ``) em vários arquivos de teste também permanecem em português; são labels descritivos sem referência cruzada, sem urgência.
 
 ### 1.2 Compose
 - Composables **stateless por padrão**: recebem estado + lambdas (`GameScreen(state, onAction)`); state hoisting sempre.

@@ -44,7 +44,7 @@ class Match3Board(
 
     fun overwrite(snapshot: List<List<Int>>) {
         if (snapshot.size != rows || snapshot.any { it.size != cols }) {
-            throw IllegalArgumentException("Snapshot invalido para tabuleiro ${rows}x$cols.")
+            throw IllegalArgumentException("Invalid snapshot for ${rows}x$cols board.")
         }
         for (row in 0 until rows) {
             for (col in 0 until cols) {
