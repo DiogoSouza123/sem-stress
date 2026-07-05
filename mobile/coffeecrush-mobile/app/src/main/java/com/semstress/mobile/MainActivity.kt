@@ -30,7 +30,9 @@ import com.semstress.mobile.common.MutableFeatureFlags
 import com.semstress.mobile.data.StageRepository
 import com.semstress.mobile.debug.DebugMenuActions
 import com.semstress.mobile.debug.DebugMenuHost
+import com.semstress.mobile.domain.DAILY_CHALLENGE_STAGE_ID
 import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.domain.ZEN_MODE_STAGE_ID
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.screens.GameScreen
@@ -41,6 +43,7 @@ import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.screens.StageMenuScreenActions
 import com.semstress.mobile.ui.screens.StageMenuScreenSound
 import com.semstress.mobile.ui.state.GameAction
+import com.semstress.mobile.ui.state.GameSessionSpec
 import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.state.MenuAction
 import com.semstress.mobile.ui.state.MenuUiState
@@ -170,6 +173,13 @@ private fun MenuDestination(
         actions = StageMenuScreenActions(
             onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
             onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
+            onPlayZenMode = {
+                navController.navigate(GameRoute(stageId = menuState.stages.first().id, zen = true))
+            },
+            onPlayDailyChallenge = {
+                val today = java.time.LocalDate.now().toEpochDay()
+                navController.navigate(GameRoute(stageId = menuState.stages.first().id, dailySeed = today))
+            },
             onToggleMusic = { settingsViewModel.toggleMusic() },
             onToggleSfx = { settingsViewModel.toggleSfx() }
         )
@@ -185,9 +195,16 @@ private fun GameDestination(
     dependencies: GameDestinationDependencies
 ) {
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val stage = menuState.stages.first { it.id == route.stageId }
+    val baseStage = menuState.stages.first { it.id == route.stageId }
+    val stage = when {
+        route.zen -> baseStage.copy(id = ZEN_MODE_STAGE_ID, isZenMode = true)
+        route.dailySeed != null -> baseStage.copy(id = DAILY_CHALLENGE_STAGE_ID)
+        else -> baseStage
+    }
     val gameViewModel: GameViewModel = hiltViewModel<GameViewModel, GameViewModel.Factory>(
-        creationCallback = { factory -> factory.create(stage, menuState.stages.size) }
+        creationCallback = { factory ->
+            factory.create(GameSessionSpec(stage, menuState.stages.size, route.dailySeed))
+        }
     )
     val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
 

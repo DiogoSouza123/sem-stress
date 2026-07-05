@@ -21,5 +21,6 @@ data class StageConfig(
     val musicName: String = "orchestronika_motivation",
     val musicVolumePercent: Int = 70,
     val collectObjective: CollectObjective? = null,
-    val region: String? = null
+    val region: String? = null,
+    val isZenMode: Boolean = false
 )

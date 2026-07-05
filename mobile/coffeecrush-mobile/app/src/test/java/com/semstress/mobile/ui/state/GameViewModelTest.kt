@@ -359,10 +359,10 @@ class GameViewModelTest {
         stage: StageConfig,
         savedStateHandle: SavedStateHandle,
         totalStages: Int = 1,
-        progressRepository: FakeProgressStore = FakeProgressStore()
+        progressRepository: FakeProgressStore = FakeProgressStore(),
+        seed: Long? = null
     ): GameViewModel = GameViewModel(
-        stage = stage,
-        totalStages = totalStages,
+        spec = GameSessionSpec(stage, totalStages, seed),
         progressRepository = progressRepository,
         engineFactory = DefaultMatch3EngineFactory(),
         savedStateHandle = savedStateHandle,

@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,10 +35,12 @@ import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeePrimaryButton
+import com.semstress.mobile.ui.components.CoffeeSecondaryButton
 import com.semstress.mobile.ui.components.StarRating
 import com.semstress.mobile.ui.components.StatChip
 import com.semstress.mobile.ui.components.StatRow
 import com.semstress.mobile.ui.theme.CoffeeTheme
+import java.time.LocalDate
 
 private const val MAX_STARS_PER_STAGE = 3
 
@@ -69,6 +72,10 @@ fun StageMenuScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         ProgressCard(progress = progress, totalStages = stages.size)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        GameModesRow(progress = progress, actions = actions)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -151,6 +158,29 @@ private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
                 averageLabel to progress.averageScore().toString(),
                 starsLabel to "${progress.totalStars()} / ${totalStages * MAX_STARS_PER_STAGE}"
             )
+        )
+    }
+}
+
+/** GP-05: entry points for the daily challenge (seeded, shared board, limited attempts) and zen mode. */
+@Composable
+private fun GameModesRow(progress: PlayerProgress, actions: StageMenuScreenActions) {
+    val today = remember { LocalDate.now().toEpochDay() }
+    val attemptsRemaining = progress.dailyAttemptsRemaining(today)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        CoffeeSecondaryButton(
+            text = stringResource(R.string.zen_mode),
+            onClick = actions.onPlayZenMode,
+            modifier = Modifier.weight(1f)
+        )
+        CoffeeSecondaryButton(
+            text = stringResource(R.string.daily_challenge, attemptsRemaining),
+            onClick = actions.onPlayDailyChallenge,
+            modifier = Modifier.weight(1f),
+            enabled = attemptsRemaining > 0
         )
     }
 }

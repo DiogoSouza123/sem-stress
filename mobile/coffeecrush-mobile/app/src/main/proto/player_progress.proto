@@ -8,4 +8,7 @@ message PlayerProgressProto {
   int32 current_stage = 2;
   map<int32, int32> best_scores = 3;
   map<int32, int32> stars_by_stage = 4;
+  int64 daily_challenge_epoch_day = 5;
+  int32 daily_attempts_used_today = 6;
+  int32 daily_best_score = 7;
 }

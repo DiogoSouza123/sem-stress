@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.semstress.mobile.BuildConfig
 import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.di.IoDispatcher
+import com.semstress.mobile.domain.DAILY_CHALLENGE_STAGE_ID
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.domain.calculateStars
@@ -54,7 +55,8 @@ data class GameUiState(
     val collectPieceType: Int? = null,
     val collectTarget: Int = 0,
     val collectProgress: Int = 0,
-    val hintMove: Pair<Position, Position>? = null
+    val hintMove: Pair<Position, Position>? = null,
+    val isZenMode: Boolean = false
 )
 
 sealed interface GameAction {
@@ -115,7 +117,8 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     collectPieceType = stage.collectObjective?.pieceType,
     collectTarget = stage.collectObjective?.count ?: 0,
     collectProgress = collectedCount,
-    hintMove = hintMove
+    hintMove = hintMove,
+    isZenMode = stage.isZenMode
 )
 
 /**
@@ -167,16 +170,19 @@ private fun Match3Board.apply(event: BoardEvent) {
  */
 @HiltViewModel(assistedFactory = GameViewModel.Factory::class)
 class GameViewModel @AssistedInject constructor(
-    @Assisted private val stage: StageConfig,
-    @Assisted private val totalStages: Int,
+    @Assisted spec: GameSessionSpec,
     private val progressRepository: ProgressStore,
     private val engineFactory: Match3EngineFactory,
     private val savedStateHandle: SavedStateHandle,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
+    private val stage: StageConfig = spec.stage
+    private val totalStages: Int = spec.totalStages
+    private val seed: Long? = spec.seed
+
     private var session: GameSession = restoreSession(savedStateHandle, stage, engineFactory)
-        ?: createFreshSession(stage, engineFactory)
+        ?: createFreshSession(stage, engineFactory, seed)
 
     private val _uiState = MutableStateFlow(session.toUiState(stage))
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -221,7 +227,8 @@ class GameViewModel @AssistedInject constructor(
                 )
                 emit()
                 viewModelScope.launch {
-                    persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
+                    val spec = GameSessionSpec(stage, totalStages, seed)
+                    persistProgressIfFinished(currentSession, spec, progressRepository, ioDispatcher)
                 }
             }
             is GameAction.DebugReshuffleWithSeed -> if (BuildConfig.DEBUG) {
@@ -316,7 +323,7 @@ class GameViewModel @AssistedInject constructor(
         val completed = if (outcome.valid) {
             applyValidMove(currentSession, first, second, outcome)
         } else {
-            if (stage.consumeInvalidMove) {
+            if (stage.consumeInvalidMove && !stage.isZenMode) {
                 currentSession.moves -= 1
             }
             currentSession.message = INVALID_MOVE_MESSAGE
@@ -332,7 +339,12 @@ class GameViewModel @AssistedInject constructor(
         currentSession.highlightedMatches = emptySet()
         currentSession.explodingMatches = emptySet()
         finalizeMove(currentSession, stage) { scheduleHint(currentSession) }
-        persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
+        persistProgressIfFinished(
+            currentSession,
+            GameSessionSpec(stage, totalStages, seed),
+            progressRepository,
+            ioDispatcher
+        )
     }
 
     /** Returns false if [session] moved on mid-animation (e.g. a replay), meaning [currentSession] is now stale. */
@@ -362,7 +374,9 @@ class GameViewModel @AssistedInject constructor(
         }
 
         currentSession.points += outcome.points
-        currentSession.moves -= 1
+        if (!stage.isZenMode) {
+            currentSession.moves -= 1
+        }
 
         if (!currentSession.engine.hasAvailableMove(currentSession.board)) {
             currentSession.engine.shuffleWithoutMatches(currentSession.board)
@@ -408,13 +422,19 @@ class GameViewModel @AssistedInject constructor(
 
         currentSession.animating = false
         finalizeMove(currentSession, stage) { scheduleHint(currentSession) }
-        persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
+        persistProgressIfFinished(
+            currentSession,
+            GameSessionSpec(stage, totalStages, seed),
+            progressRepository,
+            ioDispatcher
+        )
     }
 
-    private fun restart(seed: Long? = null) {
+    /** GP-05: replaying without an explicit seed reuses the session's own (e.g. the daily challenge's). */
+    private fun restart(newSeed: Long? = seed) {
         moveJob?.cancel()
         hintJob?.cancel()
-        session = createFreshSession(stage, engineFactory, seed)
+        session = createFreshSession(stage, engineFactory, newSeed)
         emit()
         scheduleHint(session)
     }
@@ -451,9 +471,16 @@ class GameViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(stage: StageConfig, totalStages: Int): GameViewModel
+        fun create(spec: GameSessionSpec): GameViewModel
     }
 }
+
+/** GP-05: bundles the assisted-injection args [GameViewModel] needs, to stay under the parameter limit. */
+data class GameSessionSpec(
+    val stage: StageConfig,
+    val totalStages: Int,
+    val seed: Long? = null
+)
 
 private const val NO_SELECTION = -1
 
@@ -471,6 +498,10 @@ private const val KEY_SELECTED_COL = "game_selected_col"
 /** Marks [currentSession] finished/won once its objectives (score + optional collect) are met, or out of
  *  moves; calculates stars on finish, otherwise invokes [onIncomplete] (e.g. to reschedule the GP-08 hint). */
 private fun finalizeMove(currentSession: GameSession, stage: StageConfig, onIncomplete: () -> Unit) {
+    if (stage.isZenMode) {
+        onIncomplete()
+        return
+    }
     val objectivesMet = currentSession.points >= stage.targetScore &&
         (stage.collectObjective?.isComplete(currentSession.collectedCount) ?: true)
     if (objectivesMet) {
@@ -543,8 +574,7 @@ private fun restoreSession(
 
 private suspend fun persistProgressIfFinished(
     currentSession: GameSession,
-    stage: StageConfig,
-    totalStages: Int,
+    spec: GameSessionSpec,
     progressRepository: ProgressStore,
     ioDispatcher: CoroutineDispatcher
 ) {
@@ -552,13 +582,18 @@ private suspend fun persistProgressIfFinished(
         return
     }
     withContext(ioDispatcher) {
-        val progress = progressRepository.load(totalStages).registerResult(
-            stageId = stage.id,
-            score = currentSession.points,
-            won = currentSession.won,
-            totalStages = totalStages,
-            stars = currentSession.starsEarned
-        )
+        val loaded = progressRepository.load(spec.totalStages)
+        val progress = if (spec.stage.id == DAILY_CHALLENGE_STAGE_ID && spec.seed != null) {
+            loaded.registerDailyAttempt(today = spec.seed, score = currentSession.points)
+        } else {
+            loaded.registerResult(
+                stageId = spec.stage.id,
+                score = currentSession.points,
+                won = currentSession.won,
+                totalStages = spec.totalStages,
+                stars = currentSession.starsEarned
+            )
+        }
         progressRepository.save(progress)
     }
 }

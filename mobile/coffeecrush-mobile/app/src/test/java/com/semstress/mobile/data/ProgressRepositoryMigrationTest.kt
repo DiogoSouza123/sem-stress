@@ -76,4 +76,36 @@ class ProgressRepositoryMigrationTest {
         assertEquals(0, reloaded.starsFor(1))
         assertEquals(0, reloaded.totalStars())
     }
+
+    @Test
+    fun `progresso salvo antes do desafio diario existir carrega com zero tentativas usadas`() = runTest {
+        // GP-05: os campos daily_* sao novos no proto, sem equivalente legado; o default proto3
+        // (0) precisa significar "nenhuma tentativa usada ainda" para instalacoes anteriores.
+        val context: Context = RuntimeEnvironment.getApplication()
+        val repository = ProgressRepository(context)
+        repository.save(PlayerProgress(highestUnlockedStage = 2, currentStage = 2))
+
+        val reloaded = repository.load(totalStages = 10)
+
+        assertEquals(0, reloaded.dailyAttemptsUsedToday)
+        assertEquals(0, reloaded.dailyBestScore)
+        assertEquals(3, reloaded.dailyAttemptsRemaining(today = 12345L))
+    }
+
+    @Test
+    fun `desafio diario salvo e recarregado preserva tentativas e melhor pontuacao`() = runTest {
+        val context: Context = RuntimeEnvironment.getApplication()
+        val repository = ProgressRepository(context)
+        val today = 19_500L
+
+        val afterAttempt = PlayerProgress().registerDailyAttempt(today, score = 4200)
+        repository.save(afterAttempt)
+
+        val reloaded = repository.load(totalStages = 10)
+
+        assertEquals(today, reloaded.dailyChallengeEpochDay)
+        assertEquals(1, reloaded.dailyAttemptsUsedToday)
+        assertEquals(4200, reloaded.dailyBestScore)
+        assertEquals(2, reloaded.dailyAttemptsRemaining(today))
+    }
 }

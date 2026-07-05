@@ -80,7 +80,7 @@ fun GameScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Scoreboard(score = game.points, target = game.target, moves = game.moves)
+        Scoreboard(score = game.points, target = game.target, moves = game.moves, isZenMode = game.isZenMode)
         CollectObjectiveChip(game)
         FloatingPointsBanner(points = game.points)
         ComboBanner(message = game.message?.takeIf { it != GameViewModel.INVALID_MOVE_MESSAGE })

@@ -35,4 +35,8 @@
 
     <string name="collect_objective_progress">Pedido: %1$d/%2$d</string>
     <string name="tutorial_hint_message">Toque em duas pecas vizinhas para trocar e formar grupos de 3 ou mais.</string>
+
+    <string name="zen_mode">Modo Zen</string>
+    <string name="daily_challenge">Cafe da Manha (%1$d)</string>
+    <string name="zen_mode_badge">Zen - sem pressa</string>
 </resources>

@@ -60,7 +60,10 @@ class ProgressRepository @Inject constructor(
             highestUnlockedStage = highestUnlocked.coerceIn(1, totalStages),
             currentStage = currentStage.coerceIn(1, totalStages),
             bestScores = proto.bestScoresMap.filterValues { it > 0 },
-            starsByStage = proto.starsByStageMap.filterValues { it > 0 }
+            starsByStage = proto.starsByStageMap.filterValues { it > 0 },
+            dailyChallengeEpochDay = proto.dailyChallengeEpochDay,
+            dailyAttemptsUsedToday = proto.dailyAttemptsUsedToday,
+            dailyBestScore = proto.dailyBestScore
         )
     }
 
@@ -73,6 +76,9 @@ class ProgressRepository @Inject constructor(
                 .putAllBestScores(progress.bestScores)
                 .clearStarsByStage()
                 .putAllStarsByStage(progress.starsByStage)
+                .setDailyChallengeEpochDay(progress.dailyChallengeEpochDay)
+                .setDailyAttemptsUsedToday(progress.dailyAttemptsUsedToday)
+                .setDailyBestScore(progress.dailyBestScore)
                 .build()
         }
     }

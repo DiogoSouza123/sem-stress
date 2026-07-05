@@ -4,6 +4,8 @@ package com.semstress.mobile.ui.screens
 data class StageMenuScreenActions(
     val onSelectStage: (Int) -> Unit,
     val onPlaySelectedStage: () -> Unit,
+    val onPlayZenMode: () -> Unit,
+    val onPlayDailyChallenge: () -> Unit,
     val onToggleMusic: () -> Unit,
     val onToggleSfx: () -> Unit
 )

@@ -51,12 +51,27 @@ private val SCOREBOARD_CUP_SIZE = 40.dp
 
 /** UX-05: replaces the flat "Pontos/Meta/Mov" row with a filling [ProgressCup] toward the target. */
 @Composable
-internal fun Scoreboard(score: Int, target: Int, moves: Int) {
+internal fun Scoreboard(score: Int, target: Int, moves: Int, isZenMode: Boolean = false) {
     val colors = CoffeeTheme.colors
+    val pointsLabel = stringResource(R.string.hud_points)
+
+    if (isZenMode) {
+        CoffeePanel {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatColumn(label = pointsLabel, value = score.toString())
+                StatChip(text = stringResource(R.string.zen_mode_badge))
+            }
+        }
+        return
+    }
+
     val progress = if (target > 0) score.toFloat() / target else 0f
     val lowOnMoves = moves in 1..LOW_MOVES_THRESHOLD
     val movesPulse = rememberPulseAlpha(enabled = lowOnMoves)
-    val pointsLabel = stringResource(R.string.hud_points)
     val movesLabel = stringResource(R.string.hud_moves)
 
     CoffeePanel {
