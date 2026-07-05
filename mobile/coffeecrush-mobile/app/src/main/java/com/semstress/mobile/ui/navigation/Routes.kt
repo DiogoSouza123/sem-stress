@@ -7,3 +7,6 @@ data object MenuRoute
 
 @Serializable
 data class GameRoute(val stageId: Int, val zen: Boolean = false, val dailySeed: Long? = null)
+
+@Serializable
+data object SettingsRoute

@@ -128,7 +128,7 @@ class GameViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val game = viewModel.uiState.value
-        assertEquals("Movimento invalido.", game.message)
+        assertEquals(GameViewModel.INVALID_MOVE_MESSAGE_KEY, game.message)
         assertEquals(stage.initialMoves, game.moves)
         assertEquals(0, game.points)
     }
@@ -152,7 +152,7 @@ class GameViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val game = viewModel.uiState.value
-        assertEquals("Movimento invalido.", game.message)
+        assertEquals(GameViewModel.INVALID_MOVE_MESSAGE_KEY, game.message)
         assertEquals(stage.initialMoves - 1, game.moves)
     }
 
@@ -258,7 +258,7 @@ class GameViewModelTest {
             viewModel.onAction(GameAction.CellTapped(pair.first.row, pair.first.col))
             viewModel.onAction(GameAction.CellTapped(pair.second.row, pair.second.col))
             testDispatcher.scheduler.advanceUntilIdle()
-            if (viewModel.uiState.value.message == "Sem movimentos disponiveis. Tabuleiro embaralhado.") {
+            if (viewModel.uiState.value.message == GameViewModel.SHUFFLED_MESSAGE_KEY) {
                 shuffled = true
             }
         }

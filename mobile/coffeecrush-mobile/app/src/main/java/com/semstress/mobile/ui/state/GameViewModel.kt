@@ -375,7 +375,7 @@ class GameViewModel @AssistedInject constructor(
             if (stage.consumeInvalidMove && !stage.isZenMode) {
                 currentSession.moves -= 1
             }
-            currentSession.message = INVALID_MOVE_MESSAGE
+            currentSession.message = INVALID_MOVE_MESSAGE_KEY
             currentSession.invalidSwap = first to second
             currentSession.invalidMoveNonce += 1
             true
@@ -431,9 +431,9 @@ class GameViewModel @AssistedInject constructor(
 
         if (!currentSession.engine.hasAvailableMove(currentSession.board)) {
             currentSession.engine.shuffleWithoutMatches(currentSession.board)
-            currentSession.message = "Sem movimentos disponiveis. Tabuleiro embaralhado."
+            currentSession.message = SHUFFLED_MESSAGE_KEY
         } else {
-            currentSession.message = if (outcome.cascades > 1) "Combo x${outcome.cascades}!" else null
+            currentSession.message = if (outcome.cascades > 1) "$COMBO_MESSAGE_KEY_PREFIX${outcome.cascades}" else null
         }
         return true
     }
@@ -511,7 +511,11 @@ class GameViewModel @AssistedInject constructor(
 
     companion object {
         /** RR-22: exposed so [com.semstress.mobile.ui.screens.GameScreen] can trigger SFX/haptics on it. */
-        const val INVALID_MOVE_MESSAGE = "Movimento invalido."
+        const val INVALID_MOVE_MESSAGE_KEY = "invalid_move"
+
+        /** UX-12: [GameUiState.message] keys - display text lives in strings.xml, resolved by the UI layer. */
+        const val SHUFFLED_MESSAGE_KEY = "shuffled"
+        const val COMBO_MESSAGE_KEY_PREFIX = "combo:"
     }
 
     @AssistedFactory

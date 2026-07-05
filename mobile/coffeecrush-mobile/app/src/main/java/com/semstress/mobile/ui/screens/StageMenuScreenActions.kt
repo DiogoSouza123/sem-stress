@@ -7,5 +7,6 @@ data class StageMenuScreenActions(
     val onPlayZenMode: () -> Unit,
     val onPlayDailyChallenge: () -> Unit,
     val onToggleMusic: () -> Unit,
-    val onToggleSfx: () -> Unit
+    val onToggleSfx: () -> Unit,
+    val onOpenSettings: () -> Unit
 )

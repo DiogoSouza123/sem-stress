@@ -2,11 +2,6 @@
 <resources>
     <string name="app_name">Coffee Crush Mobile</string>
 
-    <string name="exit_game_confirmation_title">Sair da partida?</string>
-    <string name="exit_game_confirmation_message">Seu progresso nesta fase sera perdido.</string>
-    <string name="exit_game_confirmation_confirm">Sair</string>
-    <string name="exit_game_confirmation_dismiss">Continuar jogando</string>
-
     <string name="toggle_music_on">Musica: ON</string>
     <string name="toggle_music_off">Musica: OFF</string>
     <string name="toggle_sfx_on">Efeitos: ON</string>
@@ -46,4 +41,21 @@
     <string name="hud_accessibility_summary">Pontos: %1$d de %2$d. Movimentos restantes: %3$d.</string>
     <string name="toggle_symbol_mode_on">Modo simbolos: ON</string>
     <string name="toggle_symbol_mode_off">Modo simbolos: OFF</string>
+
+    <string name="game_message_shuffled">Sem jogadas por ai? Embaralhamos os graos pra voce!</string>
+    <string name="game_message_combo">Combo x%1$d!</string>
+
+    <string name="settings_title">Configuracoes</string>
+    <string name="open_settings">Abrir configuracoes</string>
+    <string name="settings_sound_section">Som</string>
+    <string name="settings_accessibility_section">Acessibilidade</string>
+    <string name="settings_credits_section">Creditos</string>
+    <string name="settings_credits_music">Trilhas e efeitos sonoros: freetouse.com (uso livre com atribuicao)</string>
+    <string name="settings_privacy_section">Privacidade</string>
+    <string name="settings_privacy_body">O Coffee Crush nao coleta nem compartilha dados pessoais dos jogadores.</string>
+
+    <string name="pause_title">Jogo pausado</string>
+    <string name="pause_continue">Continuar</string>
+    <string name="pause_restart">Recomecar fase</string>
+    <string name="pause_exit">Sair para o menu</string>
 </resources>

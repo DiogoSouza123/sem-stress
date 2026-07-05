@@ -18,8 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -37,11 +35,15 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.components.CoffeeIconButton
+import com.semstress.mobile.ui.components.CoffeePanel
+import com.semstress.mobile.ui.components.CoffeePrimaryButton
+import com.semstress.mobile.ui.components.CoffeeSecondaryButton
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
@@ -55,12 +57,12 @@ fun GameScreen(
     actions: GameScreenActions,
     debugTools: GameScreenDebugTools
 ) {
-    var showExitConfirmation by remember { mutableStateOf(false) }
-    val requestExit: () -> Unit = {
-        if (game.finished) actions.onBackToMenu() else showExitConfirmation = true
+    var showPauseMenu by remember { mutableStateOf(false) }
+    val requestPause: () -> Unit = {
+        if (game.finished) actions.onBackToMenu() else showPauseMenu = true
     }
 
-    BackHandler(enabled = !game.finished, onBack = requestExit)
+    BackHandler(enabled = !game.finished, onBack = requestPause)
     GameSfxAndHaptics(game, sound)
 
     val colors = CoffeeTheme.colors
@@ -75,7 +77,7 @@ fun GameScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        GameHeader(game, sound, actions, requestExit)
+        GameHeader(game, sound, actions, requestPause)
         DebugMenuTrigger(debugTools)
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -91,20 +93,24 @@ fun GameScreen(
         }
         CollectObjectiveChip(game)
         FloatingPointsBanner(points = game.points)
-        ComboBanner(message = game.message?.takeIf { it != GameViewModel.INVALID_MOVE_MESSAGE })
+        ComboBanner(message = resolveGameMessage(game.message))
 
         Spacer(modifier = Modifier.height(12.dp))
 
         BoardSection(game, spriteAtlas, actions, sound.isSymbolModeEnabled)
     }
 
-    if (showExitConfirmation) {
-        ExitConfirmationDialog(
-            onConfirm = {
-                showExitConfirmation = false
-                actions.onBackToMenu()
+    if (showPauseMenu) {
+        PauseDialog(
+            onContinue = { showPauseMenu = false },
+            onRestart = {
+                showPauseMenu = false
+                actions.onReplayStage()
             },
-            onDismiss = { showExitConfirmation = false }
+            onExit = {
+                showPauseMenu = false
+                actions.onBackToMenu()
+            }
         )
     }
 
@@ -243,7 +249,7 @@ private fun GameSfxAndHaptics(game: GameUiState, sound: GameScreenSound) {
         }
     }
     LaunchedEffect(game.message) {
-        if (game.message == GameViewModel.INVALID_MOVE_MESSAGE) {
+        if (game.message == GameViewModel.INVALID_MOVE_MESSAGE_KEY) {
             if (!sound.isSfxMuted) {
                 sound.sfxPlayer.play(SfxEffect.INVALID_MOVE)
             }
@@ -260,23 +266,53 @@ private fun GameSfxAndHaptics(game: GameUiState, sound: GameScreenSound) {
     }
 }
 
+/** UX-10: pause overlay (continuar/recomecar/sair) shown from the back gesture/button mid-game. */
 @Composable
-private fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.exit_game_confirmation_title)) },
-        text = { Text(stringResource(R.string.exit_game_confirmation_message)) },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(stringResource(R.string.exit_game_confirmation_confirm))
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.exit_game_confirmation_dismiss))
+private fun PauseDialog(onContinue: () -> Unit, onRestart: () -> Unit, onExit: () -> Unit) {
+    Dialog(onDismissRequest = onContinue) {
+        CoffeePanel {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.pause_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CoffeeTheme.colors.hudText
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                CoffeePrimaryButton(
+                    text = stringResource(R.string.pause_continue),
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CoffeeSecondaryButton(
+                    text = stringResource(R.string.pause_restart),
+                    onClick = onRestart,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CoffeeSecondaryButton(
+                    text = stringResource(R.string.pause_exit),
+                    onClick = onExit,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
-    )
+    }
+}
+
+/** UX-12: [GameUiState.message] only carries a stable key - the warm, localized copy lives in strings.xml. */
+@Composable
+private fun resolveGameMessage(key: String?): String? {
+    return when {
+        key == null || key == GameViewModel.INVALID_MOVE_MESSAGE_KEY -> null
+        key == GameViewModel.SHUFFLED_MESSAGE_KEY -> stringResource(R.string.game_message_shuffled)
+        key.startsWith(GameViewModel.COMBO_MESSAGE_KEY_PREFIX) -> {
+            val cascades = key.removePrefix(GameViewModel.COMBO_MESSAGE_KEY_PREFIX).toIntOrNull()
+            cascades?.let { stringResource(R.string.game_message_combo, it) }
+        }
+        else -> null
+    }
 }
 
 internal fun fallbackPieceSymbol(value: Int): String {

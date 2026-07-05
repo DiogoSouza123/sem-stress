@@ -35,10 +35,14 @@ import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.domain.ZEN_MODE_STAGE_ID
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
+import com.semstress.mobile.ui.navigation.SettingsRoute
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.GameScreenActions
 import com.semstress.mobile.ui.screens.GameScreenDebugTools
 import com.semstress.mobile.ui.screens.GameScreenSound
+import com.semstress.mobile.ui.screens.SettingsScreen
+import com.semstress.mobile.ui.screens.SettingsScreenActions
+import com.semstress.mobile.ui.screens.SettingsScreenState
 import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.screens.StageMenuScreenActions
 import com.semstress.mobile.ui.screens.StageMenuScreenSound
@@ -128,6 +132,10 @@ private fun CoffeeCrushApp(dependencies: GameDestinationDependencies) {
             MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
         }
 
+        composable<SettingsRoute> {
+            SettingsDestination(navController, settingsViewModel)
+        }
+
         composable<GameRoute>(
             deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
         ) { backStackEntry ->
@@ -181,7 +189,26 @@ private fun MenuDestination(
                 navController.navigate(GameRoute(stageId = menuState.stages.first().id, dailySeed = today))
             },
             onToggleMusic = { settingsViewModel.toggleMusic() },
-            onToggleSfx = { settingsViewModel.toggleSfx() }
+            onToggleSfx = { settingsViewModel.toggleSfx() },
+            onOpenSettings = { navController.navigate(SettingsRoute) }
+        )
+    )
+}
+
+@Composable
+private fun SettingsDestination(navController: NavController, settingsViewModel: SettingsViewModel) {
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    SettingsScreen(
+        state = SettingsScreenState(
+            musicMuted = settingsState.musicMuted,
+            sfxMuted = settingsState.sfxMuted,
+            symbolModeEnabled = settingsState.symbolModeEnabled
+        ),
+        actions = SettingsScreenActions(
+            onToggleMusic = { settingsViewModel.toggleMusic() },
+            onToggleSfx = { settingsViewModel.toggleSfx() },
+            onToggleSymbolMode = { settingsViewModel.toggleSymbolMode() },
+            onBack = { navController.popBackStack() }
         )
     )
 }

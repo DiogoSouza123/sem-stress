@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeePrimaryButton
 import com.semstress.mobile.ui.components.CoffeeSecondaryButton
@@ -127,6 +129,12 @@ private fun StageMenuHeader(sound: StageMenuScreenSound, actions: StageMenuScree
         }
 
         Column(horizontalAlignment = Alignment.End) {
+            CoffeeIconButton(
+                icon = Icons.Filled.Settings,
+                contentDescription = stringResource(R.string.open_settings),
+                onClick = actions.onOpenSettings
+            )
+            Spacer(modifier = Modifier.height(4.dp))
             OutlinedButton(onClick = actions.onToggleMusic) {
                 Text(stringResource(if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on))
             }
