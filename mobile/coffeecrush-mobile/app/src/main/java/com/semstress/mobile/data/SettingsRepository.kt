@@ -10,6 +10,8 @@ interface SettingsStore {
     fun setMusicMuted(muted: Boolean)
     fun isSfxMuted(): Boolean
     fun setSfxMuted(muted: Boolean)
+    fun isSymbolModeEnabled(): Boolean
+    fun setSymbolModeEnabled(enabled: Boolean)
 }
 
 class SettingsRepository @Inject constructor(@ApplicationContext context: Context) : SettingsStore {
@@ -27,9 +29,17 @@ class SettingsRepository @Inject constructor(@ApplicationContext context: Contex
         prefs.edit { putBoolean(KEY_SFX_MUTED, muted) }
     }
 
+    /** UX-11: a distinct glyph per piece type, for players who rely on color/sprite art to tell pieces apart. */
+    override fun isSymbolModeEnabled(): Boolean = prefs.getBoolean(KEY_SYMBOL_MODE, false)
+
+    override fun setSymbolModeEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_SYMBOL_MODE, enabled) }
+    }
+
     companion object {
         private const val PREFS_NAME = "coffee_crush_mobile_settings"
         private const val KEY_MUSIC_MUTED = "music_muted"
         private const val KEY_SFX_MUTED = "sfx_muted"
+        private const val KEY_SYMBOL_MODE = "symbol_mode_enabled"
     }
 }

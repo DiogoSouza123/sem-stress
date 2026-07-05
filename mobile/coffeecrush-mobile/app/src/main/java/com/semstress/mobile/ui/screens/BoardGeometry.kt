@@ -2,12 +2,18 @@ package com.semstress.mobile.ui.screens
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
 import kotlin.math.abs
 import kotlin.math.hypot
+
+private const val BOARD_SPACING_DP = 6
 
 /**
  * Pixel geometry of the board grid, used to translate pointer offsets into [Position]s. Kept
@@ -23,6 +29,23 @@ data class BoardGeometry(
     val boardHeightPx: Float
 ) {
     val pitchPx: Float get() = cellSizePx + spacingPx
+}
+
+@Composable
+fun BoxWithConstraintsScope.rememberBoardGeometry(rows: Int, cols: Int): BoardGeometry {
+    val spacing = BOARD_SPACING_DP.dp
+    val cellSize = (maxWidth - (spacing * (cols + 1))) / cols
+    val density = LocalDensity.current
+    val spacingPx = with(density) { spacing.toPx() }
+    val cellSizePx = with(density) { cellSize.toPx() }
+    return BoardGeometry(
+        rows = rows,
+        cols = cols,
+        cellSizePx = cellSizePx,
+        spacingPx = spacingPx,
+        boardWidthPx = (cols * cellSizePx) + ((cols - 1) * spacingPx),
+        boardHeightPx = (rows * cellSizePx) + ((rows - 1) * spacingPx)
+    )
 }
 
 private fun BoardGeometry.cellAt(offset: Offset): Position? {

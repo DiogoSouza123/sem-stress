@@ -13,7 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class SettingsUiState(val musicMuted: Boolean = false, val sfxMuted: Boolean = false)
+data class SettingsUiState(
+    val musicMuted: Boolean = false,
+    val sfxMuted: Boolean = false,
+    val symbolModeEnabled: Boolean = false
+)
 
 /**
  * Owns audio/settings state shared across screens (RR-03): both the menu and the game screen
@@ -33,7 +37,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(ioDispatcher) {
             _uiState.value = SettingsUiState(
                 musicMuted = settingsRepository.isMusicMuted(),
-                sfxMuted = settingsRepository.isSfxMuted()
+                sfxMuted = settingsRepository.isSfxMuted(),
+                symbolModeEnabled = settingsRepository.isSymbolModeEnabled()
             )
         }
     }
@@ -51,6 +56,15 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(sfxMuted = muted)
         viewModelScope.launch(ioDispatcher) {
             settingsRepository.setSfxMuted(muted)
+        }
+    }
+
+    /** UX-11: colorblind-friendly glyph overlay on every piece, independent of sprite/color. */
+    fun toggleSymbolMode() {
+        val enabled = !_uiState.value.symbolModeEnabled
+        _uiState.value = _uiState.value.copy(symbolModeEnabled = enabled)
+        viewModelScope.launch(ioDispatcher) {
+            settingsRepository.setSymbolModeEnabled(enabled)
         }
     }
 }

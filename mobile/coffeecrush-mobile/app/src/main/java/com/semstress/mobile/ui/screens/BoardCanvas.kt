@@ -40,7 +40,6 @@ import com.semstress.mobile.ui.theme.CoffeeSemanticColors
 import com.semstress.mobile.ui.theme.CoffeeTheme
 
 private const val SPRITE_FRAME_DURATION_MS = 80L
-private const val BOARD_SPACING_DP = 6
 private const val CELL_CORNER_RADIUS_DP = 12
 private const val OVERLAY_CORNER_RADIUS_DP = 10
 private const val OVERLAY_INSET_DP = 2
@@ -61,7 +60,8 @@ data class BoardSelectionState(
     val exploding: Set<Position>,
     val shaking: Set<Position> = emptySet(),
     val invalidMoveNonce: Int = 0,
-    val hinted: Set<Position> = emptySet()
+    val hinted: Set<Position> = emptySet(),
+    val symbolModeEnabled: Boolean = false
 )
 
 private data class BoardDrawContext(
@@ -73,7 +73,8 @@ private data class BoardDrawContext(
     val pieceTextStyle: TextStyle,
     val explosionTextStyle: TextStyle,
     val colors: CoffeeSemanticColors,
-    val shakeOffsetPx: Float
+    val shakeOffsetPx: Float,
+    val symbolModeEnabled: Boolean
 )
 
 /**
@@ -104,7 +105,8 @@ fun BoardCanvas(
     val pieceTextStyle = MaterialTheme.typography.headlineSmall
     val explosionTextStyle = MaterialTheme.typography.headlineMedium
     val colors = CoffeeTheme.colors
-    val shakeOffset = rememberShakeOffsetPx(selection.invalidMoveNonce)
+    val reducedMotion = rememberReducedMotionEnabled()
+    val shakeOffset = rememberShakeOffsetPx(selection.invalidMoveNonce, reducedMotion)
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -112,20 +114,8 @@ fun BoardCanvas(
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-            val spacing = BOARD_SPACING_DP.dp
-            val cellSize = (maxWidth - (spacing * (cols + 1))) / cols
-            val density = LocalDensity.current
-            val spacingPx = with(density) { spacing.toPx() }
-            val cellSizePx = with(density) { cellSize.toPx() }
-            val geometry = BoardGeometry(
-                rows = rows,
-                cols = cols,
-                cellSizePx = cellSizePx,
-                spacingPx = spacingPx,
-                boardWidthPx = (cols * cellSizePx) + ((cols - 1) * spacingPx),
-                boardHeightPx = (rows * cellSizePx) + ((rows - 1) * spacingPx)
-            )
-            val boardHeight = with(density) { geometry.boardHeightPx.toDp() }
+            val geometry = rememberBoardGeometry(rows, cols)
+            val boardHeight = with(LocalDensity.current) { geometry.boardHeightPx.toDp() }
 
             Canvas(
                 modifier = Modifier
@@ -136,13 +126,14 @@ fun BoardCanvas(
                 val context = BoardDrawContext(
                     spriteAtlas = spriteAtlas,
                     frame = currentSpriteFrame(spriteAtlas, frameTime.value),
-                    cellSizePx = cellSizePx,
+                    cellSizePx = geometry.cellSizePx,
                     pitchPx = geometry.pitchPx,
                     textMeasurer = textMeasurer,
                     pieceTextStyle = pieceTextStyle,
                     explosionTextStyle = explosionTextStyle,
                     colors = colors,
-                    shakeOffsetPx = shakeOffset.value
+                    shakeOffsetPx = shakeOffset.value,
+                    symbolModeEnabled = selection.symbolModeEnabled
                 )
                 for (row in 0 until rows) {
                     for (col in 0 until cols) {
@@ -178,11 +169,11 @@ private fun rememberFrameTicker(): State<Long> {
  * used to give invalid-move feedback without text (per ui-ux.md's "sem texto" requirement).
  */
 @Composable
-private fun rememberShakeOffsetPx(nonce: Int): Animatable<Float, AnimationVector1D> {
+private fun rememberShakeOffsetPx(nonce: Int, reducedMotion: Boolean): Animatable<Float, AnimationVector1D> {
     val offset = remember { Animatable(0f) }
     val amplitudePx = with(LocalDensity.current) { SHAKE_AMPLITUDE_DP.dp.toPx() }
-    LaunchedEffect(nonce) {
-        if (nonce == 0) {
+    LaunchedEffect(nonce, reducedMotion) {
+        if (nonce == 0 || reducedMotion) {
             return@LaunchedEffect
         }
         offset.snapTo(0f)
@@ -265,10 +256,11 @@ private fun DrawScope.drawSelectionOverlay(
     }
 }
 
+/** UX-11: symbol mode always shows the distinct per-type glyph, for players who don't rely on color/sprite art. */
 private fun DrawScope.drawPiece(value: Int, topLeft: Offset, context: BoardDrawContext) {
     val inset = PIECE_INSET_DP.dp.toPx()
     val sheet = context.spriteAtlas?.pieceSheet(value)
-    if (sheet != null) {
+    if (sheet != null && !context.symbolModeEnabled) {
         drawSpriteFrame(sheet, topLeft, inset, context)
     } else {
         val symbol = fallbackPieceSymbol(value)

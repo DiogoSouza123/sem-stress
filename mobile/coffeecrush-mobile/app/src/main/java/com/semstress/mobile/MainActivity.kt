@@ -221,7 +221,8 @@ private fun GameDestination(
         sound = GameScreenSound(
             isMusicMuted = settingsState.musicMuted,
             isSfxMuted = settingsState.sfxMuted,
-            sfxPlayer = dependencies.sfxPlayer
+            sfxPlayer = dependencies.sfxPlayer,
+            isSymbolModeEnabled = settingsState.symbolModeEnabled
         ),
         spriteAtlas = menuState.spriteAtlas,
         actions = GameScreenActions(

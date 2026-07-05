@@ -42,4 +42,8 @@
 
     <string name="aroma_meter_label">Aroma</string>
     <string name="activate_barista_skill">Degustacao: revelar jogada</string>
+
+    <string name="hud_accessibility_summary">Pontos: %1$d de %2$d. Movimentos restantes: %3$d.</string>
+    <string name="toggle_symbol_mode_on">Modo simbolos: ON</string>
+    <string name="toggle_symbol_mode_off">Modo simbolos: OFF</string>
 </resources>

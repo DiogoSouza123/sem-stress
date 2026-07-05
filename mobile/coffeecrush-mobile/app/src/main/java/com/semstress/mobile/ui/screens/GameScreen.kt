@@ -95,7 +95,7 @@ fun GameScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        BoardSection(game, spriteAtlas, actions)
+        BoardSection(game, spriteAtlas, actions, sound.isSymbolModeEnabled)
     }
 
     if (showExitConfirmation) {
@@ -114,7 +114,12 @@ fun GameScreen(
 }
 
 @Composable
-private fun BoardSection(game: GameUiState, spriteAtlas: SpriteAtlas?, actions: GameScreenActions) {
+private fun BoardSection(
+    game: GameUiState,
+    spriteAtlas: SpriteAtlas?,
+    actions: GameScreenActions,
+    symbolModeEnabled: Boolean
+) {
     val shakingPositions = game.invalidSwap?.let { (first, second) -> setOf(first, second) } ?: emptySet()
     val hintedPositions = game.hintMove?.let { (first, second) -> setOf(first, second) } ?: emptySet()
     BoardCanvas(
@@ -125,7 +130,8 @@ private fun BoardSection(game: GameUiState, spriteAtlas: SpriteAtlas?, actions: 
             exploding = game.explodingMatches,
             shaking = shakingPositions,
             invalidMoveNonce = game.invalidMoveNonce,
-            hinted = hintedPositions
+            hinted = hintedPositions,
+            symbolModeEnabled = symbolModeEnabled
         ),
         spriteAtlas = spriteAtlas,
         onCellTap = actions.onCellTap,

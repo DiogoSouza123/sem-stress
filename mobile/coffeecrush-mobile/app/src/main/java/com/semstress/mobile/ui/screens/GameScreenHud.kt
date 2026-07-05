@@ -35,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
@@ -79,12 +81,15 @@ internal fun Scoreboard(score: Int, target: Int, moves: Int, isZenMode: Boolean 
 
     val progress = if (target > 0) score.toFloat() / target else 0f
     val lowOnMoves = moves in 1..LOW_MOVES_THRESHOLD
-    val movesPulse = rememberPulseAlpha(enabled = lowOnMoves)
+    val movesPulse = rememberPulseAlpha(enabled = lowOnMoves && !rememberReducedMotionEnabled())
     val movesLabel = stringResource(R.string.hud_moves)
 
+    val accessibilitySummary = stringResource(R.string.hud_accessibility_summary, score, target, moves)
     CoffeePanel {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) { contentDescription = accessibilitySummary },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
