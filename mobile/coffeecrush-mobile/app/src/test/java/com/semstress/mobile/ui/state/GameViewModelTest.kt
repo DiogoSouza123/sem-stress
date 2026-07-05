@@ -370,6 +370,44 @@ class GameViewModelTest {
         )
     }
 
+    @Test
+    fun `um match-4 exato cria um Moedor na ultima celula da corrida, sem deixa-la vazia`() = runTest(testDispatcher) {
+        val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
+        // Extende a corrida "0 0 0" ja presente na linha 0 (colunas 0-2) trocando a peca 1, na
+        // linha 0 coluna 3, pela peca 0 que esta abaixo dela - produz uma corrida de exatamente 4,
+        // cuja ultima celula (linha 0, coluna 3) deveria virar um Moedor em vez de ficar vazia.
+        val rows = listOf(
+            intArrayOf(0, 0, 0, 1, 2, 3),
+            intArrayOf(1, 2, 3, 0, 4, 0),
+            intArrayOf(2, 3, 4, 1, 0, 4),
+            intArrayOf(3, 4, 0, 2, 1, 0),
+            intArrayOf(4, 0, 1, 3, 2, 1),
+            intArrayOf(0, 1, 2, 4, 3, 2)
+        )
+        val flatBoard = IntArray(stage.rows * stage.cols)
+        var index = 0
+        for (row in 0 until stage.rows) {
+            for (col in 0 until stage.cols) {
+                flatBoard[index] = rows[row][col]
+                index++
+            }
+        }
+        val handle = SavedStateHandle()
+        handle["game_board"] = flatBoard
+        val viewModel = newGameViewModelWithHandle(stage, handle)
+
+        viewModel.onAction(GameAction.CellTapped(0, 3))
+        viewModel.onAction(GameAction.CellTapped(1, 3))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val result = viewModel.uiState.value
+        assertEquals(
+            Match3Engine.SPECIAL_GRINDER,
+            result.board[0][3],
+            "A ultima celula do match-4 deveria ter virado um Moedor, nao ficar vazia/ser substituida"
+        )
+    }
+
     private fun newGameViewModel(
         stage: StageConfig,
         totalStages: Int = 1,

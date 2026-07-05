@@ -147,6 +147,7 @@ private suspend fun GameSession.applyRound(round: AnimationRound, onChanged: () 
     delay(MATCH_HIGHLIGHT_MS)
 
     round.matchedPositions.forEach { board.set(it.row, it.col, Match3Engine.EMPTY) }
+    round.specialSpawns.forEach { board.set(it.row, it.col, Match3Engine.SPECIAL_GRINDER) }
     explodingMatches = round.matchedPositions.toSet()
     onChanged()
     delay(EXPLOSION_MS)
