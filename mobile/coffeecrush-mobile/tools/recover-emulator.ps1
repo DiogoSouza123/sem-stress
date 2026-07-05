@@ -2,7 +2,9 @@ param(
     [Alias("AvdName")]
     [string]$PrimaryAvd = "Pixel_10_Pro",
     [string]$BackupAvd = "Pixel_10_Pro_Backup",
-    [switch]$NoFallback
+    [switch]$NoFallback,
+    [switch]$Watch,
+    [int]$WatchIntervalSeconds = 10
 )
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -64,6 +66,51 @@ function Start-And-WaitAvd([string]$AvdName, [int]$TimeoutSeconds = 180) {
     return $false
 }
 
+function Test-QemuAlive {
+    return $null -ne (Get-Process -Name "qemu-system-x86_64" -ErrorAction SilentlyContinue)
+}
+
+<#
+ .SYNOPSIS
+ Mantem a conexao ADB de pe apos o AVD ja estar online.
+
+ .DESCRIPTION
+ O adb.exe deste SDK trava esporadicamente com STATUS_STACK_BUFFER_OVERRUN dentro de
+ ucrtbase.dll (bug reproduzido de forma deterministica neste ambiente - ja confirmado que
+ nao e por versao desatualizada, o platform-tools instalado e identico ao mais recente do
+ Google). O Android Studio so ve o dispositivo desconectar ("device offline"/EOF) e nao se
+ recupera solo. O processo qemu-system-x86_64 (o emulador em si) normalmente sobrevive a
+ essa queda do adb - entao, na maioria dos casos, basta reiniciar o servidor adb, sem
+ descartar o estado do emulador (o que o resto do script faz, ao custo de reiniciar tudo).
+#>
+function Watch-AvdConnection([string]$AvdName, [int]$IntervalSeconds) {
+    Write-Host ""
+    Write-Host "Modo -Watch ativo: verificando a conexao ADB a cada $IntervalSeconds s (Ctrl+C para sair)."
+    while ($true) {
+        Start-Sleep -Seconds $IntervalSeconds
+
+        if (-not (Test-QemuAlive)) {
+            Write-Host "$(Get-Date -Format 'HH:mm:ss') - o processo do emulador caiu. Reabrindo o AVD '$AvdName'..."
+            Stop-EmulatorStack
+            Clear-AvdLocks $AvdName
+            [void](Apply-StableConfig $AvdName)
+            $ok = Start-And-WaitAvd -AvdName $AvdName -TimeoutSeconds 180
+            Write-Host $(if ($ok) { "OK: AVD reaberto." } else { "Falha ao reabrir o AVD - tentando de novo no proximo ciclo." })
+            continue
+        }
+
+        $out = (& $adb devices) -join "`n"
+        if ($out -notmatch "emulator-\d+\s+device") {
+            Write-Host "$(Get-Date -Format 'HH:mm:ss') - adb perdeu o dispositivo (emulador ainda de pe). Reiniciando so o servidor adb..."
+            & $adb kill-server | Out-Null
+            Start-Sleep -Seconds 1
+            & $adb start-server | Out-Null
+            Start-Sleep -Seconds 2
+            & $adb devices
+        }
+    }
+}
+
 if (-not (Test-Path $emu)) { throw "Emulator nao encontrado em: $emu" }
 if (-not (Test-Path $adb)) { throw "ADB nao encontrado em: $adb" }
 
@@ -94,6 +141,9 @@ foreach ($target in $targets) {
     if ($ok) {
         Write-Host "OK: emulador online com '$target'."
         & $adb devices
+        if ($Watch) {
+            Watch-AvdConnection -AvdName $target -IntervalSeconds $WatchIntervalSeconds
+        }
         exit 0
     }
 
