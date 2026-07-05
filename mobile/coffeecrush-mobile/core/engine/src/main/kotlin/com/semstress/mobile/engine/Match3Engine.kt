@@ -9,7 +9,12 @@ class Match3Engine(
 ) {
     companion object {
         const val EMPTY = -1
+
+        /** GP-01: "Moedor" special piece, created by a match-4; mills its 8 neighbors on activation. */
+        const val SPECIAL_GRINDER = -2
+
         private const val MAX_SHUFFLE_ATTEMPTS = 300
+        private const val GRINDER_MATCH_LENGTH = 4
     }
 
     fun tryMove(
@@ -72,8 +77,8 @@ class Match3Engine(
         val rounds = mutableListOf<AnimationRound>()
 
         while (true) {
-            val matches = findMatches(board)
-            if (matches.positions.isEmpty()) {
+            val runs = findMatchRuns(board)
+            if (runs.isEmpty()) {
                 return AnimatedResolveOutcome(
                     points = totalPoints,
                     cascades = cascadeLevel,
@@ -83,19 +88,22 @@ class Match3Engine(
 
             cascadeLevel++
             val roundPoints = if (cascadeLevel == 1 || config.scoreCascade) {
-                calculatePoints(matches.runLengths, cascadeLevel)
+                calculatePoints(runs.map { it.length }, cascadeLevel)
             } else {
                 0
             }
             totalPoints += roundPoints
 
+            val allPositions = runs.flatMapTo(linkedSetOf()) { it.positions }
+            val specialSpawns = selectSpecialSpawns(runs)
             val matchedPositions = if (captureRounds) {
-                matches.positions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
+                allPositions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
             } else {
                 emptyList()
             }
 
-            clearMatched(board, matches.positions)
+            clearMatched(board, allPositions)
+            specialSpawns.forEach { position -> board.set(position.row, position.col, SPECIAL_GRINDER) }
             val fallSteps = if (captureRounds) {
                 collapseAndRefillCapturingEvents(board)
             } else {
@@ -107,9 +115,47 @@ class Match3Engine(
                 rounds += AnimationRound(
                     matchedPositions = matchedPositions,
                     fallSteps = fallSteps,
-                    roundPoints = roundPoints
+                    roundPoints = roundPoints,
+                    specialSpawns = specialSpawns
                 )
             }
+        }
+    }
+
+    /** GP-01: taps a [SPECIAL_GRINDER] piece, milling its 8 neighbors (Moore neighborhood) for bonus points. */
+    fun activateSpecialPiece(board: Match3Board, position: Position): SpecialActivationOutcome {
+        if (!board.isValid(position) || board.get(position.row, position.col) != SPECIAL_GRINDER) {
+            return SpecialActivationOutcome(
+                activated = false,
+                points = 0,
+                milledPieces = emptyList(),
+                fallSteps = emptyList()
+            )
+        }
+
+        val milled = moorePositions(board, position).mapNotNull { neighbor ->
+            val value = board.get(neighbor.row, neighbor.col)
+            if (value >= 0) neighbor to value else null
+        }
+
+        board.set(position.row, position.col, EMPTY)
+        milled.forEach { (neighbor, _) -> board.set(neighbor.row, neighbor.col, EMPTY) }
+
+        val fallSteps = collapseAndRefillCapturingEvents(board)
+        return SpecialActivationOutcome(
+            activated = true,
+            points = milled.size * config.scoreMatch3,
+            milledPieces = milled,
+            fallSteps = fallSteps
+        )
+    }
+
+    private fun moorePositions(board: Match3Board, center: Position): List<Position> {
+        val deltas = listOf(-1 to -1, -1 to 0, -1 to 1, 0 to -1, 0 to 1, 1 to -1, 1 to 0, 1 to 1)
+        return deltas.mapNotNull { (deltaRow, deltaCol) ->
+            val row = center.row + deltaRow
+            val col = center.col + deltaCol
+            if (row in 0 until board.rows && col in 0 until board.cols) Position(row, col) else null
         }
     }
 
@@ -262,8 +308,24 @@ class Match3Engine(
     }
 
     private fun findMatches(board: Match3Board): MatchGroup {
+        val runs = findMatchRuns(board)
         val matched = linkedSetOf<Position>()
         val runLengths = mutableListOf<Int>()
+        runs.forEach { run ->
+            matched += run.positions
+            runLengths += run.length
+        }
+        return MatchGroup(positions = matched, runLengths = runLengths)
+    }
+
+    /**
+     * GP-01: unlike [findMatches] (which flattens everything into one position set for scoring),
+     * this keeps each run's cells in order so special-piece creation can pick a specific cell
+     * (e.g. the last cell of a match-4) instead of clearing the whole run uniformly. A cell's value
+     * being negative (EMPTY or a special piece marker) always excludes it from matching.
+     */
+    private fun findMatchRuns(board: Match3Board): List<MatchRun> {
+        val runs = mutableListOf<MatchRun>()
 
         for (row in 0 until board.rows) {
             var col = 0
@@ -274,11 +336,8 @@ class Match3Engine(
                     col++
                 }
                 val length = col - start + 1
-                if (value != EMPTY && length >= config.minMatchSize) {
-                    for (c in start..col) {
-                        matched += Position(row, c)
-                    }
-                    runLengths += length
+                if (value >= 0 && length >= config.minMatchSize) {
+                    runs += MatchRun((start..col).map { c -> Position(row, c) }, length)
                 }
                 col++
             }
@@ -293,17 +352,19 @@ class Match3Engine(
                     row++
                 }
                 val length = row - start + 1
-                if (value != EMPTY && length >= config.minMatchSize) {
-                    for (r in start..row) {
-                        matched += Position(r, col)
-                    }
-                    runLengths += length
+                if (value >= 0 && length >= config.minMatchSize) {
+                    runs += MatchRun((start..row).map { r -> Position(r, col) }, length)
                 }
                 row++
             }
         }
 
-        return MatchGroup(positions = matched, runLengths = runLengths)
+        return runs
+    }
+
+    /** GP-01: the last cell of each exact match-4 run becomes a Moedor instead of being cleared. */
+    private fun selectSpecialSpawns(runs: List<MatchRun>): List<Position> {
+        return runs.filter { it.length == GRINDER_MATCH_LENGTH }.map { it.positions.last() }
     }
 
     private fun wouldCreateMatch(
@@ -323,7 +384,7 @@ class Match3Engine(
 
     private fun createsMatchAt(board: Match3Board, row: Int, col: Int): Boolean {
         val value = board.get(row, col)
-        if (value == EMPTY) {
+        if (value < 0) {
             return false
         }
 

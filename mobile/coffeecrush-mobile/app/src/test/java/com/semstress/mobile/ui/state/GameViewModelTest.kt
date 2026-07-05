@@ -5,6 +5,7 @@ import com.semstress.mobile.data.FakeProgressStore
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.DefaultMatch3EngineFactory
+import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.engine.stageConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -310,6 +311,42 @@ class GameViewModelTest {
         assertEquals(beforeDeath.points, restoredState.points)
         assertEquals(beforeDeath.moves, restoredState.moves)
         assertEquals(beforeDeath.selected, restoredState.selected)
+    }
+
+    @Test
+    fun `tocar em um Moedor mói os vizinhos, pontua e nao consome movimento`() = runTest(testDispatcher) {
+        val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
+        val seeded = newGameViewModel(stage)
+        val originalBoard = seeded.uiState.value.board
+        val grinderRow = 2
+        val grinderCol = 2
+        val flatBoard = IntArray(stage.rows * stage.cols)
+        var index = 0
+        for (row in 0 until stage.rows) {
+            for (col in 0 until stage.cols) {
+                flatBoard[index] = if (row == grinderRow && col == grinderCol) {
+                    Match3Engine.SPECIAL_GRINDER
+                } else {
+                    originalBoard[row][col]
+                }
+                index++
+            }
+        }
+        val handle = SavedStateHandle()
+        handle["game_board"] = flatBoard
+        val viewModel = newGameViewModelWithHandle(stage, handle)
+        val movesBefore = viewModel.uiState.value.moves
+
+        viewModel.onAction(GameAction.CellTapped(grinderRow, grinderCol))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val result = viewModel.uiState.value
+        assertTrue(result.points > 0, "Esperava pontos ganhos ao ativar o Moedor")
+        assertEquals(movesBefore, result.moves, "Ativar um especial nao deveria consumir movimento")
+        assertFalse(
+            result.board.flatten().contains(Match3Engine.SPECIAL_GRINDER),
+            "O Moedor ativado deveria ter sido consumido"
+        )
     }
 
     private fun newGameViewModel(

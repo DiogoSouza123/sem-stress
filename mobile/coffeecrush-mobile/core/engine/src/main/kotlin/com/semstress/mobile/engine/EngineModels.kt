@@ -42,10 +42,28 @@ sealed interface BoardEvent {
 data class AnimationRound(
     val matchedPositions: List<Position>,
     val fallSteps: List<List<BoardEvent>>,
-    val roundPoints: Int
+    val roundPoints: Int,
+    val specialSpawns: List<Position> = emptyList()
 )
 
 data class MatchGroup(
     val positions: Set<Position>,
     val runLengths: List<Int>
+)
+
+/** GP-01: a single detected run (all same value, contiguous, in one direction) with its cell order preserved. */
+data class MatchRun(
+    val positions: List<Position>,
+    val length: Int
+)
+
+/**
+ * GP-01: result of tapping a special piece. [milledPieces] pairs each affected neighbor with the
+ * piece value it held before being cleared, so callers can credit collect objectives.
+ */
+data class SpecialActivationOutcome(
+    val activated: Boolean,
+    val points: Int,
+    val milledPieces: List<Pair<Position, Int>>,
+    val fallSteps: List<List<BoardEvent>>
 )

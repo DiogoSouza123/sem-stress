@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
+import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
@@ -265,6 +266,9 @@ private fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit)
 }
 
 internal fun fallbackPieceSymbol(value: Int): String {
+    if (value == Match3Engine.SPECIAL_GRINDER) {
+        return "⚙️"
+    }
     return when ((value % 6 + 6) % 6) {
         0 -> "☕"
         1 -> "🫘"

@@ -240,6 +240,13 @@ class GameViewModel @AssistedInject constructor(
         scheduleHint(currentSession)
 
         val clicked = Position(row, col)
+        if (currentSession.board.get(row, col) == Match3Engine.SPECIAL_GRINDER) {
+            currentSession.selected = null
+            emit()
+            launchAnimatedAction { performSpecialActivation(currentSession, clicked) }
+            return
+        }
+
         val selected = currentSession.selected
         when {
             selected == null -> {
@@ -255,7 +262,7 @@ class GameViewModel @AssistedInject constructor(
             else -> {
                 currentSession.selected = null
                 emit()
-                launchMove(currentSession, selected, clicked)
+                launchAnimatedAction { performMoveAnimated(currentSession, selected, clicked) }
             }
         }
     }
@@ -277,7 +284,7 @@ class GameViewModel @AssistedInject constructor(
 
         currentSession.selected = null
         emit()
-        launchMove(currentSession, first, second)
+        launchAnimatedAction { performMoveAnimated(currentSession, first, second) }
     }
 
     /** GP-08: (re)starts the ~8s inactivity countdown and clears any hint already shown, on every player action. */
@@ -293,12 +300,12 @@ class GameViewModel @AssistedInject constructor(
         }
     }
 
-    private fun launchMove(currentSession: GameSession, first: Position, second: Position) {
+    private fun launchAnimatedAction(action: suspend () -> Unit) {
         if (moveJob?.isActive == true) {
             return
         }
         moveJob = viewModelScope.launch {
-            performMoveAnimated(currentSession, first, second)
+            action()
             emit()
         }
     }
@@ -324,7 +331,7 @@ class GameViewModel @AssistedInject constructor(
         currentSession.animating = false
         currentSession.highlightedMatches = emptySet()
         currentSession.explodingMatches = emptySet()
-        finalizeMove(currentSession)
+        finalizeMove(currentSession, stage) { scheduleHint(currentSession) }
         persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
     }
 
@@ -366,27 +373,42 @@ class GameViewModel @AssistedInject constructor(
         return true
     }
 
-    private fun finalizeMove(currentSession: GameSession) {
-        val objectivesMet = currentSession.points >= stage.targetScore &&
-            (stage.collectObjective?.isComplete(currentSession.collectedCount) ?: true)
-        if (objectivesMet) {
-            currentSession.finished = true
-            currentSession.won = true
-        } else if (currentSession.moves <= 0) {
-            currentSession.finished = true
-            currentSession.won = false
+    /** GP-01: tapping a Moedor mills its 8 neighbors instead of swapping; does not spend a move. */
+    private suspend fun performSpecialActivation(currentSession: GameSession, position: Position) {
+        val workingBoard = currentSession.board.copyOf()
+        val outcome = currentSession.engine.activateSpecialPiece(workingBoard, position)
+        if (!outcome.activated) {
+            return
         }
-        if (currentSession.finished) {
-            currentSession.starsEarned = calculateStars(
-                won = currentSession.won,
-                score = currentSession.points,
-                targetScore = stage.targetScore,
-                movesRemaining = currentSession.moves,
-                initialMoves = stage.initialMoves
-            )
-        } else {
-            scheduleHint(currentSession)
+
+        currentSession.animating = true
+        currentSession.message = null
+        val affected = (outcome.milledPieces.map { it.first } + position).toSet()
+        currentSession.highlightedMatches = affected
+        emit()
+        delay(MATCH_HIGHLIGHT_MS)
+
+        affected.forEach { pos -> currentSession.board.set(pos.row, pos.col, Match3Engine.EMPTY) }
+        currentSession.explodingMatches = affected
+        emit()
+        delay(EXPLOSION_MS)
+
+        currentSession.highlightedMatches = emptySet()
+        currentSession.explodingMatches = emptySet()
+        outcome.fallSteps.forEach { step ->
+            step.forEach { event -> currentSession.board.apply(event) }
+            emit()
+            delay(FALL_FRAME_MS)
         }
+
+        currentSession.points += outcome.points
+        stage.collectObjective?.let { objective ->
+            currentSession.collectedCount += outcome.milledPieces.count { (_, value) -> value == objective.pieceType }
+        }
+
+        currentSession.animating = false
+        finalizeMove(currentSession, stage) { scheduleHint(currentSession) }
+        persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
     }
 
     private fun restart(seed: Long? = null) {
@@ -445,6 +467,31 @@ private const val KEY_COLLECTED = "game_collected"
 private const val KEY_MESSAGE = "game_message"
 private const val KEY_SELECTED_ROW = "game_selected_row"
 private const val KEY_SELECTED_COL = "game_selected_col"
+
+/** Marks [currentSession] finished/won once its objectives (score + optional collect) are met, or out of
+ *  moves; calculates stars on finish, otherwise invokes [onIncomplete] (e.g. to reschedule the GP-08 hint). */
+private fun finalizeMove(currentSession: GameSession, stage: StageConfig, onIncomplete: () -> Unit) {
+    val objectivesMet = currentSession.points >= stage.targetScore &&
+        (stage.collectObjective?.isComplete(currentSession.collectedCount) ?: true)
+    if (objectivesMet) {
+        currentSession.finished = true
+        currentSession.won = true
+    } else if (currentSession.moves <= 0) {
+        currentSession.finished = true
+        currentSession.won = false
+    }
+    if (currentSession.finished) {
+        currentSession.starsEarned = calculateStars(
+            won = currentSession.won,
+            score = currentSession.points,
+            targetScore = stage.targetScore,
+            movesRemaining = currentSession.moves,
+            initialMoves = stage.initialMoves
+        )
+    } else {
+        onIncomplete()
+    }
+}
 
 private fun createFreshSession(
     stage: StageConfig,
