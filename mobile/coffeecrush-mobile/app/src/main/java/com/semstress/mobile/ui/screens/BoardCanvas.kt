@@ -1,5 +1,8 @@
 package com.semstress.mobile.ui.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,12 +49,17 @@ private const val EXPLOSION_INSET_DP = 1
 private const val SELECTED_ALPHA = 0.38f
 private const val HIGHLIGHT_ALPHA = 0.55f
 private const val BACKGROUND_ALPHA = 0.32f
+private const val SHAKE_STEP_MS = 45
+private const val SHAKE_AMPLITUDE_DP = 6f
+private const val SHAKE_SECOND_STEP_FACTOR = 0.6f
 
 /** Selection/animation overlays for the board, kept apart from the piece values themselves. */
 data class BoardSelectionState(
     val selected: Position?,
     val highlighted: Set<Position>,
-    val exploding: Set<Position>
+    val exploding: Set<Position>,
+    val shaking: Set<Position> = emptySet(),
+    val invalidMoveNonce: Int = 0
 )
 
 private data class BoardDrawContext(
@@ -62,7 +70,8 @@ private data class BoardDrawContext(
     val textMeasurer: TextMeasurer,
     val pieceTextStyle: TextStyle,
     val explosionTextStyle: TextStyle,
-    val colors: CoffeeSemanticColors
+    val colors: CoffeeSemanticColors,
+    val shakeOffsetPx: Float
 )
 
 /**
@@ -93,6 +102,7 @@ fun BoardCanvas(
     val pieceTextStyle = MaterialTheme.typography.headlineSmall
     val explosionTextStyle = MaterialTheme.typography.headlineMedium
     val colors = CoffeeTheme.colors
+    val shakeOffset = rememberShakeOffsetPx(selection.invalidMoveNonce)
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -129,7 +139,8 @@ fun BoardCanvas(
                     textMeasurer = textMeasurer,
                     pieceTextStyle = pieceTextStyle,
                     explosionTextStyle = explosionTextStyle,
-                    colors = colors
+                    colors = colors,
+                    shakeOffsetPx = shakeOffset.value
                 )
                 for (row in 0 until rows) {
                     for (col in 0 until cols) {
@@ -160,6 +171,27 @@ private fun rememberFrameTicker(): State<Long> {
     return time
 }
 
+/**
+ * UX-05: a short, decaying horizontal shake (in px) that replays every time [nonce] changes,
+ * used to give invalid-move feedback without text (per ui-ux.md's "sem texto" requirement).
+ */
+@Composable
+private fun rememberShakeOffsetPx(nonce: Int): Animatable<Float, AnimationVector1D> {
+    val offset = remember { Animatable(0f) }
+    val amplitudePx = with(LocalDensity.current) { SHAKE_AMPLITUDE_DP.dp.toPx() }
+    LaunchedEffect(nonce) {
+        if (nonce == 0) {
+            return@LaunchedEffect
+        }
+        offset.snapTo(0f)
+        val steps = listOf(amplitudePx, -amplitudePx, amplitudePx * SHAKE_SECOND_STEP_FACTOR, 0f)
+        steps.forEach { target ->
+            offset.animateTo(target, animationSpec = tween(SHAKE_STEP_MS))
+        }
+    }
+    return offset
+}
+
 private fun DrawScope.drawCell(
     position: Position,
     value: Int,
@@ -181,7 +213,12 @@ private fun DrawScope.drawCell(
     drawSelectionOverlay(position, selection, topLeft, context)
 
     if (hasPiece) {
-        drawPiece(value, topLeft, context)
+        val pieceTopLeft = if (position in selection.shaking) {
+            topLeft + Offset(context.shakeOffsetPx, 0f)
+        } else {
+            topLeft
+        }
+        drawPiece(value, pieceTopLeft, context)
     }
     if (position in selection.exploding) {
         drawExplosion(topLeft, context)

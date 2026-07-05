@@ -12,6 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
-import com.semstress.mobile.ui.components.CoffeePanel
-import com.semstress.mobile.ui.components.CoffeeSecondaryButton
+import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.components.StarRating
-import com.semstress.mobile.ui.components.StatRow
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
@@ -71,35 +75,30 @@ fun GameScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        GameHeader(game, sound, actions)
+        GameHeader(game, sound, actions, requestExit)
         DebugMenuTrigger(debugTools)
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Scoreboard(score = game.points, target = game.target, moves = game.moves)
-
-        game.message?.let { message ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = message, style = MaterialTheme.typography.labelLarge, color = colors.hudText)
-        }
+        FloatingPointsBanner(points = game.points)
+        ComboBanner(message = game.message?.takeIf { it != GameViewModel.INVALID_MOVE_MESSAGE })
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val shakingPositions = game.invalidSwap?.let { (first, second) -> setOf(first, second) } ?: emptySet()
         BoardCanvas(
             board = game.board,
-            selection = BoardSelectionState(game.selected, game.highlightedMatches, game.explodingMatches),
+            selection = BoardSelectionState(
+                selected = game.selected,
+                highlighted = game.highlightedMatches,
+                exploding = game.explodingMatches,
+                shaking = shakingPositions,
+                invalidMoveNonce = game.invalidMoveNonce
+            ),
             spriteAtlas = spriteAtlas,
             onCellTap = actions.onCellTap,
             onCellDragSwap = actions.onCellDragSwap
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        CoffeeSecondaryButton(
-            text = stringResource(R.string.back_to_menu),
-            onClick = requestExit,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !game.animating
         )
     }
 
@@ -135,15 +134,27 @@ private fun DebugMenuTrigger(debugTools: GameScreenDebugTools) {
     )
 }
 
+/** UX-05: system controls (back/music/sfx) as discreet top icon buttons instead of full-width text buttons. */
 @Composable
-private fun GameHeader(game: GameUiState, sound: GameScreenSound, actions: GameScreenActions) {
+private fun GameHeader(
+    game: GameUiState,
+    sound: GameScreenSound,
+    actions: GameScreenActions,
+    onBackClick: () -> Unit
+) {
     val colors = CoffeeTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        CoffeeIconButton(
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.back_to_menu),
+            onClick = onBackClick
+        )
+
+        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = game.stageName,
                 style = MaterialTheme.typography.headlineSmall,
@@ -157,14 +168,26 @@ private fun GameHeader(game: GameUiState, sound: GameScreenSound, actions: GameS
             )
         }
 
-        Column(horizontalAlignment = Alignment.End) {
-            OutlinedButton(onClick = actions.onToggleMusic) {
-                Text(stringResource(if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on))
+        Row {
+            CoffeeIconButton(
+                icon = if (sound.isMusicMuted) Icons.Filled.MusicOff else Icons.Filled.MusicNote,
+                contentDescription = stringResource(
+                    if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on
+                ),
+                onClick = actions.onToggleMusic
+            )
+            val sfxIcon = if (sound.isSfxMuted) {
+                Icons.AutoMirrored.Filled.VolumeOff
+            } else {
+                Icons.AutoMirrored.Filled.VolumeUp
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedButton(onClick = actions.onToggleSfx) {
-                Text(stringResource(if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on))
-            }
+            CoffeeIconButton(
+                icon = sfxIcon,
+                contentDescription = stringResource(
+                    if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on
+                ),
+                onClick = actions.onToggleSfx
+            )
         }
     }
 }
@@ -266,22 +289,6 @@ private fun GameResultDialog(game: GameUiState, onReplayStage: () -> Unit, onBac
             }
         }
     )
-}
-
-@Composable
-private fun Scoreboard(score: Int, target: Int, moves: Int) {
-    val pointsLabel = stringResource(R.string.hud_points)
-    val targetLabel = stringResource(R.string.hud_target)
-    val movesLabel = stringResource(R.string.hud_moves)
-    CoffeePanel {
-        StatRow(
-            stats = listOf(
-                pointsLabel to score.toString(),
-                targetLabel to target.toString(),
-                movesLabel to moves.toString()
-            )
-        )
-    }
 }
 
 internal fun fallbackPieceSymbol(value: Int): String {

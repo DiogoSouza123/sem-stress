@@ -18,7 +18,6 @@
     <string name="stage_lost_title">Fim da rodada</string>
     <string name="stage_result_summary">Pontuacao: %1$d\nMeta: %2$d\nMovimentos restantes: %3$d</string>
     <string name="hud_points">Pontos</string>
-    <string name="hud_target">Meta</string>
     <string name="hud_moves">Mov</string>
 
     <string name="app_title">Coffee Crush</string>

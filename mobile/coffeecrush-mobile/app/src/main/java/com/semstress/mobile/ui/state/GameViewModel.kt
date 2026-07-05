@@ -46,7 +46,9 @@ data class GameUiState(
     val message: String? = null,
     val finished: Boolean = false,
     val won: Boolean = false,
-    val starsEarned: Int = 0
+    val starsEarned: Int = 0,
+    val invalidSwap: Pair<Position, Position>? = null,
+    val invalidMoveNonce: Int = 0
 )
 
 sealed interface GameAction {
@@ -77,7 +79,9 @@ private data class GameSession(
     var animating: Boolean = false,
     var highlightedMatches: Set<Position> = emptySet(),
     var explodingMatches: Set<Position> = emptySet(),
-    var message: String? = null
+    var message: String? = null,
+    var invalidSwap: Pair<Position, Position>? = null,
+    var invalidMoveNonce: Int = 0
 )
 
 private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState(
@@ -95,7 +99,9 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     message = message,
     finished = finished,
     won = won,
-    starsEarned = starsEarned
+    starsEarned = starsEarned,
+    invalidSwap = invalidSwap,
+    invalidMoveNonce = invalidMoveNonce
 )
 
 /**
@@ -292,6 +298,8 @@ class GameViewModel @AssistedInject constructor(
                 currentSession.moves -= 1
             }
             currentSession.message = INVALID_MOVE_MESSAGE
+            currentSession.invalidSwap = first to second
+            currentSession.invalidMoveNonce += 1
         }
 
         currentSession.animating = false
