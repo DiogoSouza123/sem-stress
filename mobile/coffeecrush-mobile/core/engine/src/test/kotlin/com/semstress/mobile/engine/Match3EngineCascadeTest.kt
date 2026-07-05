@@ -122,6 +122,39 @@ class Match3EngineCascadeTest {
 
         outcome.rounds.forEach { round ->
             round.matchedPositions.forEach { replay.set(it.row, it.col, Match3Engine.EMPTY) }
+            round.specialSpawns.forEach { spawn ->
+                replay.set(spawn.position.row, spawn.position.col, spawn.pieceValue)
+            }
+            round.fallSteps.forEach { step -> step.forEach { event -> replay.apply(event) } }
+        }
+
+        assertEquals(original.snapshot(), replay.snapshot())
+    }
+
+    @Test
+    fun `replay reproduz o board final quando a rodada cria uma peca especial`() {
+        val original = boardFrom(
+            """
+            4 4 4 4 2
+            0 1 2 3 4
+            1 2 3 4 0
+            2 3 4 0 1
+            3 4 0 1 2
+            """
+        )
+        val replay = original.copyOf()
+
+        val outcome = engine.resolveBoardAnimated(original)
+        assertTrue(
+            outcome.rounds.any { it.specialSpawns.isNotEmpty() },
+            "Esperava que o match-4 gerasse uma peca especial capturada em specialSpawns"
+        )
+
+        outcome.rounds.forEach { round ->
+            round.matchedPositions.forEach { replay.set(it.row, it.col, Match3Engine.EMPTY) }
+            round.specialSpawns.forEach { spawn ->
+                replay.set(spawn.position.row, spawn.position.col, spawn.pieceValue)
+            }
             round.fallSteps.forEach { step -> step.forEach { event -> replay.apply(event) } }
         }
 
@@ -136,5 +169,6 @@ private fun Match3Board.apply(event: BoardEvent) {
             set(event.from.row, event.from.col, Match3Engine.EMPTY)
         }
         is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
+        is BoardEvent.Reshuffled -> set(event.position.row, event.position.col, event.piece)
     }
 }

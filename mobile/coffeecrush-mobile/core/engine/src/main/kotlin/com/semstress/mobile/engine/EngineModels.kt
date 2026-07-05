@@ -26,11 +26,20 @@ data class AnimatedResolveOutcome(
     val rounds: List<AnimationRound>
 )
 
-/** A single piece dropping one step due to gravity, or a new piece filling an empty cell. */
+/**
+ * A single piece dropping one step due to gravity, a new piece filling an empty cell, or (GP-01,
+ * Vapor) an existing piece's value changing in place without moving position.
+ */
 sealed interface BoardEvent {
     data class Moved(val from: Position, val to: Position, val piece: Int) : BoardEvent
     data class Spawned(val position: Position, val piece: Int) : BoardEvent
+
+    /** GP-01: Vapor reshuffles the top rows in place - the cell stays put, only its value changes. */
+    data class Reshuffled(val position: Position, val piece: Int) : BoardEvent
 }
+
+/** GP-01: a special piece created this round, and the board value it should become. */
+data class SpecialSpawn(val position: Position, val pieceValue: Int)
 
 /**
  * One cascade step: the pieces matched at [matchedPositions], then the sequence of [BoardEvent]
@@ -43,7 +52,7 @@ data class AnimationRound(
     val matchedPositions: List<Position>,
     val fallSteps: List<List<BoardEvent>>,
     val roundPoints: Int,
-    val specialSpawns: List<Position> = emptyList()
+    val specialSpawns: List<SpecialSpawn> = emptyList()
 )
 
 data class MatchGroup(
@@ -58,12 +67,16 @@ data class MatchRun(
 )
 
 /**
- * GP-01: result of tapping a special piece. [milledPieces] pairs each affected neighbor with the
- * piece value it held before being cleared, so callers can credit collect objectives.
+ * GP-01: result of activating a special piece (Moedor/Prensa Francesa/Xicara Vazia), whether by tap
+ * or (Xicara Vazia only) automatically once its countdown expires. [affectedPieces] pairs each
+ * cleared cell with the piece value it held before being cleared, so callers can credit collect
+ * objectives; [triggerPosition] is the special piece's own cell, cleared separately by the caller
+ * so it can be included in the highlight/explosion animation alongside [affectedPieces].
  */
 data class SpecialActivationOutcome(
     val activated: Boolean,
     val points: Int,
-    val milledPieces: List<Pair<Position, Int>>,
-    val fallSteps: List<List<BoardEvent>>
+    val affectedPieces: List<Pair<Position, Int>>,
+    val fallSteps: List<List<BoardEvent>>,
+    val triggerPosition: Position? = null
 )

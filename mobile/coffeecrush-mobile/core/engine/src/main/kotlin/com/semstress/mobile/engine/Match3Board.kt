@@ -38,6 +38,9 @@ class Match3Board(
 
     fun nextPiece(): Int = random.nextInt(pieceTypes)
 
+    /** GP-01: Vapor shuffles existing pieces in place - exposed so that reshuffle stays seedable/testable. */
+    fun nextIndex(bound: Int): Int = random.nextInt(bound)
+
     fun snapshot(): List<List<Int>> {
         return cells.map { row -> row.toList() }
     }

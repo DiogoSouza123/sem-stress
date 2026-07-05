@@ -16,6 +16,7 @@ import com.semstress.mobile.engine.BoardEvent
 import com.semstress.mobile.engine.Match3Board
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.engine.Match3EngineFactory
+import com.semstress.mobile.engine.SpecialActivationOutcome
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -147,7 +148,7 @@ private suspend fun GameSession.applyRound(round: AnimationRound, onChanged: () 
     delay(MATCH_HIGHLIGHT_MS)
 
     round.matchedPositions.forEach { board.set(it.row, it.col, Match3Engine.EMPTY) }
-    round.specialSpawns.forEach { board.set(it.row, it.col, Match3Engine.SPECIAL_GRINDER) }
+    round.specialSpawns.forEach { spawn -> board.set(spawn.position.row, spawn.position.col, spawn.pieceValue) }
     explodingMatches = round.matchedPositions.toSet()
     onChanged()
     delay(EXPLOSION_MS)
@@ -172,7 +173,45 @@ private fun Match3Board.apply(event: BoardEvent) {
             set(event.from.row, event.from.col, Match3Engine.EMPTY)
         }
         is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
+        is BoardEvent.Reshuffled -> set(event.position.row, event.position.col, event.piece)
     }
+}
+
+/**
+ * GP-01: plays out a [SpecialActivationOutcome] (highlight -> explode -> fall -> score), shared by
+ * the player-tapped path ([GameViewModel.performSpecialActivation]) and Xicara Vazia's automatic
+ * countdown expiry (see the `tickEmptyCups` call in [GameViewModel.applyValidMove]).
+ */
+private suspend fun GameSession.animateSpecialOutcome(
+    outcome: SpecialActivationOutcome,
+    stage: StageConfig,
+    onChanged: () -> Unit
+) {
+    val affected = (outcome.affectedPieces.map { it.first } + listOfNotNull(outcome.triggerPosition)).toSet()
+    animating = true
+    message = null
+    highlightedMatches = affected
+    onChanged()
+    delay(MATCH_HIGHLIGHT_MS)
+
+    affected.forEach { pos -> board.set(pos.row, pos.col, Match3Engine.EMPTY) }
+    explodingMatches = affected
+    onChanged()
+    delay(EXPLOSION_MS)
+
+    highlightedMatches = emptySet()
+    explodingMatches = emptySet()
+    outcome.fallSteps.forEach { step ->
+        step.forEach { event -> board.apply(event) }
+        onChanged()
+        delay(FALL_FRAME_MS)
+    }
+
+    points += outcome.points
+    stage.collectObjective?.let { objective ->
+        collectedCount += outcome.affectedPieces.count { (_, value) -> value == objective.pieceType }
+    }
+    aroma = (aroma + outcome.affectedPieces.size * AROMA_PER_MATCHED_PIECE).coerceAtMost(AROMA_CAPACITY)
 }
 
 /**
@@ -297,7 +336,7 @@ class GameViewModel @AssistedInject constructor(
         scheduleHint(currentSession)
 
         val clicked = Position(row, col)
-        if (currentSession.board.get(row, col) == Match3Engine.SPECIAL_GRINDER) {
+        if (Match3Engine.isSpecialPiece(currentSession.board.get(row, col))) {
             currentSession.selected = null
             emit()
             launchAnimatedAction { performSpecialActivation(currentSession, clicked) }
@@ -410,10 +449,14 @@ class GameViewModel @AssistedInject constructor(
         emit()
 
         val objective = stage.collectObjective
+        val matchedThisMove = mutableListOf<Position>()
+        var stillCurrent = true
         for (round in outcome.rounds) {
             if (session !== currentSession) {
-                return false
+                stillCurrent = false
+                break
             }
+            matchedThisMove += round.matchedPositions
             if (objective != null) {
                 val collected = round.matchedPositions.count { position ->
                     currentSession.board.get(position.row, position.col) == objective.pieceType
@@ -425,9 +468,21 @@ class GameViewModel @AssistedInject constructor(
             currentSession.applyRound(round) { emit() }
         }
 
-        currentSession.points += outcome.points
-        if (!stage.isZenMode) {
-            currentSession.moves -= 1
+        if (stillCurrent) {
+            currentSession.points += outcome.points
+            if (!stage.isZenMode) {
+                currentSession.moves -= 1
+            }
+            for (explosion in currentSession.engine.tickEmptyCups(currentSession.board, matchedThisMove)) {
+                if (session !== currentSession) {
+                    stillCurrent = false
+                    break
+                }
+                currentSession.animateSpecialOutcome(explosion, stage) { emit() }
+            }
+        }
+        if (!stillCurrent) {
+            return false
         }
 
         if (!currentSession.engine.hasAvailableMove(currentSession.board)) {
@@ -439,7 +494,11 @@ class GameViewModel @AssistedInject constructor(
         return true
     }
 
-    /** GP-01: tapping a Moedor mills its 8 neighbors instead of swapping; does not spend a move. */
+    /**
+     * GP-01: activates whichever special piece sits at [position] (Moedor mills its 8 neighbors,
+     * Prensa Francesa compresses its column, Xicara Vazia detonates early) instead of swapping;
+     * does not spend a move.
+     */
     private suspend fun performSpecialActivation(currentSession: GameSession, position: Position) {
         val workingBoard = currentSession.board.copyOf()
         val outcome = currentSession.engine.activateSpecialPiece(workingBoard, position)
@@ -447,32 +506,7 @@ class GameViewModel @AssistedInject constructor(
             return
         }
 
-        currentSession.animating = true
-        currentSession.message = null
-        val affected = (outcome.milledPieces.map { it.first } + position).toSet()
-        currentSession.highlightedMatches = affected
-        emit()
-        delay(MATCH_HIGHLIGHT_MS)
-
-        affected.forEach { pos -> currentSession.board.set(pos.row, pos.col, Match3Engine.EMPTY) }
-        currentSession.explodingMatches = affected
-        emit()
-        delay(EXPLOSION_MS)
-
-        currentSession.highlightedMatches = emptySet()
-        currentSession.explodingMatches = emptySet()
-        outcome.fallSteps.forEach { step ->
-            step.forEach { event -> currentSession.board.apply(event) }
-            emit()
-            delay(FALL_FRAME_MS)
-        }
-
-        currentSession.points += outcome.points
-        stage.collectObjective?.let { objective ->
-            currentSession.collectedCount += outcome.milledPieces.count { (_, value) -> value == objective.pieceType }
-        }
-        currentSession.aroma = (currentSession.aroma + outcome.milledPieces.size * AROMA_PER_MATCHED_PIECE)
-            .coerceAtMost(AROMA_CAPACITY)
+        currentSession.animateSpecialOutcome(outcome, stage) { emit() }
 
         currentSession.animating = false
         finalizeMove(currentSession, stage) { scheduleHint(currentSession) }

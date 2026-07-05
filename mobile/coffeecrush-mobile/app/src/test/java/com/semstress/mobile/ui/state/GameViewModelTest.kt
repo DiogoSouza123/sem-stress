@@ -6,6 +6,7 @@ import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.DefaultMatch3EngineFactory
+import com.semstress.mobile.engine.EmptyCupState
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.engine.stageConfig
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -405,6 +407,106 @@ class GameViewModelTest {
             Match3Engine.SPECIAL_GRINDER,
             result.board[0][3],
             "A ultima celula do match-4 deveria ter virado um Moedor, nao ficar vazia/ser substituida"
+        )
+    }
+
+    @Test
+    fun `tocar em uma Prensa Francesa limpa a coluna inteira e nao consome movimento`() = runTest(testDispatcher) {
+        val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
+        val seeded = newGameViewModel(stage)
+        val originalBoard = seeded.uiState.value.board
+        val pressRow = 2
+        val pressCol = 2
+        val flatBoard = IntArray(stage.rows * stage.cols)
+        var index = 0
+        for (row in 0 until stage.rows) {
+            for (col in 0 until stage.cols) {
+                flatBoard[index] = if (row == pressRow && col == pressCol) {
+                    Match3Engine.SPECIAL_FRENCH_PRESS
+                } else {
+                    originalBoard[row][col]
+                }
+                index++
+            }
+        }
+        val handle = SavedStateHandle()
+        handle["game_board"] = flatBoard
+        val viewModel = newGameViewModelWithHandle(stage, handle)
+        val movesBefore = viewModel.uiState.value.moves
+
+        viewModel.onAction(GameAction.CellTapped(pressRow, pressCol))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val result = viewModel.uiState.value
+        assertTrue(result.points > 0, "Esperava pontos ganhos ao ativar a Prensa Francesa")
+        assertEquals(movesBefore, result.moves, "Ativar um especial nao deveria consumir movimento")
+        for (row in 0 until stage.rows) {
+            assertNotEquals(Match3Engine.SPECIAL_FRENCH_PRESS, result.board[row][pressCol])
+        }
+    }
+
+    @Test
+    fun `tocar em uma Xicara Vazia detona cedo e nao consome movimento`() = runTest(testDispatcher) {
+        val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
+        val seeded = newGameViewModel(stage)
+        val originalBoard = seeded.uiState.value.board
+        val cupRow = 2
+        val cupCol = 2
+        val flatBoard = IntArray(stage.rows * stage.cols)
+        var index = 0
+        for (row in 0 until stage.rows) {
+            for (col in 0 until stage.cols) {
+                flatBoard[index] = if (row == cupRow && col == cupCol) {
+                    EmptyCupState.encode(EmptyCupState.INITIAL_TURNS, absorbed = 2)
+                } else {
+                    originalBoard[row][col]
+                }
+                index++
+            }
+        }
+        val handle = SavedStateHandle()
+        handle["game_board"] = flatBoard
+        val viewModel = newGameViewModelWithHandle(stage, handle)
+        val movesBefore = viewModel.uiState.value.moves
+
+        viewModel.onAction(GameAction.CellTapped(cupRow, cupCol))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val result = viewModel.uiState.value
+        assertTrue(result.points > 0, "Esperava pontos ganhos ao detonar a Xicara Vazia")
+        assertEquals(movesBefore, result.moves, "Ativar um especial nao deveria consumir movimento")
+        assertFalse(
+            EmptyCupState.matches(result.board[cupRow][cupCol]),
+            "A Xicara Vazia detonada nao deveria sobrar no tabuleiro"
+        )
+    }
+
+    @Test
+    fun `Xicara Vazia explode automaticamente quando o countdown expira apos um movimento`() = runTest(testDispatcher) {
+        val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
+        val flatBoard = intArrayOf(
+            0, 0, 0, 1, 2, 3,
+            1, 2, 3, 0, 4, 0,
+            2, 3, 4, 1, 0, 4,
+            3, 4, 0, 2, 1, 0,
+            4, 0, 1, 3, 2, 1,
+            0, 1, 2, 4, 3, 2
+        )
+        val cupRow = 5
+        val cupCol = 5
+        flatBoard[cupRow * stage.cols + cupCol] = EmptyCupState.encode(turnsRemaining = 1, absorbed = 2)
+        val handle = SavedStateHandle()
+        handle["game_board"] = flatBoard
+        val viewModel = newGameViewModelWithHandle(stage, handle)
+
+        viewModel.onAction(GameAction.CellTapped(0, 3))
+        viewModel.onAction(GameAction.CellTapped(1, 3))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val result = viewModel.uiState.value
+        assertFalse(
+            EmptyCupState.matches(result.board[cupRow][cupCol]),
+            "A Xicara Vazia deveria ter explodido automaticamente apos o countdown expirar"
         )
     }
 

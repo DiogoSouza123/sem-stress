@@ -13,8 +13,21 @@ class Match3Engine(
         /** GP-01: "Moedor" special piece, created by a match-4; mills its 8 neighbors on activation. */
         const val SPECIAL_GRINDER = -2
 
+        /** GP-01: "Prensa Francesa", created by an L/T-shaped match-5; compresses its whole column on activation. */
+        const val SPECIAL_FRENCH_PRESS = -3
+
         private const val MAX_SHUFFLE_ATTEMPTS = 300
         private const val GRINDER_MATCH_LENGTH = 4
+        private const val LT_SHAPE_ARM_LENGTH = 3
+        private const val EMPTY_CUP_MIN_LENGTH = 5
+        private const val VAPOR_CASCADE_THRESHOLD = 3
+        private const val VAPOR_TOP_ROWS = 2
+        private const val VAPOR_MAX_SHUFFLE_ATTEMPTS = 200
+
+        /** GP-01: true for any special piece value - the three tappable ones, or Xicara Vazia in any of its states. */
+        fun isSpecialPiece(value: Int): Boolean {
+            return value == SPECIAL_GRINDER || value == SPECIAL_FRENCH_PRESS || EmptyCupState.matches(value)
+        }
     }
 
     fun tryMove(
@@ -74,6 +87,7 @@ class Match3Engine(
     ): AnimatedResolveOutcome {
         var totalPoints = 0
         var cascadeLevel = 0
+        var vaporTriggered = false
         val rounds = mutableListOf<AnimationRound>()
 
         while (true) {
@@ -95,7 +109,7 @@ class Match3Engine(
             totalPoints += roundPoints
 
             val allPositions = runs.flatMapTo(linkedSetOf()) { it.positions }
-            val specialSpawns = selectSpecialSpawns(runs)
+            val specialSpawns = selectSpecialSpawns(runs, board)
             val matchedPositions = if (captureRounds) {
                 allPositions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
             } else {
@@ -103,7 +117,7 @@ class Match3Engine(
             }
 
             clearMatched(board, allPositions)
-            specialSpawns.forEach { position -> board.set(position.row, position.col, SPECIAL_GRINDER) }
+            specialSpawns.forEach { spawn -> board.set(spawn.position.row, spawn.position.col, spawn.pieceValue) }
             val fallSteps = if (captureRounds) {
                 collapseAndRefillCapturingEvents(board)
             } else {
@@ -111,10 +125,14 @@ class Match3Engine(
                 emptyList()
             }
 
+            val vaporDue = !vaporTriggered && cascadeLevel == VAPOR_CASCADE_THRESHOLD
+            vaporTriggered = vaporTriggered || vaporDue
+            val vaporEvents = if (vaporDue) steamReshuffleTopRows(board) else emptyList()
+
             if (captureRounds) {
                 rounds += AnimationRound(
                     matchedPositions = matchedPositions,
-                    fallSteps = fallSteps,
+                    fallSteps = if (vaporEvents.isEmpty()) fallSteps else fallSteps + listOf(vaporEvents),
                     roundPoints = roundPoints,
                     specialSpawns = specialSpawns
                 )
@@ -122,31 +140,84 @@ class Match3Engine(
         }
     }
 
-    /** GP-01: taps a [SPECIAL_GRINDER] piece, milling its 8 neighbors (Moore neighborhood) for bonus points. */
+    /**
+     * GP-01: activates whichever special piece sits at [position] - Moedor (mills 8 neighbors),
+     * Prensa Francesa (compresses its column) or Xicara Vazia (explodes a 3x3 area, tap-detonated
+     * early instead of waiting out its countdown - see [tickEmptyCups]).
+     */
     fun activateSpecialPiece(board: Match3Board, position: Position): SpecialActivationOutcome {
-        if (!board.isValid(position) || board.get(position.row, position.col) != SPECIAL_GRINDER) {
-            return SpecialActivationOutcome(
-                activated = false,
-                points = 0,
-                milledPieces = emptyList(),
-                fallSteps = emptyList()
-            )
+        if (!board.isValid(position)) {
+            return notActivated()
         }
+        val value = board.get(position.row, position.col)
+        return when {
+            value == SPECIAL_GRINDER -> activateGrinder(board, position)
+            value == SPECIAL_FRENCH_PRESS -> activateFrenchPress(board, position)
+            EmptyCupState.matches(value) -> activateEmptyCup(board, position, EmptyCupState.absorbed(value))
+            else -> notActivated()
+        }
+    }
 
+    private fun notActivated(): SpecialActivationOutcome {
+        return SpecialActivationOutcome(
+            activated = false,
+            points = 0,
+            affectedPieces = emptyList(),
+            fallSteps = emptyList()
+        )
+    }
+
+    private fun activateGrinder(board: Match3Board, position: Position): SpecialActivationOutcome {
         val milled = moorePositions(board, position).mapNotNull { neighbor ->
             val value = board.get(neighbor.row, neighbor.col)
             if (value >= 0) neighbor to value else null
         }
-
         board.set(position.row, position.col, EMPTY)
         milled.forEach { (neighbor, _) -> board.set(neighbor.row, neighbor.col, EMPTY) }
-
         val fallSteps = collapseAndRefillCapturingEvents(board)
         return SpecialActivationOutcome(
             activated = true,
             points = milled.size * config.scoreMatch3,
-            milledPieces = milled,
-            fallSteps = fallSteps
+            affectedPieces = milled,
+            fallSteps = fallSteps,
+            triggerPosition = position
+        )
+    }
+
+    /** GP-01: clears the whole column - the pieces above "crush" the ones below - and refills it from the top. */
+    private fun activateFrenchPress(board: Match3Board, position: Position): SpecialActivationOutcome {
+        val affected = (0 until board.rows).mapNotNull { row ->
+            val value = board.get(row, position.col)
+            if (value >= 0) Position(row, position.col) to value else null
+        }
+        for (row in 0 until board.rows) {
+            board.set(row, position.col, EMPTY)
+        }
+        val fallSteps = collapseAndRefillCapturingEvents(board)
+        return SpecialActivationOutcome(
+            activated = true,
+            points = affected.size * config.scoreMatch3,
+            affectedPieces = affected,
+            fallSteps = fallSteps,
+            triggerPosition = position
+        )
+    }
+
+    /** GP-01: explodes a 3x3 area; [absorbed] (pieces absorbed while it sat on the board) scales the bonus. */
+    private fun activateEmptyCup(board: Match3Board, position: Position, absorbed: Int): SpecialActivationOutcome {
+        val area = moorePositions(board, position) + position
+        val affected = area.mapNotNull { pos ->
+            val value = board.get(pos.row, pos.col)
+            if (value >= 0) pos to value else null
+        }
+        area.forEach { pos -> board.set(pos.row, pos.col, EMPTY) }
+        val fallSteps = collapseAndRefillCapturingEvents(board)
+        return SpecialActivationOutcome(
+            activated = true,
+            points = (affected.size + absorbed) * config.scoreMatch3,
+            affectedPieces = affected,
+            fallSteps = fallSteps,
+            triggerPosition = position
         )
     }
 
@@ -157,6 +228,39 @@ class Match3Engine(
             val col = center.col + deltaCol
             if (row in 0 until board.rows && col in 0 until board.cols) Position(row, col) else null
         }
+    }
+
+    /**
+     * GP-01: called once per player move to age every Xicara Vazia on the board by a turn, credit
+     * it for any of [matchedThisMove] that landed in its Moore neighborhood, and auto-detonate any
+     * whose countdown just ran out (see [activateSpecialPiece] for the player-triggered early path).
+     */
+    fun tickEmptyCups(board: Match3Board, matchedThisMove: List<Position>): List<SpecialActivationOutcome> {
+        val cupPositions = (0 until board.rows).flatMap { row ->
+            (0 until board.cols).mapNotNull { col ->
+                Position(row, col).takeIf { EmptyCupState.matches(board.get(row, col)) }
+            }
+        }
+
+        val explosions = mutableListOf<SpecialActivationOutcome>()
+        cupPositions.forEach { position ->
+            val value = board.get(position.row, position.col)
+            if (!EmptyCupState.matches(value)) {
+                return@forEach
+            }
+            val absorbedNow = EmptyCupState.absorbed(value) + matchedThisMove.count { isMooreAdjacent(position, it) }
+            val remainingTurns = EmptyCupState.turnsRemaining(value) - 1
+            if (remainingTurns <= 0) {
+                explosions += activateEmptyCup(board, position, absorbedNow)
+            } else {
+                board.set(position.row, position.col, EmptyCupState.encode(remainingTurns, absorbedNow))
+            }
+        }
+        return explosions
+    }
+
+    private fun isMooreAdjacent(center: Position, other: Position): Boolean {
+        return other != center && abs(center.row - other.row) <= 1 && abs(center.col - other.col) <= 1
     }
 
     fun ensurePlayableBoard(board: Match3Board) {
@@ -227,6 +331,47 @@ class Match3Engine(
         if (findMatches(board).positions.isNotEmpty() || !hasAvailableMove(board)) {
             shuffleWithoutMatches(board)
         }
+    }
+
+    /**
+     * GP-01: Vapor - triggered once a move's cascade reaches [VAPOR_CASCADE_THRESHOLD] levels.
+     * Rearranges the existing pieces of the top [VAPOR_TOP_ROWS] rows (never introduces new values)
+     * into a permutation with no immediate match and at least one available move, smoothing the
+     * "stuck top of board" RNG problem instead of just rewarding cascades with points.
+     */
+    private fun steamReshuffleTopRows(board: Match3Board): List<BoardEvent.Reshuffled> {
+        val affectedRows = minOf(VAPOR_TOP_ROWS, board.rows)
+        val positions = (0 until affectedRows).flatMap { row -> (0 until board.cols).map { col -> Position(row, col) } }
+        val original = positions.map { board.get(it.row, it.col) }
+
+        var chosen = original
+        var attempts = 0
+        var valid = false
+        while (attempts < VAPOR_MAX_SHUFFLE_ATTEMPTS && !valid) {
+            chosen = shuffledValues(original, board)
+            applyValues(board, positions, chosen)
+            valid = findMatchRuns(board).isEmpty() && hasAvailableMove(board)
+            attempts++
+        }
+
+        return positions.indices.mapNotNull { index ->
+            if (original[index] == chosen[index]) null else BoardEvent.Reshuffled(positions[index], chosen[index])
+        }
+    }
+
+    private fun shuffledValues(values: List<Int>, board: Match3Board): List<Int> {
+        val shuffled = values.toMutableList()
+        for (i in shuffled.indices.reversed()) {
+            val j = board.nextIndex(i + 1)
+            val temp = shuffled[i]
+            shuffled[i] = shuffled[j]
+            shuffled[j] = temp
+        }
+        return shuffled
+    }
+
+    private fun applyValues(board: Match3Board, positions: List<Position>, values: List<Int>) {
+        positions.indices.forEach { index -> board.set(positions[index].row, positions[index].col, values[index]) }
     }
 
     private fun calculatePoints(runLengths: List<Int>, cascadeLevel: Int): Int {
@@ -362,10 +507,63 @@ class Match3Engine(
         return runs
     }
 
-    /** GP-01: the last cell of each exact match-4 run becomes a Moedor instead of being cleared. */
-    private fun selectSpecialSpawns(runs: List<MatchRun>): List<Position> {
-        return runs.filter { it.length == GRINDER_MATCH_LENGTH }.map { it.positions.last() }
+    /**
+     * GP-01: the last cell of each exact match-4 run becomes a Moedor; a straight run of 5+ becomes
+     * a Xicara Vazia; a length-3 run crossing another length-3 run of the same value (L/T shape)
+     * becomes a Prensa Francesa at the intersection instead - checked first, since it consumes the
+     * two arms that would otherwise each just be a plain 3-match.
+     */
+    private fun selectSpecialSpawns(runs: List<MatchRun>, board: Match3Board): List<SpecialSpawn> {
+        val (lShapeSpawns, consumedRuns) = findLShapeSpawns(runs, board)
+        val spawns = lShapeSpawns.toMutableList()
+        runs.filterNot { it in consumedRuns }.forEach { run ->
+            when {
+                run.length == GRINDER_MATCH_LENGTH -> spawns += SpecialSpawn(run.positions.last(), SPECIAL_GRINDER)
+                run.length >= EMPTY_CUP_MIN_LENGTH -> {
+                    val cupValue = EmptyCupState.encode(EmptyCupState.INITIAL_TURNS, absorbed = 0)
+                    spawns += SpecialSpawn(run.positions.last(), cupValue)
+                }
+            }
+        }
+        return spawns
     }
+
+    /**
+     * Pairs each length-3 horizontal run with a crossing length-3 vertical run of the same value,
+     * to spawn a Prensa Francesa at the intersection - but only when the horizontal run crosses
+     * EXACTLY one vertical run. A denser cluster (e.g. a solid 3x3 block) makes every run cross
+     * multiple others, which is not really an "L/T" shape - those are left to clear normally.
+     */
+    private fun findLShapeSpawns(runs: List<MatchRun>, board: Match3Board): Pair<List<SpecialSpawn>, Set<MatchRun>> {
+        val horizontalArms = runs.filter { it.length == LT_SHAPE_ARM_LENGTH && it.isHorizontalRun() }
+        val verticalArms = runs.filter { it.length == LT_SHAPE_ARM_LENGTH && it.isVerticalRun() }
+        val spawns = mutableListOf<SpecialSpawn>()
+        val consumed = mutableSetOf<MatchRun>()
+
+        horizontalArms.forEach { horizontalArm ->
+            if (horizontalArm in consumed) {
+                return@forEach
+            }
+            val sameValue = board.get(horizontalArm.positions[0].row, horizontalArm.positions[0].col)
+            val crossing = verticalArms.filter { arm ->
+                arm !in consumed &&
+                    board.get(arm.positions[0].row, arm.positions[0].col) == sameValue &&
+                    arm.positions.any { it in horizontalArm.positions }
+            }
+            if (crossing.size == 1) {
+                val verticalArm = crossing.single()
+                val intersection = horizontalArm.positions.first { it in verticalArm.positions }
+                spawns += SpecialSpawn(intersection, SPECIAL_FRENCH_PRESS)
+                consumed += horizontalArm
+                consumed += verticalArm
+            }
+        }
+        return spawns to consumed
+    }
+
+    private fun MatchRun.isHorizontalRun(): Boolean = positions.size > 1 && positions[0].row == positions[1].row
+
+    private fun MatchRun.isVerticalRun(): Boolean = positions.size > 1 && positions[0].col == positions[1].col
 
     private fun wouldCreateMatch(
         board: Match3Board,

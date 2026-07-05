@@ -39,6 +39,7 @@ import androidx.compose.ui.window.Dialog
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
+import com.semstress.mobile.engine.EmptyCupState
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.components.CoffeePanel
@@ -316,15 +317,17 @@ private fun resolveGameMessage(key: String?): String? {
 }
 
 internal fun fallbackPieceSymbol(value: Int): String {
-    if (value == Match3Engine.SPECIAL_GRINDER) {
-        return "⚙️"
-    }
-    return when ((value % 6 + 6) % 6) {
-        0 -> "☕"
-        1 -> "🫘"
-        2 -> "🥛"
-        3 -> "🍪"
-        4 -> "🟤"
-        else -> "⭐"
+    return when {
+        value == Match3Engine.SPECIAL_GRINDER -> "⚙️"
+        value == Match3Engine.SPECIAL_FRENCH_PRESS -> "⬇️"
+        EmptyCupState.matches(value) -> "🫗"
+        else -> when ((value % 6 + 6) % 6) {
+            0 -> "☕"
+            1 -> "🫘"
+            2 -> "🥛"
+            3 -> "🍪"
+            4 -> "🟤"
+            else -> "⭐"
+        }
     }
 }
