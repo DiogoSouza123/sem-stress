@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.ui.theme.CoffeeTheme
+import com.semstress.mobile.ui.theme.TABULAR_NUMBER_FEATURE
 
 /**
  * UX-01: canonical card surface with a subtle kraft-paper-like border, used for
@@ -45,7 +46,11 @@ fun CoffeePanel(
 fun StatColumn(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = CoffeeTheme.colors.hudTextMuted)
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = TABULAR_NUMBER_FEATURE),
+            fontWeight = FontWeight.ExtraBold
+        )
     }
 }
 
