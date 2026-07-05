@@ -11,12 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -37,13 +34,13 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
+import com.semstress.mobile.ui.components.CoffeePanel
+import com.semstress.mobile.ui.components.CoffeeSecondaryButton
+import com.semstress.mobile.ui.components.StatRow
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
-import com.semstress.mobile.ui.theme.Caramel
-import com.semstress.mobile.ui.theme.CoffeeDark
-import com.semstress.mobile.ui.theme.Cream
-import com.semstress.mobile.ui.theme.Latte
+import com.semstress.mobile.ui.theme.CoffeeTheme
 
 @Composable
 fun GameScreen(
@@ -61,12 +58,13 @@ fun GameScreen(
     BackHandler(enabled = !game.finished, onBack = requestExit)
     GameSfxAndHaptics(game, sound)
 
+    val colors = CoffeeTheme.colors
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(Caramel.copy(alpha = 0.4f), Latte, Cream)
+                    listOf(colors.surfaceBoardBorder.copy(alpha = 0.4f), colors.surfaceBoard, colors.panelBackground)
                 )
             )
             .verticalScroll(rememberScrollState())
@@ -81,7 +79,7 @@ fun GameScreen(
 
         game.message?.let { message ->
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = message, style = MaterialTheme.typography.labelLarge, color = CoffeeDark)
+            Text(text = message, style = MaterialTheme.typography.labelLarge, color = colors.hudText)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -96,13 +94,12 @@ fun GameScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
+        CoffeeSecondaryButton(
+            text = stringResource(R.string.back_to_menu),
             onClick = requestExit,
+            modifier = Modifier.fillMaxWidth(),
             enabled = !game.animating
-        ) {
-            Text("Voltar ao menu")
-        }
+        )
     }
 
     if (showExitConfirmation) {
@@ -139,6 +136,7 @@ private fun DebugMenuTrigger(debugTools: GameScreenDebugTools) {
 
 @Composable
 private fun GameHeader(game: GameUiState, sound: GameScreenSound, actions: GameScreenActions) {
+    val colors = CoffeeTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -149,12 +147,12 @@ private fun GameHeader(game: GameUiState, sound: GameScreenSound, actions: GameS
                 text = game.stageName,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = CoffeeDark
+                color = colors.hudText
             )
             Text(
                 text = game.stageDescription,
                 style = MaterialTheme.typography.bodyMedium,
-                color = CoffeeDark.copy(alpha = 0.75f)
+                color = colors.hudTextMuted
             )
         }
 
@@ -236,21 +234,28 @@ private fun GameResultDialog(game: GameUiState, onReplayStage: () -> Unit, onBac
         onDismissRequest = {},
         title = {
             Text(
-                text = if (game.won) "Fase concluida!" else "Fim da rodada",
+                text = stringResource(if (game.won) R.string.stage_won_title else R.string.stage_lost_title),
                 fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
-            Text("Pontuacao: ${game.points}\nMeta: ${game.target}\nMovimentos restantes: ${game.moves}")
+            Text(
+                stringResource(
+                    R.string.stage_result_summary,
+                    game.points,
+                    game.target,
+                    game.moves
+                )
+            )
         },
         confirmButton = {
             Button(onClick = onReplayStage) {
-                Text("Jogar novamente")
+                Text(stringResource(R.string.play_again))
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onBackToMenu) {
-                Text("Voltar ao menu")
+                Text(stringResource(R.string.back_to_menu))
             }
         }
     )
@@ -258,32 +263,16 @@ private fun GameResultDialog(game: GameUiState, onReplayStage: () -> Unit, onBac
 
 @Composable
 private fun Scoreboard(score: Int, target: Int, moves: Int) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Metric("Pontos", score.toString())
-            Metric("Meta", target.toString())
-            Metric("Mov", moves.toString())
-        }
-    }
-}
-
-@Composable
-private fun Metric(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(
-            value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold
+    val pointsLabel = stringResource(R.string.hud_points)
+    val targetLabel = stringResource(R.string.hud_target)
+    val movesLabel = stringResource(R.string.hud_moves)
+    CoffeePanel {
+        StatRow(
+            stats = listOf(
+                pointsLabel to score.toString(),
+                targetLabel to target.toString(),
+                movesLabel to moves.toString()
+            )
         )
     }
 }

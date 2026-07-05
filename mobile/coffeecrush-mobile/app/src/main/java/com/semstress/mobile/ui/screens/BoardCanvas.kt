@@ -33,9 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.sprites.SpriteAtlas
-import com.semstress.mobile.ui.theme.Gold
-import com.semstress.mobile.ui.theme.Latte
-import com.semstress.mobile.ui.theme.Mint
+import com.semstress.mobile.ui.theme.CoffeeSemanticColors
+import com.semstress.mobile.ui.theme.CoffeeTheme
 
 private const val SPRITE_FRAME_DURATION_MS = 80L
 private const val BOARD_SPACING_DP = 6
@@ -62,7 +61,8 @@ private data class BoardDrawContext(
     val pitchPx: Float,
     val textMeasurer: TextMeasurer,
     val pieceTextStyle: TextStyle,
-    val explosionTextStyle: TextStyle
+    val explosionTextStyle: TextStyle,
+    val colors: CoffeeSemanticColors
 )
 
 /**
@@ -92,6 +92,7 @@ fun BoardCanvas(
     val textMeasurer = rememberTextMeasurer()
     val pieceTextStyle = MaterialTheme.typography.headlineSmall
     val explosionTextStyle = MaterialTheme.typography.headlineMedium
+    val colors = CoffeeTheme.colors
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -127,7 +128,8 @@ fun BoardCanvas(
                     pitchPx = geometry.pitchPx,
                     textMeasurer = textMeasurer,
                     pieceTextStyle = pieceTextStyle,
-                    explosionTextStyle = explosionTextStyle
+                    explosionTextStyle = explosionTextStyle,
+                    colors = colors
                 )
                 for (row in 0 until rows) {
                     for (col in 0 until cols) {
@@ -169,14 +171,14 @@ private fun DrawScope.drawCell(
 
     if (hasPiece) {
         drawRoundRect(
-            color = Latte.copy(alpha = BACKGROUND_ALPHA),
+            color = context.colors.surfaceBoard.copy(alpha = BACKGROUND_ALPHA),
             topLeft = topLeft,
             size = Size(context.cellSizePx, context.cellSizePx),
             cornerRadius = CornerRadius(CELL_CORNER_RADIUS_DP.dp.toPx())
         )
     }
 
-    drawSelectionOverlay(position, selection, topLeft, context.cellSizePx)
+    drawSelectionOverlay(position, selection, topLeft, context)
 
     if (hasPiece) {
         drawPiece(value, topLeft, context)
@@ -190,8 +192,9 @@ private fun DrawScope.drawSelectionOverlay(
     position: Position,
     selection: BoardSelectionState,
     topLeft: Offset,
-    cellSizePx: Float
+    context: BoardDrawContext
 ) {
+    val cellSizePx = context.cellSizePx
     val inset = OVERLAY_INSET_DP.dp.toPx()
     val overlayTopLeft = topLeft + Offset(inset, inset)
     val overlaySize = Size(cellSizePx - inset * 2, cellSizePx - inset * 2)
@@ -199,7 +202,7 @@ private fun DrawScope.drawSelectionOverlay(
 
     if (position == selection.selected) {
         drawRoundRect(
-            color = Gold.copy(alpha = SELECTED_ALPHA),
+            color = context.colors.pieceHighlight.copy(alpha = SELECTED_ALPHA),
             topLeft = overlayTopLeft,
             size = overlaySize,
             cornerRadius = overlayCornerRadius
@@ -207,7 +210,7 @@ private fun DrawScope.drawSelectionOverlay(
     }
     if (position in selection.highlighted) {
         drawRoundRect(
-            color = Mint.copy(alpha = HIGHLIGHT_ALPHA),
+            color = context.colors.pieceExplosion.copy(alpha = HIGHLIGHT_ALPHA),
             topLeft = overlayTopLeft,
             size = overlaySize,
             cornerRadius = overlayCornerRadius

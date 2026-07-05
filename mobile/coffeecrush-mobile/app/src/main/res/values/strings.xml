@@ -11,4 +11,25 @@
     <string name="toggle_music_off">Musica: OFF</string>
     <string name="toggle_sfx_on">Efeitos: ON</string>
     <string name="toggle_sfx_off">Efeitos: OFF</string>
+
+    <string name="back_to_menu">Voltar ao menu</string>
+    <string name="play_again">Jogar novamente</string>
+    <string name="stage_won_title">Fase concluida!</string>
+    <string name="stage_lost_title">Fim da rodada</string>
+    <string name="stage_result_summary">Pontuacao: %1$d\nMeta: %2$d\nMovimentos restantes: %3$d</string>
+    <string name="hud_points">Pontos</string>
+    <string name="hud_target">Meta</string>
+    <string name="hud_moves">Mov</string>
+
+    <string name="app_title">Coffee Crush</string>
+    <string name="menu_subtitle">Menu de fases</string>
+    <string name="select_your_stage">Selecione sua fase</string>
+    <string name="play_selected_stage">Jogar fase selecionada</string>
+    <string name="progress_overall">Progresso geral</string>
+    <string name="progress_stages">Fases</string>
+    <string name="progress_points">Pontos</string>
+    <string name="progress_average">Media</string>
+    <string name="stage_status_unlocked">Liberada</string>
+    <string name="stage_status_locked">Bloqueada</string>
+    <string name="stage_status_completed">Concluida</string>
 </resources>

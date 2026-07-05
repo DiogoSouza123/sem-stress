@@ -49,7 +49,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 
 ## Fase 5 — Produto: UI 2.0 e Gameplay 2.0 (P1–P2 de produto)
 
-- [ ] **UX-01** `M` — Design system (tokens semânticos, `CoffeeButton`, `ProgressCup`, `StarRating`) + dark theme real + screenshot tests.
+- [x] **UX-01** `M` — Design system (tokens semânticos, `CoffeeButton`, `ProgressCup`, `StarRating`) + dark theme real + screenshot tests. (tokens semânticos em `CoffeeSemanticColors`/`CoffeeTheme.colors`, aplicados em `GameScreen`/`StageMenuScreen`/`BoardCanvas` no lugar de cores cruas; componentes `CoffeePrimaryButton`/`CoffeeSecondaryButton`/`CoffeeIconButton`/`CoffeePanel`/`StatChip`/`StarRating`/`ProgressCup` com `@Preview` claro/escuro; dark theme ligado a `isSystemInDarkTheme()`; extração para módulo `:core:ui` e infra de screenshot-test automatizado (Paparazzi/Roborazzi) ficam para item futuro — sem infra de golden-image configurada ainda)
 - [ ] **UX-02** `P` — Tipografia própria (display + corpo, números tabulares).
 - [ ] **GP-03** `M` — Estrelas 1–3 por fase (`starsByStage` no DataStore) + exibição no menu (**UX-04a**).
 - [ ] **UX-05** `M` — HUD novo: ProgressCup da meta, movimentos com alerta, pontos flutuantes, shake em inválido.
