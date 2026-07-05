@@ -41,7 +41,7 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 
 ## Fase 4 — Estrutura e engine 2.0 (P2)
 
-- [ ] **RR-09** `M` — Código 100% português; strings de usuário em `strings.xml`. PR isolado, sem lógica.
+- [x] **RR-09** `M` — Código 100% inglês; strings de usuário em `strings.xml`. PR isolado, sem lógica.
 - [ ] **RR-08** `G` — Modularização: `:core:model` e `:core:engine` (Kotlin JVM puro) primeiro; depois `:core:data`, `:core:ui`, `:feature:*`. *Aceite:* `:core:engine` compila sem Android SDK.
 - [ ] **RR-07 / RR-17** `G` — Engine emite eventos semânticos (`Cleared/Moved/Spawned`); board encapsulado; UI interpola. *Aceite:* testes de engine adaptados passam; animação de queda contínua possível; flag para alternar pipeline.
 - [ ] **MZ-01** `M` — Infra `FeatureFlags` (Debug → Remote → Default) em `:core:common`. ([monetization](monetization.md) §1.4)
