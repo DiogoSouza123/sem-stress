@@ -1,5 +1,8 @@
 package com.semstress.mobile.di
 
+import com.semstress.mobile.common.DefaultFeatureFlags
+import com.semstress.mobile.common.FeatureFlags
+import com.semstress.mobile.common.MutableFeatureFlags
 import com.semstress.mobile.data.ProgressRepository
 import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.data.SettingsRepository
@@ -32,4 +35,10 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindSpriteAtlasSource(impl: SpriteRepository): SpriteAtlasSource
+
+    @Binds
+    abstract fun bindFeatureFlags(impl: DefaultFeatureFlags): FeatureFlags
+
+    @Binds
+    abstract fun bindMutableFeatureFlags(impl: DefaultFeatureFlags): MutableFeatureFlags
 }

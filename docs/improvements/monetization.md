@@ -76,6 +76,8 @@ enum class Flag(val default: Boolean) {
 
 Implementações em cadeia (a primeira que responder vence): `DebugOverrideFlags` (painel debug) → `RemoteConfigFlags` (Firebase, quando existir) → `DefaultFlags` (constantes, tudo `false`). Essa infraestrutura serve também aos rollouts técnicos (RR-20, RR-07) — construí-la primeiro (MZ-01) beneficia o projeto inteiro antes de qualquer centavo.
 
+**Feito em MZ-01:** módulo `:core:common` (Kotlin JVM puro, sem Android SDK) com `Flag`/`FeatureFlags`/`MutableFeatureFlags` e uma única implementação `DefaultFeatureFlags` (in-memory, thread-safe) que já resolve o papel de `DebugOverrideFlags` + `DefaultFlags` — como `RemoteConfigFlags` ainda não existe (depende de Firebase, fora de escopo aqui), o "override" só é escrito pelo painel de debug (CQ-03); nada mais no app grava nele hoje. `FeatureFlags`/`MutableFeatureFlags` são bindados via Hilt em `DataModule` (`:app`), disponíveis em qualquer build type. Quando `RemoteConfigFlags` existir, ele entra como uma segunda fonte consultada por `DefaultFeatureFlags` antes do `default` do enum, sem mudar a interface pública.
+
 ## 2. Frameworks/SDKs sugeridos (para o futuro flavor `monetized`)
 
 | Função | SDK | Observações |

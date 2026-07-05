@@ -77,6 +77,16 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    // CQ-03: the debug panel lives in src/debug (compiled only for the `debug` build type) with a
+    // no-op counterpart in src/release; `benchmark` has no source set of its own (it only exists
+    // for PF-01's macrobenchmark) so it reuses the release (no-op) sources, matching its own
+    // `matchingFallbacks += listOf("release")` above.
+    sourceSets {
+        getByName("benchmark") {
+            java.srcDirs("src/release/java")
+        }
+    }
 }
 
 detekt {
@@ -103,6 +113,7 @@ protobuf {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:engine"))
+    implementation(project(":core:common"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

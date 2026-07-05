@@ -13,6 +13,7 @@ composeBom = "2025.04.01"
 junitJupiter = "6.1.1"
 junitPlatformLauncher = "6.1.1"
 kover = "0.9.8"
+kotlinxCoroutinesCore = "1.9.0"
 kotlinxCoroutinesTest = "1.11.0"
 navigationCompose = "2.9.8"
 kotlinxSerializationJson = "1.7.3"
@@ -51,6 +52,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatformLauncher" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
