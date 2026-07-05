@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -152,6 +153,8 @@ private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
     val pointsLabel = stringResource(R.string.progress_points)
     val averageLabel = stringResource(R.string.progress_average)
     val starsLabel = stringResource(R.string.progress_stars)
+    val completedStages = progress.completedStagesCount()
+    val averageScore = if (completedStages == 0) 0 else progress.totalScore() / completedStages
     CoffeePanel {
         Text(
             text = stringResource(R.string.progress_overall),
@@ -161,12 +164,22 @@ private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
         Spacer(modifier = Modifier.height(8.dp))
         StatRow(
             stats = listOf(
-                stagesLabel to "${progress.completedStagesCount()} / $totalStages",
+                stagesLabel to "$completedStages / $totalStages",
                 pointsLabel to progress.totalScore().toString(),
-                averageLabel to progress.averageScore().toString(),
+                averageLabel to averageScore.toString(),
                 starsLabel to "${progress.totalStars()} / ${totalStages * MAX_STARS_PER_STAGE}"
             )
         )
+        if (progress.currentStreakDays > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            StatChip(
+                text = pluralStringResource(
+                    R.plurals.daily_streak,
+                    progress.currentStreakDays,
+                    progress.currentStreakDays
+                )
+            )
+        }
     }
 }
 

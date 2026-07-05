@@ -2,6 +2,7 @@ package com.semstress.mobile.ui.state
 
 import androidx.lifecycle.SavedStateHandle
 import com.semstress.mobile.data.FakeProgressStore
+import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.DefaultMatch3EngineFactory
@@ -173,6 +174,26 @@ class GameViewModelTest {
         assertTrue(game.won)
         assertEquals(2, store.saved.highestUnlockedStage)
         assertEquals(game.points, store.saved.scoreFor(1))
+        assertEquals(java.time.LocalDate.now().toEpochDay(), store.saved.lastPlayedEpochDay)
+        assertEquals(1, store.saved.currentStreakDays)
+    }
+
+    @Test
+    fun `terminar uma fase estende o streak diario ja existente`() = runTest(testDispatcher) {
+        val stage = stageConfig(id = 1, rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 1)
+        val today = java.time.LocalDate.now().toEpochDay()
+        val store = FakeProgressStore(
+            initial = PlayerProgress(lastPlayedEpochDay = today - 1, currentStreakDays = 4)
+        )
+        val viewModel = newGameViewModel(stage, totalStages = 2, progressRepository = store)
+        val board = viewModel.uiState.value.board
+        val (first, second) = requireNotNull(findMovePair(board, stage, wantValid = true))
+
+        viewModel.onAction(GameAction.CellTapped(first.row, first.col))
+        viewModel.onAction(GameAction.CellTapped(second.row, second.col))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(5, store.saved.currentStreakDays)
     }
 
     @Test

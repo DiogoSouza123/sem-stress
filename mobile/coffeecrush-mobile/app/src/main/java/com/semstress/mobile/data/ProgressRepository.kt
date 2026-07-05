@@ -63,7 +63,9 @@ class ProgressRepository @Inject constructor(
             starsByStage = proto.starsByStageMap.filterValues { it > 0 },
             dailyChallengeEpochDay = proto.dailyChallengeEpochDay,
             dailyAttemptsUsedToday = proto.dailyAttemptsUsedToday,
-            dailyBestScore = proto.dailyBestScore
+            dailyBestScore = proto.dailyBestScore,
+            lastPlayedEpochDay = proto.lastPlayedEpochDay,
+            currentStreakDays = proto.currentStreakDays
         )
     }
 
@@ -79,6 +81,8 @@ class ProgressRepository @Inject constructor(
                 .setDailyChallengeEpochDay(progress.dailyChallengeEpochDay)
                 .setDailyAttemptsUsedToday(progress.dailyAttemptsUsedToday)
                 .setDailyBestScore(progress.dailyBestScore)
+                .setLastPlayedEpochDay(progress.lastPlayedEpochDay)
+                .setCurrentStreakDays(progress.currentStreakDays)
                 .build()
         }
     }

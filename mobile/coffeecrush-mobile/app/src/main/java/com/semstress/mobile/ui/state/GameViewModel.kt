@@ -632,6 +632,7 @@ private suspend fun persistProgressIfFinished(
     }
     withContext(ioDispatcher) {
         val loaded = progressRepository.load(spec.totalStages)
+        val today = spec.seed ?: java.time.LocalDate.now().toEpochDay()
         val progress = if (spec.stage.id == DAILY_CHALLENGE_STAGE_ID && spec.seed != null) {
             loaded.registerDailyAttempt(today = spec.seed, score = currentSession.points)
         } else {
@@ -643,6 +644,6 @@ private suspend fun persistProgressIfFinished(
                 stars = currentSession.starsEarned
             )
         }
-        progressRepository.save(progress)
+        progressRepository.save(progress.registerPlay(today))
     }
 }

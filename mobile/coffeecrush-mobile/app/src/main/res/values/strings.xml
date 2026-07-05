@@ -58,4 +58,9 @@
     <string name="pause_continue">Continuar</string>
     <string name="pause_restart">Recomecar fase</string>
     <string name="pause_exit">Sair para o menu</string>
+
+    <plurals name="daily_streak">
+        <item quantity="one">🔥 %1$d dia seguido</item>
+        <item quantity="other">🔥 %1$d dias seguidos</item>
+    </plurals>
 </resources>

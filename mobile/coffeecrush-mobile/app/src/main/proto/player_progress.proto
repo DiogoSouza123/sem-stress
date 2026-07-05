@@ -11,4 +11,6 @@ message PlayerProgressProto {
   int64 daily_challenge_epoch_day = 5;
   int32 daily_attempts_used_today = 6;
   int32 daily_best_score = 7;
+  int64 last_played_epoch_day = 8;
+  int32 current_streak_days = 9;
 }

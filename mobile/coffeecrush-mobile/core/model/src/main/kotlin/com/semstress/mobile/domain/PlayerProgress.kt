@@ -7,9 +7,24 @@ data class PlayerProgress(
     val starsByStage: Map<Int, Int> = emptyMap(),
     val dailyChallengeEpochDay: Long = 0L,
     val dailyAttemptsUsedToday: Int = 0,
-    val dailyBestScore: Int = 0
+    val dailyBestScore: Int = 0,
+    val lastPlayedEpochDay: Long = 0L,
+    val currentStreakDays: Int = 0
 ) {
     fun isUnlocked(stageId: Int): Boolean = stageId <= highestUnlockedStage
+
+    /**
+     * GP-06: called whenever a stage session finishes. Consecutive days extend the streak by one;
+     * playing again on the same day is a no-op; any gap resets it to 1 (no "vale-folga" grace day yet).
+     */
+    fun registerPlay(today: Long): PlayerProgress {
+        val streak = when (today) {
+            lastPlayedEpochDay -> currentStreakDays.coerceAtLeast(1)
+            lastPlayedEpochDay + 1 -> currentStreakDays + 1
+            else -> 1
+        }
+        return copy(lastPlayedEpochDay = today, currentStreakDays = streak)
+    }
 
     /** GP-05: attempts reset once [today] (an epoch day) differs from the last day the challenge was played. */
     fun dailyAttemptsRemaining(today: Long, maxAttempts: Int = DAILY_CHALLENGE_MAX_ATTEMPTS): Int {
@@ -39,14 +54,6 @@ data class PlayerProgress(
     fun completedStagesCount(): Int = bestScores.values.count { it > 0 }
 
     fun totalScore(): Int = bestScores.values.filter { it > 0 }.sum()
-
-    fun averageScore(): Int {
-        val completed = completedStagesCount()
-        if (completed == 0) {
-            return 0
-        }
-        return totalScore() / completed
-    }
 
     fun registerResult(
         stageId: Int,
