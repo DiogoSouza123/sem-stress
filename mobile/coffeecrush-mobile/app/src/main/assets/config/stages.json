@@ -30,7 +30,8 @@
       "description": "Aprenda o basico",
       "pieceTypes": 5,
       "initialMoves": 20,
-      "targetScore": 5000
+      "targetScore": 5000,
+      "region": "Cafezal"
     },
     {
       "id": 2,
@@ -38,14 +39,16 @@
       "description": "Ritmo crescente",
       "pieceTypes": 5,
       "initialMoves": 18,
-      "targetScore": 7000
+      "targetScore": 7000,
+      "region": "Cafezal"
     },
     {
       "id": 3,
       "name": "Fase 3 - Torrefacao",
       "description": "Mais variedade",
       "initialMoves": 17,
-      "targetScore": 9000
+      "targetScore": 9000,
+      "region": "Torrefacao"
     },
     {
       "id": 4,
@@ -53,7 +56,8 @@
       "description": "Tabuleiro maior",
       "rows": 7,
       "initialMoves": 20,
-      "targetScore": 12000
+      "targetScore": 12000,
+      "region": "Torrefacao"
     },
     {
       "id": 5,
@@ -61,7 +65,8 @@
       "description": "Mais desafio",
       "rows": 7,
       "initialMoves": 18,
-      "targetScore": 14000
+      "targetScore": 14000,
+      "region": "Cafeteria"
     },
     {
       "id": 6,
@@ -70,7 +75,8 @@
       "rows": 7,
       "cols": 7,
       "initialMoves": 18,
-      "targetScore": 17000
+      "targetScore": 17000,
+      "region": "Cafeteria"
     },
     {
       "id": 7,
@@ -79,7 +85,8 @@
       "rows": 7,
       "cols": 7,
       "initialMoves": 16,
-      "targetScore": 19000
+      "targetScore": 19000,
+      "region": "Graos Nobres"
     },
     {
       "id": 8,
@@ -88,7 +95,8 @@
       "rows": 8,
       "cols": 7,
       "initialMoves": 16,
-      "targetScore": 22000
+      "targetScore": 22000,
+      "region": "Graos Nobres"
     },
     {
       "id": 9,
@@ -97,7 +105,8 @@
       "rows": 8,
       "cols": 7,
       "initialMoves": 15,
-      "targetScore": 25000
+      "targetScore": 25000,
+      "region": "Mestre do Cafe"
     },
     {
       "id": 10,
@@ -106,7 +115,8 @@
       "rows": 8,
       "cols": 8,
       "initialMoves": 14,
-      "targetScore": 30000
+      "targetScore": 30000,
+      "region": "Mestre do Cafe"
     }
   ]
 }

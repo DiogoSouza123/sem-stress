@@ -66,7 +66,8 @@ data class StageDto(
     val musicName: String? = null,
     val musicVolumePercent: Int? = null,
     val collectPieceType: Int? = null,
-    val collectCount: Int? = null
+    val collectCount: Int? = null,
+    val region: String? = null
 )
 
 /**
@@ -157,7 +158,8 @@ object StageCatalogJsonParser {
             backgroundName = orDefault(dto.backgroundName, base.backgroundName),
             musicName = music.first,
             musicVolumePercent = music.second,
-            collectObjective = collectObjectiveFrom(dto)
+            collectObjective = collectObjectiveFrom(dto),
+            region = dto.region
         )
     }
 

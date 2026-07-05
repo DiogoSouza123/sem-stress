@@ -20,5 +20,6 @@ data class StageConfig(
     val backgroundName: String = "coffee_bg",
     val musicName: String = "orchestronika_motivation",
     val musicVolumePercent: Int = 70,
-    val collectObjective: CollectObjective? = null
+    val collectObjective: CollectObjective? = null,
+    val region: String? = null
 )
