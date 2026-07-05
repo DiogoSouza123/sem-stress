@@ -9,6 +9,7 @@ import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.domain.calculateStars
+import com.semstress.mobile.engine.AnimatedMoveOutcome
 import com.semstress.mobile.engine.AnimationRound
 import com.semstress.mobile.engine.BoardEvent
 import com.semstress.mobile.engine.Match3Board
@@ -48,7 +49,12 @@ data class GameUiState(
     val won: Boolean = false,
     val starsEarned: Int = 0,
     val invalidSwap: Pair<Position, Position>? = null,
-    val invalidMoveNonce: Int = 0
+    val invalidMoveNonce: Int = 0,
+    val initialMoves: Int = 0,
+    val collectPieceType: Int? = null,
+    val collectTarget: Int = 0,
+    val collectProgress: Int = 0,
+    val hintMove: Pair<Position, Position>? = null
 )
 
 sealed interface GameAction {
@@ -66,6 +72,7 @@ sealed interface GameAction {
 private const val MATCH_HIGHLIGHT_MS = 140L
 private const val EXPLOSION_MS = 220L
 private const val FALL_FRAME_MS = 65L
+private const val HINT_DELAY_MS = 8000L
 
 private data class GameSession(
     val board: Match3Board,
@@ -81,7 +88,9 @@ private data class GameSession(
     var explodingMatches: Set<Position> = emptySet(),
     var message: String? = null,
     var invalidSwap: Pair<Position, Position>? = null,
-    var invalidMoveNonce: Int = 0
+    var invalidMoveNonce: Int = 0,
+    var collectedCount: Int = 0,
+    var hintMove: Pair<Position, Position>? = null
 )
 
 private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState(
@@ -101,7 +110,12 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     won = won,
     starsEarned = starsEarned,
     invalidSwap = invalidSwap,
-    invalidMoveNonce = invalidMoveNonce
+    invalidMoveNonce = invalidMoveNonce,
+    initialMoves = stage.initialMoves,
+    collectPieceType = stage.collectObjective?.pieceType,
+    collectTarget = stage.collectObjective?.count ?: 0,
+    collectProgress = collectedCount,
+    hintMove = hintMove
 )
 
 /**
@@ -161,7 +175,8 @@ class GameViewModel @AssistedInject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
-    private var session: GameSession = restoreSession() ?: createFreshSession()
+    private var session: GameSession = restoreSession(savedStateHandle, stage, engineFactory)
+        ?: createFreshSession(stage, engineFactory)
 
     private val _uiState = MutableStateFlow(session.toUiState(stage))
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -170,9 +185,11 @@ class GameViewModel @AssistedInject constructor(
     val backToMenuRequests: SharedFlow<Unit> = _backToMenuRequests.asSharedFlow()
 
     private var moveJob: Job? = null
+    private var hintJob: Job? = null
 
     init {
         emit()
+        scheduleHint(session)
     }
 
     fun onAction(action: GameAction) {
@@ -183,6 +200,7 @@ class GameViewModel @AssistedInject constructor(
             GameAction.Replay -> restart()
             GameAction.BackToMenu -> {
                 moveJob?.cancel()
+                hintJob?.cancel()
                 _backToMenuRequests.tryEmit(Unit)
             }
             is GameAction.DebugAddMoves -> if (BuildConfig.DEBUG) {
@@ -202,7 +220,9 @@ class GameViewModel @AssistedInject constructor(
                     initialMoves = stage.initialMoves
                 )
                 emit()
-                viewModelScope.launch { persistProgressIfFinished(currentSession) }
+                viewModelScope.launch {
+                    persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
+                }
             }
             is GameAction.DebugReshuffleWithSeed -> if (BuildConfig.DEBUG) {
                 restart(action.seed)
@@ -217,6 +237,7 @@ class GameViewModel @AssistedInject constructor(
         if (blocked || outOfBounds) {
             return
         }
+        scheduleHint(currentSession)
 
         val clicked = Position(row, col)
         val selected = currentSession.selected
@@ -252,10 +273,24 @@ class GameViewModel @AssistedInject constructor(
         if (first == second) {
             return
         }
+        scheduleHint(currentSession)
 
         currentSession.selected = null
         emit()
         launchMove(currentSession, first, second)
+    }
+
+    /** GP-08: (re)starts the ~8s inactivity countdown and clears any hint already shown, on every player action. */
+    private fun scheduleHint(currentSession: GameSession) {
+        hintJob?.cancel()
+        currentSession.hintMove = null
+        hintJob = viewModelScope.launch {
+            delay(HINT_DELAY_MS)
+            if (session === currentSession && !currentSession.finished && !currentSession.animating) {
+                currentSession.hintMove = currentSession.engine.findAvailableMove(currentSession.board)
+                emit()
+            }
+        }
     }
 
     private fun launchMove(currentSession: GameSession, first: Position, second: Position) {
@@ -271,28 +306,8 @@ class GameViewModel @AssistedInject constructor(
     private suspend fun performMoveAnimated(currentSession: GameSession, first: Position, second: Position) {
         val workingBoard = currentSession.board.copyOf()
         val outcome = currentSession.engine.tryMoveAnimated(workingBoard, first, second)
-        if (outcome.valid) {
-            currentSession.animating = true
-            currentSession.message = null
-            currentSession.board.swap(first, second)
-            emit()
-
-            for (round in outcome.rounds) {
-                if (session !== currentSession) {
-                    return
-                }
-                currentSession.applyRound(round) { emit() }
-            }
-
-            currentSession.points += outcome.points
-            currentSession.moves -= 1
-
-            if (!currentSession.engine.hasAvailableMove(currentSession.board)) {
-                currentSession.engine.shuffleWithoutMatches(currentSession.board)
-                currentSession.message = "Sem movimentos disponiveis. Tabuleiro embaralhado."
-            } else {
-                currentSession.message = if (outcome.cascades > 1) "Combo x${outcome.cascades}!" else null
-            }
+        val completed = if (outcome.valid) {
+            applyValidMove(currentSession, first, second, outcome)
         } else {
             if (stage.consumeInvalidMove) {
                 currentSession.moves -= 1
@@ -300,13 +315,61 @@ class GameViewModel @AssistedInject constructor(
             currentSession.message = INVALID_MOVE_MESSAGE
             currentSession.invalidSwap = first to second
             currentSession.invalidMoveNonce += 1
+            true
+        }
+        if (!completed) {
+            return
         }
 
         currentSession.animating = false
         currentSession.highlightedMatches = emptySet()
         currentSession.explodingMatches = emptySet()
+        finalizeMove(currentSession)
+        persistProgressIfFinished(currentSession, stage, totalStages, progressRepository, ioDispatcher)
+    }
 
-        if (currentSession.points >= stage.targetScore) {
+    /** Returns false if [session] moved on mid-animation (e.g. a replay), meaning [currentSession] is now stale. */
+    private suspend fun applyValidMove(
+        currentSession: GameSession,
+        first: Position,
+        second: Position,
+        outcome: AnimatedMoveOutcome
+    ): Boolean {
+        currentSession.animating = true
+        currentSession.message = null
+        currentSession.board.swap(first, second)
+        emit()
+
+        val objective = stage.collectObjective
+        for (round in outcome.rounds) {
+            if (session !== currentSession) {
+                return false
+            }
+            if (objective != null) {
+                val collected = round.matchedPositions.count { position ->
+                    currentSession.board.get(position.row, position.col) == objective.pieceType
+                }
+                currentSession.collectedCount += collected
+            }
+            currentSession.applyRound(round) { emit() }
+        }
+
+        currentSession.points += outcome.points
+        currentSession.moves -= 1
+
+        if (!currentSession.engine.hasAvailableMove(currentSession.board)) {
+            currentSession.engine.shuffleWithoutMatches(currentSession.board)
+            currentSession.message = "Sem movimentos disponiveis. Tabuleiro embaralhado."
+        } else {
+            currentSession.message = if (outcome.cascades > 1) "Combo x${outcome.cascades}!" else null
+        }
+        return true
+    }
+
+    private fun finalizeMove(currentSession: GameSession) {
+        val objectivesMet = currentSession.points >= stage.targetScore &&
+            (stage.collectObjective?.isComplete(currentSession.collectedCount) ?: true)
+        if (objectivesMet) {
             currentSession.finished = true
             currentSession.won = true
         } else if (currentSession.moves <= 0) {
@@ -321,40 +384,17 @@ class GameViewModel @AssistedInject constructor(
                 movesRemaining = currentSession.moves,
                 initialMoves = stage.initialMoves
             )
-        }
-        persistProgressIfFinished(currentSession)
-    }
-
-    private suspend fun persistProgressIfFinished(currentSession: GameSession) {
-        if (!currentSession.finished) {
-            return
-        }
-        withContext(ioDispatcher) {
-            val progress = progressRepository.load(totalStages).registerResult(
-                stageId = stage.id,
-                score = currentSession.points,
-                won = currentSession.won,
-                totalStages = totalStages,
-                stars = currentSession.starsEarned
-            )
-            progressRepository.save(progress)
+        } else {
+            scheduleHint(currentSession)
         }
     }
 
     private fun restart(seed: Long? = null) {
         moveJob?.cancel()
-        session = createFreshSession(seed)
+        hintJob?.cancel()
+        session = createFreshSession(stage, engineFactory, seed)
         emit()
-    }
-
-    private fun createFreshSession(seed: Long? = null): GameSession {
-        val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes, seed)
-        val engine = engineFactory.create(stage)
-        board.fillRandom()
-        engine.ensurePlayableBoard(board)
-        engine.resolveBoard(board)
-        engine.ensurePlayableBoard(board)
-        return GameSession(board = board, engine = engine, moves = stage.initialMoves)
+        scheduleHint(session)
     }
 
     private fun emit() {
@@ -376,59 +416,102 @@ class GameViewModel @AssistedInject constructor(
         savedStateHandle[KEY_FINISHED] = currentSession.finished
         savedStateHandle[KEY_WON] = currentSession.won
         savedStateHandle[KEY_STARS] = currentSession.starsEarned
+        savedStateHandle[KEY_COLLECTED] = currentSession.collectedCount
         savedStateHandle[KEY_MESSAGE] = currentSession.message
         savedStateHandle[KEY_SELECTED_ROW] = currentSession.selected?.row ?: NO_SELECTION
         savedStateHandle[KEY_SELECTED_COL] = currentSession.selected?.col ?: NO_SELECTION
     }
 
-    private fun restoreSession(): GameSession? {
-        val flatBoard = savedStateHandle.get<IntArray>(KEY_BOARD) ?: return null
-        val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes)
-        val nested = (0 until stage.rows).map { row ->
-            (0 until stage.cols).map { col -> flatBoard[row * stage.cols + col] }
-        }
-        board.overwrite(nested)
-
-        val selectedRow = savedStateHandle.get<Int>(KEY_SELECTED_ROW) ?: NO_SELECTION
-        val selectedCol = savedStateHandle.get<Int>(KEY_SELECTED_COL) ?: NO_SELECTION
-        val selected = if (selectedRow == NO_SELECTION || selectedCol == NO_SELECTION) {
-            null
-        } else {
-            Position(selectedRow, selectedCol)
-        }
-
-        return GameSession(
-            board = board,
-            engine = engineFactory.create(stage),
-            selected = selected,
-            points = savedStateHandle.get<Int>(KEY_POINTS) ?: 0,
-            moves = savedStateHandle.get<Int>(KEY_MOVES) ?: stage.initialMoves,
-            finished = savedStateHandle.get<Boolean>(KEY_FINISHED) ?: false,
-            won = savedStateHandle.get<Boolean>(KEY_WON) ?: false,
-            starsEarned = savedStateHandle.get<Int>(KEY_STARS) ?: 0,
-            message = savedStateHandle.get<String>(KEY_MESSAGE)
-        )
-    }
-
     companion object {
         /** RR-22: exposed so [com.semstress.mobile.ui.screens.GameScreen] can trigger SFX/haptics on it. */
         const val INVALID_MOVE_MESSAGE = "Movimento invalido."
-
-        private const val NO_SELECTION = -1
-
-        private const val KEY_BOARD = "game_board"
-        private const val KEY_POINTS = "game_points"
-        private const val KEY_MOVES = "game_moves"
-        private const val KEY_FINISHED = "game_finished"
-        private const val KEY_WON = "game_won"
-        private const val KEY_STARS = "game_stars"
-        private const val KEY_MESSAGE = "game_message"
-        private const val KEY_SELECTED_ROW = "game_selected_row"
-        private const val KEY_SELECTED_COL = "game_selected_col"
     }
 
     @AssistedFactory
     interface Factory {
         fun create(stage: StageConfig, totalStages: Int): GameViewModel
+    }
+}
+
+private const val NO_SELECTION = -1
+
+private const val KEY_BOARD = "game_board"
+private const val KEY_POINTS = "game_points"
+private const val KEY_MOVES = "game_moves"
+private const val KEY_FINISHED = "game_finished"
+private const val KEY_WON = "game_won"
+private const val KEY_STARS = "game_stars"
+private const val KEY_COLLECTED = "game_collected"
+private const val KEY_MESSAGE = "game_message"
+private const val KEY_SELECTED_ROW = "game_selected_row"
+private const val KEY_SELECTED_COL = "game_selected_col"
+
+private fun createFreshSession(
+    stage: StageConfig,
+    engineFactory: Match3EngineFactory,
+    seed: Long? = null
+): GameSession {
+    val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes, seed)
+    val engine = engineFactory.create(stage)
+    board.fillRandom()
+    engine.ensurePlayableBoard(board)
+    engine.resolveBoard(board)
+    engine.ensurePlayableBoard(board)
+    return GameSession(board = board, engine = engine, moves = stage.initialMoves)
+}
+
+private fun restoreSession(
+    savedStateHandle: SavedStateHandle,
+    stage: StageConfig,
+    engineFactory: Match3EngineFactory
+): GameSession? {
+    val flatBoard = savedStateHandle.get<IntArray>(KEY_BOARD) ?: return null
+    val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes)
+    val nested = (0 until stage.rows).map { row ->
+        (0 until stage.cols).map { col -> flatBoard[row * stage.cols + col] }
+    }
+    board.overwrite(nested)
+
+    val selectedRow = savedStateHandle.get<Int>(KEY_SELECTED_ROW) ?: NO_SELECTION
+    val selectedCol = savedStateHandle.get<Int>(KEY_SELECTED_COL) ?: NO_SELECTION
+    val selected = if (selectedRow == NO_SELECTION || selectedCol == NO_SELECTION) {
+        null
+    } else {
+        Position(selectedRow, selectedCol)
+    }
+
+    return GameSession(
+        board = board,
+        engine = engineFactory.create(stage),
+        selected = selected,
+        points = savedStateHandle.get<Int>(KEY_POINTS) ?: 0,
+        moves = savedStateHandle.get<Int>(KEY_MOVES) ?: stage.initialMoves,
+        finished = savedStateHandle.get<Boolean>(KEY_FINISHED) ?: false,
+        won = savedStateHandle.get<Boolean>(KEY_WON) ?: false,
+        starsEarned = savedStateHandle.get<Int>(KEY_STARS) ?: 0,
+        collectedCount = savedStateHandle.get<Int>(KEY_COLLECTED) ?: 0,
+        message = savedStateHandle.get<String>(KEY_MESSAGE)
+    )
+}
+
+private suspend fun persistProgressIfFinished(
+    currentSession: GameSession,
+    stage: StageConfig,
+    totalStages: Int,
+    progressRepository: ProgressStore,
+    ioDispatcher: CoroutineDispatcher
+) {
+    if (!currentSession.finished) {
+        return
+    }
+    withContext(ioDispatcher) {
+        val progress = progressRepository.load(totalStages).registerResult(
+            stageId = stage.id,
+            score = currentSession.points,
+            won = currentSession.won,
+            totalStages = totalStages,
+            stars = currentSession.starsEarned
+        )
+        progressRepository.save(progress)
     }
 }

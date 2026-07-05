@@ -32,4 +32,7 @@
     <string name="stage_status_unlocked">Liberada</string>
     <string name="stage_status_locked">Bloqueada</string>
     <string name="stage_status_completed">Concluida</string>
+
+    <string name="collect_objective_progress">Pedido: %1$d/%2$d</string>
+    <string name="tutorial_hint_message">Toque em duas pecas vizinhas para trocar e formar grupos de 3 ou mais.</string>
 </resources>

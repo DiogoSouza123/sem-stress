@@ -13,7 +13,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.ProgressCup
+import com.semstress.mobile.ui.components.StatChip
 import com.semstress.mobile.ui.components.StatColumn
+import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.theme.CoffeeTheme
 import com.semstress.mobile.ui.theme.TABULAR_NUMBER_FEATURE
 import kotlinx.coroutines.delay
@@ -42,6 +46,7 @@ private const val LOW_MOVES_THRESHOLD = 5
 private const val PULSE_MIN_ALPHA = 0.4f
 private const val PULSE_STEP_MS = 500
 private const val FLOATING_POINTS_VISIBLE_MS = 900L
+private const val FIRST_STAGE_ID = 1
 private val SCOREBOARD_CUP_SIZE = 40.dp
 
 /** UX-05: replaces the flat "Pontos/Meta/Mov" row with a filling [ProgressCup] toward the target. */
@@ -135,6 +140,37 @@ internal fun ComboBanner(message: String?) {
             fontWeight = FontWeight.ExtraBold,
             color = CoffeeTheme.colors.hudText,
             modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+}
+
+/** GP-02: shows the optional collect objective's progress as a HUD chip, when the stage has one. */
+@Composable
+internal fun CollectObjectiveChip(game: GameUiState) {
+    if (game.collectPieceType == null) {
+        return
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    StatChip(text = stringResource(R.string.collect_objective_progress, game.collectProgress, game.collectTarget))
+}
+
+/** GP-08: true right at the start of stage 1, before the player has made any move or selection. */
+internal fun isFirstMoveOfTutorialStage(game: GameUiState): Boolean {
+    return game.stageId == FIRST_STAGE_ID &&
+        game.moves == game.initialMoves &&
+        game.selected == null &&
+        !game.animating &&
+        !game.finished
+}
+
+/** GP-08: short, always-visible tip for the first stage, replacing a paragraph-heavy tutorial screen. */
+@Composable
+internal fun TutorialHint() {
+    CoffeePanel {
+        Text(
+            text = stringResource(R.string.tutorial_hint_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = CoffeeTheme.colors.hudText
         )
     }
 }

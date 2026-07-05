@@ -121,6 +121,45 @@ class StageCatalogJsonParserTest {
     }
 
     @Test
+    fun `parseia collectObjective quando presente na fase`() {
+        val json = """
+            { "schemaVersion": 1, "stages": [
+                { "id": 1, "name": "Fase 1", "pieceTypes": 5, "collectPieceType": 2, "collectCount": 15 }
+            ] }
+        """.trimIndent()
+
+        val stage = StageCatalogJsonParser.parse(json).stages.single()
+
+        val objective = requireNotNull(stage.collectObjective)
+        assertEquals(2, objective.pieceType)
+        assertEquals(15, objective.count)
+    }
+
+    @Test
+    fun `nao cria collectObjective quando os campos nao estao presentes`() {
+        val json = """{ "schemaVersion": 1, "stages": [ { "id": 1, "name": "Fase 1" } ] }"""
+
+        val stage = StageCatalogJsonParser.parse(json).stages.single()
+
+        assertEquals(null, stage.collectObjective)
+    }
+
+    @Test
+    fun `rejeita collectPieceType fora do intervalo de tipos de peca`() {
+        val json = """
+            { "schemaVersion": 1, "stages": [
+                { "id": 1, "name": "Fase 1", "pieceTypes": 5, "collectPieceType": 9, "collectCount": 10 }
+            ] }
+        """.trimIndent()
+
+        val exception = assertThrows(StageConfigParsingException::class.java) {
+            StageCatalogJsonParser.parse(json)
+        }
+
+        assertTrue(exception.message!!.contains("collectPieceType"))
+    }
+
+    @Test
     fun `ignora chaves desconhecidas no json para permitir evolucao do schema`() {
         val json = """
             { "schemaVersion": 1, "campoFuturo": true, "stages": [ { "id": 1, "name": "Fase 1", "campoNovo": 123 } ] }

@@ -19,5 +19,6 @@ data class StageConfig(
     val onlyAdjacentSwap: Boolean = true,
     val backgroundName: String = "coffee_bg",
     val musicName: String = "orchestronika_motivation",
-    val musicVolumePercent: Int = 70
+    val musicVolumePercent: Int = 70,
+    val collectObjective: CollectObjective? = null
 )

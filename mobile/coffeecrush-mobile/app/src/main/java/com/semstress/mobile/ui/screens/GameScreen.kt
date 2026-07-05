@@ -81,25 +81,13 @@ fun GameScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Scoreboard(score = game.points, target = game.target, moves = game.moves)
+        CollectObjectiveChip(game)
         FloatingPointsBanner(points = game.points)
         ComboBanner(message = game.message?.takeIf { it != GameViewModel.INVALID_MOVE_MESSAGE })
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val shakingPositions = game.invalidSwap?.let { (first, second) -> setOf(first, second) } ?: emptySet()
-        BoardCanvas(
-            board = game.board,
-            selection = BoardSelectionState(
-                selected = game.selected,
-                highlighted = game.highlightedMatches,
-                exploding = game.explodingMatches,
-                shaking = shakingPositions,
-                invalidMoveNonce = game.invalidMoveNonce
-            ),
-            spriteAtlas = spriteAtlas,
-            onCellTap = actions.onCellTap,
-            onCellDragSwap = actions.onCellDragSwap
-        )
+        BoardSection(game, spriteAtlas, actions)
     }
 
     if (showExitConfirmation) {
@@ -114,6 +102,31 @@ fun GameScreen(
 
     if (game.finished) {
         GameResultDialog(game, actions.onReplayStage, actions.onBackToMenu)
+    }
+}
+
+@Composable
+private fun BoardSection(game: GameUiState, spriteAtlas: SpriteAtlas?, actions: GameScreenActions) {
+    val shakingPositions = game.invalidSwap?.let { (first, second) -> setOf(first, second) } ?: emptySet()
+    val hintedPositions = game.hintMove?.let { (first, second) -> setOf(first, second) } ?: emptySet()
+    BoardCanvas(
+        board = game.board,
+        selection = BoardSelectionState(
+            selected = game.selected,
+            highlighted = game.highlightedMatches,
+            exploding = game.explodingMatches,
+            shaking = shakingPositions,
+            invalidMoveNonce = game.invalidMoveNonce,
+            hinted = hintedPositions
+        ),
+        spriteAtlas = spriteAtlas,
+        onCellTap = actions.onCellTap,
+        onCellDragSwap = actions.onCellDragSwap
+    )
+
+    if (isFirstMoveOfTutorialStage(game)) {
+        Spacer(modifier = Modifier.height(8.dp))
+        TutorialHint()
     }
 }
 

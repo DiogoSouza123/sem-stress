@@ -133,6 +133,26 @@ class Match3Engine(
         return false
     }
 
+    /** GP-08: the first swap that would create a match, used to highlight a hint after inactivity. */
+    fun findAvailableMove(board: Match3Board): Pair<Position, Position>? {
+        val positions = (0 until board.rows).flatMap { row -> (0 until board.cols).map { col -> Position(row, col) } }
+        return positions.firstNotNullOfOrNull { position -> candidateMoveAt(board, position) }
+    }
+
+    private fun candidateMoveAt(board: Match3Board, position: Position): Pair<Position, Position>? {
+        val right = Position(position.row, position.col + 1)
+        val down = Position(position.row + 1, position.col)
+        val canSwapRight = position.col + 1 < board.cols &&
+            wouldCreateMatch(board, position.row, position.col, right.row, right.col)
+        val canSwapDown = position.row + 1 < board.rows &&
+            wouldCreateMatch(board, position.row, position.col, down.row, down.col)
+        return when {
+            canSwapRight -> position to right
+            canSwapDown -> position to down
+            else -> null
+        }
+    }
+
     fun shuffleWithoutMatches(board: Match3Board) {
         repeat(MAX_SHUFFLE_ATTEMPTS) {
             board.fillRandom()

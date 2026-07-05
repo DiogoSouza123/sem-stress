@@ -52,6 +52,7 @@ private const val BACKGROUND_ALPHA = 0.32f
 private const val SHAKE_STEP_MS = 45
 private const val SHAKE_AMPLITUDE_DP = 6f
 private const val SHAKE_SECOND_STEP_FACTOR = 0.6f
+private const val HINT_ALPHA = 0.3f
 
 /** Selection/animation overlays for the board, kept apart from the piece values themselves. */
 data class BoardSelectionState(
@@ -59,7 +60,8 @@ data class BoardSelectionState(
     val highlighted: Set<Position>,
     val exploding: Set<Position>,
     val shaking: Set<Position> = emptySet(),
-    val invalidMoveNonce: Int = 0
+    val invalidMoveNonce: Int = 0,
+    val hinted: Set<Position> = emptySet()
 )
 
 private data class BoardDrawContext(
@@ -248,6 +250,14 @@ private fun DrawScope.drawSelectionOverlay(
     if (position in selection.highlighted) {
         drawRoundRect(
             color = context.colors.pieceExplosion.copy(alpha = HIGHLIGHT_ALPHA),
+            topLeft = overlayTopLeft,
+            size = overlaySize,
+            cornerRadius = overlayCornerRadius
+        )
+    }
+    if (position in selection.hinted) {
+        drawRoundRect(
+            color = context.colors.warning.copy(alpha = HINT_ALPHA),
             topLeft = overlayTopLeft,
             size = overlaySize,
             cornerRadius = overlayCornerRadius

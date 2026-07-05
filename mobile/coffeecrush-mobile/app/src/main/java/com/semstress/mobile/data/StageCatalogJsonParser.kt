@@ -1,5 +1,6 @@
 package com.semstress.mobile.data
 
+import com.semstress.mobile.domain.CollectObjective
 import com.semstress.mobile.domain.StageCatalog
 import com.semstress.mobile.domain.StageConfig
 import kotlinx.serialization.Serializable
@@ -63,7 +64,9 @@ data class StageDto(
     val backgroundName: String? = null,
     val musicEnabled: Boolean? = null,
     val musicName: String? = null,
-    val musicVolumePercent: Int? = null
+    val musicVolumePercent: Int? = null,
+    val collectPieceType: Int? = null,
+    val collectCount: Int? = null
 )
 
 /**
@@ -153,8 +156,16 @@ object StageCatalogJsonParser {
             onlyAdjacentSwap = orDefault(dto.onlyAdjacentSwap, base.onlyAdjacentSwap),
             backgroundName = orDefault(dto.backgroundName, base.backgroundName),
             musicName = music.first,
-            musicVolumePercent = music.second
+            musicVolumePercent = music.second,
+            collectObjective = collectObjectiveFrom(dto)
         )
+    }
+
+    /** GP-02: `collect` is stage-specific only (a global default piece type wouldn't make sense). */
+    private fun collectObjectiveFrom(dto: StageDto): CollectObjective? {
+        val pieceType = dto.collectPieceType
+        val count = dto.collectCount
+        return if (pieceType != null && count != null) CollectObjective(pieceType, count) else null
     }
 
     private fun resolveMusic(dto: StageDto, base: StageDefaultsDto): Pair<String, Int> {
@@ -179,6 +190,12 @@ object StageCatalogJsonParser {
         requireStage(stage.targetScore >= 0, stage.id) { "targetScore cannot be negative" }
         requireStage(stage.musicVolumePercent in 0..MAX_MUSIC_VOLUME_PERCENT, stage.id) {
             "musicVolumePercent must be between 0 and $MAX_MUSIC_VOLUME_PERCENT"
+        }
+        stage.collectObjective?.let { objective ->
+            requireStage(objective.pieceType in 0 until stage.pieceTypes, stage.id) {
+                "collectPieceType must be a valid piece type (0..${stage.pieceTypes - 1})"
+            }
+            requireStage(objective.count > 0, stage.id) { "collectCount must be greater than zero" }
         }
     }
 
