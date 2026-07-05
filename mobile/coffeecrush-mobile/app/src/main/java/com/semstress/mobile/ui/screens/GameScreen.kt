@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
+import com.semstress.mobile.debug.DebugMenuState
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
@@ -49,15 +50,12 @@ fun GameScreen(
     game: GameUiState,
     sound: GameScreenSound,
     spriteAtlas: SpriteAtlas?,
-    actions: GameScreenActions
+    actions: GameScreenActions,
+    debugTools: GameScreenDebugTools
 ) {
     var showExitConfirmation by remember { mutableStateOf(false) }
     val requestExit: () -> Unit = {
-        if (game.finished) {
-            actions.onBackToMenu()
-        } else {
-            showExitConfirmation = true
-        }
+        if (game.finished) actions.onBackToMenu() else showExitConfirmation = true
     }
 
     BackHandler(enabled = !game.finished, onBack = requestExit)
@@ -75,6 +73,7 @@ fun GameScreen(
             .padding(16.dp)
     ) {
         GameHeader(game, sound, actions)
+        DebugMenuTrigger(debugTools)
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -119,6 +118,23 @@ fun GameScreen(
     if (game.finished) {
         GameResultDialog(game, actions.onReplayStage, actions.onBackToMenu)
     }
+}
+
+/** CQ-03: shows the debug-panel entry point when [GameScreenDebugTools.host] is available (debug builds only). */
+@Composable
+private fun DebugMenuTrigger(debugTools: GameScreenDebugTools) {
+    var showDebugMenu by remember { mutableStateOf(false) }
+    if (debugTools.host.isAvailable) {
+        OutlinedButton(onClick = { showDebugMenu = true }) {
+            Text("Debug")
+        }
+    }
+    debugTools.host.Menu(
+        state = DebugMenuState(visible = showDebugMenu),
+        actions = debugTools.actions,
+        featureFlags = debugTools.featureFlags,
+        onDismiss = { showDebugMenu = false }
+    )
 }
 
 @Composable

@@ -26,12 +26,16 @@ import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.semstress.mobile.audio.BackgroundMusicPlayer
 import com.semstress.mobile.audio.SfxPlayer
+import com.semstress.mobile.common.MutableFeatureFlags
 import com.semstress.mobile.data.StageRepository
+import com.semstress.mobile.debug.DebugMenuActions
+import com.semstress.mobile.debug.DebugMenuHost
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.GameScreenActions
+import com.semstress.mobile.ui.screens.GameScreenDebugTools
 import com.semstress.mobile.ui.screens.GameScreenSound
 import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.screens.StageMenuScreenActions
@@ -48,8 +52,13 @@ import javax.inject.Inject
 
 private const val GAME_DEEP_LINK_PATTERN = "coffeecrush://game/{stageId}"
 
-/** Bundles the app-scoped audio players so [GameDestination] stays under the parameter limit. */
-private data class AudioPlayers(val backgroundMusicPlayer: BackgroundMusicPlayer, val sfxPlayer: SfxPlayer)
+/** Bundles the app-scoped dependencies [GameDestination] needs, to stay under the parameter limit. */
+private data class GameDestinationDependencies(
+    val backgroundMusicPlayer: BackgroundMusicPlayer,
+    val sfxPlayer: SfxPlayer,
+    val debugMenuHost: DebugMenuHost,
+    val featureFlags: MutableFeatureFlags
+)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -60,6 +69,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var sfxPlayer: SfxPlayer
 
+    @Inject
+    lateinit var debugMenuHost: DebugMenuHost
+
+    @Inject
+    lateinit var featureFlags: MutableFeatureFlags
+
     private val menuViewModel: MenuViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,14 +84,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CoffeeCrushTheme {
-                CoffeeCrushApp(backgroundMusicPlayer, sfxPlayer)
+                CoffeeCrushApp(
+                    GameDestinationDependencies(backgroundMusicPlayer, sfxPlayer, debugMenuHost, featureFlags)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CoffeeCrushApp(backgroundMusicPlayer: BackgroundMusicPlayer, sfxPlayer: SfxPlayer) {
+private fun CoffeeCrushApp(dependencies: GameDestinationDependencies) {
+    val backgroundMusicPlayer = dependencies.backgroundMusicPlayer
     val menuViewModel: MenuViewModel = hiltViewModel()
     val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -116,7 +134,7 @@ private fun CoffeeCrushApp(backgroundMusicPlayer: BackgroundMusicPlayer, sfxPlay
                 navController,
                 menuState,
                 settingsViewModel,
-                AudioPlayers(backgroundMusicPlayer, sfxPlayer)
+                dependencies
             )
         }
     }
@@ -164,7 +182,7 @@ private fun GameDestination(
     navController: NavController,
     menuState: MenuUiState,
     settingsViewModel: SettingsViewModel,
-    players: AudioPlayers
+    dependencies: GameDestinationDependencies
 ) {
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val stage = menuState.stages.first { it.id == route.stageId }
@@ -173,7 +191,7 @@ private fun GameDestination(
     )
     val gameState by gameViewModel.uiState.collectAsStateWithLifecycle()
 
-    PlayTrackForStage(stage, settingsState.musicMuted, players.backgroundMusicPlayer)
+    PlayTrackForStage(stage, settingsState.musicMuted, dependencies.backgroundMusicPlayer)
 
     LaunchedEffect(gameViewModel) {
         gameViewModel.backToMenuRequests.collect {
@@ -186,7 +204,7 @@ private fun GameDestination(
         sound = GameScreenSound(
             isMusicMuted = settingsState.musicMuted,
             isSfxMuted = settingsState.sfxMuted,
-            sfxPlayer = players.sfxPlayer
+            sfxPlayer = dependencies.sfxPlayer
         ),
         spriteAtlas = menuState.spriteAtlas,
         actions = GameScreenActions(
@@ -198,6 +216,15 @@ private fun GameDestination(
             onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
             onToggleMusic = { settingsViewModel.toggleMusic() },
             onToggleSfx = { settingsViewModel.toggleSfx() }
+        ),
+        debugTools = GameScreenDebugTools(
+            host = dependencies.debugMenuHost,
+            featureFlags = dependencies.featureFlags,
+            actions = DebugMenuActions(
+                onAddMoves = { amount -> gameViewModel.onAction(GameAction.DebugAddMoves(amount)) },
+                onForceWin = { gameViewModel.onAction(GameAction.DebugForceWin) },
+                onReshuffleWithSeed = { seed -> gameViewModel.onAction(GameAction.DebugReshuffleWithSeed(seed)) }
+            )
         )
     )
 }

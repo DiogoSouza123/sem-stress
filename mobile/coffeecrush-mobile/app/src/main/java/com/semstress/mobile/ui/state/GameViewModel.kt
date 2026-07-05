@@ -3,6 +3,7 @@ package com.semstress.mobile.ui.state
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.semstress.mobile.BuildConfig
 import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.Position
@@ -51,6 +52,11 @@ sealed interface GameAction {
     data class CellDragSwapped(val fromRow: Int, val fromCol: Int, val toRow: Int, val toCol: Int) : GameAction
     data object Replay : GameAction
     data object BackToMenu : GameAction
+
+    /** CQ-03: debug-panel-only actions; the panel that emits these only exists in debug builds. */
+    data class DebugAddMoves(val amount: Int) : GameAction
+    data object DebugForceWin : GameAction
+    data class DebugReshuffleWithSeed(val seed: Long) : GameAction
 }
 
 private const val MATCH_HIGHLIGHT_MS = 140L
@@ -156,7 +162,7 @@ class GameViewModel @AssistedInject constructor(
     private var moveJob: Job? = null
 
     init {
-        persistSession()
+        emit()
     }
 
     fun onAction(action: GameAction) {
@@ -168,6 +174,21 @@ class GameViewModel @AssistedInject constructor(
             GameAction.BackToMenu -> {
                 moveJob?.cancel()
                 _backToMenuRequests.tryEmit(Unit)
+            }
+            is GameAction.DebugAddMoves -> if (BuildConfig.DEBUG) {
+                session.moves += action.amount
+                emit()
+            }
+            GameAction.DebugForceWin -> if (BuildConfig.DEBUG && moveJob?.isActive != true) {
+                val currentSession = session
+                currentSession.points = stage.targetScore
+                currentSession.finished = true
+                currentSession.won = true
+                emit()
+                viewModelScope.launch { persistProgressIfFinished(currentSession) }
+            }
+            is GameAction.DebugReshuffleWithSeed -> if (BuildConfig.DEBUG) {
+                restart(action.seed)
             }
         }
     }
@@ -273,27 +294,32 @@ class GameViewModel @AssistedInject constructor(
             currentSession.finished = true
             currentSession.won = false
         }
-        if (currentSession.finished) {
-            withContext(ioDispatcher) {
-                val progress = progressRepository.load(totalStages).registerResult(
-                    stageId = stage.id,
-                    score = currentSession.points,
-                    won = currentSession.won,
-                    totalStages = totalStages
-                )
-                progressRepository.save(progress)
-            }
+        persistProgressIfFinished(currentSession)
+    }
+
+    private suspend fun persistProgressIfFinished(currentSession: GameSession) {
+        if (!currentSession.finished) {
+            return
+        }
+        withContext(ioDispatcher) {
+            val progress = progressRepository.load(totalStages).registerResult(
+                stageId = stage.id,
+                score = currentSession.points,
+                won = currentSession.won,
+                totalStages = totalStages
+            )
+            progressRepository.save(progress)
         }
     }
 
-    private fun restart() {
+    private fun restart(seed: Long? = null) {
         moveJob?.cancel()
-        session = createFreshSession()
+        session = createFreshSession(seed)
         emit()
     }
 
-    private fun createFreshSession(): GameSession {
-        val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes)
+    private fun createFreshSession(seed: Long? = null): GameSession {
+        val board = Match3Board(stage.rows, stage.cols, stage.pieceTypes, seed)
         val engine = engineFactory.create(stage)
         board.fillRandom()
         engine.ensurePlayableBoard(board)
@@ -304,10 +330,7 @@ class GameViewModel @AssistedInject constructor(
 
     private fun emit() {
         _uiState.value = session.toUiState(stage)
-        persistSession()
-    }
 
-    private fun persistSession() {
         val currentSession = session
         val flatBoard = IntArray(stage.rows * stage.cols)
         val snapshot = currentSession.board.snapshot()
