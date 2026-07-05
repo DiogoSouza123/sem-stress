@@ -41,7 +41,6 @@ import com.semstress.mobile.R
 import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
 import com.semstress.mobile.ui.components.CoffeeIconButton
-import com.semstress.mobile.ui.components.StarRating
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
@@ -101,7 +100,7 @@ fun GameScreen(
     }
 
     if (game.finished) {
-        GameResultDialog(game, actions.onReplayStage, actions.onBackToMenu)
+        GameResultOverlay(game, actions.onReplayStage, actions.onBackToMenu)
     }
 }
 
@@ -260,45 +259,6 @@ private fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit)
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
                 Text(stringResource(R.string.exit_game_confirmation_dismiss))
-            }
-        }
-    )
-}
-
-@Composable
-private fun GameResultDialog(game: GameUiState, onReplayStage: () -> Unit, onBackToMenu: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = {},
-        title = {
-            Text(
-                text = stringResource(if (game.won) R.string.stage_won_title else R.string.stage_lost_title),
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    stringResource(
-                        R.string.stage_result_summary,
-                        game.points,
-                        game.target,
-                        game.moves
-                    )
-                )
-                if (game.won) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    StarRating(stars = game.starsEarned)
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onReplayStage) {
-                Text(stringResource(R.string.play_again))
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onBackToMenu) {
-                Text(stringResource(R.string.back_to_menu))
             }
         }
     )

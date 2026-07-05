@@ -14,9 +14,9 @@
 
     <string name="back_to_menu">Voltar ao menu</string>
     <string name="play_again">Jogar novamente</string>
-    <string name="stage_won_title">Fase concluida!</string>
-    <string name="stage_lost_title">Fim da rodada</string>
-    <string name="stage_result_summary">Pontuacao: %1$d\nMeta: %2$d\nMovimentos restantes: %3$d</string>
+    <string name="stage_won_title">Cafe coado com perfeicao!</string>
+    <string name="stage_lost_title">Faltou pouco!</string>
+    <string name="stage_lost_encouragement">Os graos quase se juntaram. Bora tentar de novo?</string>
     <string name="hud_points">Pontos</string>
     <string name="hud_moves">Mov</string>
 
