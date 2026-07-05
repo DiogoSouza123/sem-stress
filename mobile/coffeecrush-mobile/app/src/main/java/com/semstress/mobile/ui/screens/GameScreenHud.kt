@@ -10,13 +10,17 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,11 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.ui.components.CoffeePanel
+import com.semstress.mobile.ui.components.CoffeePrimaryButton
 import com.semstress.mobile.ui.components.ProgressCup
 import com.semstress.mobile.ui.components.StatChip
 import com.semstress.mobile.ui.components.StatColumn
@@ -47,6 +53,8 @@ private const val PULSE_MIN_ALPHA = 0.4f
 private const val PULSE_STEP_MS = 500
 private const val FLOATING_POINTS_VISIBLE_MS = 900L
 private const val FIRST_STAGE_ID = 1
+private const val AROMA_BAR_SHAPE_PERCENT = 50
+private val AROMA_BAR_HEIGHT = 10.dp
 private val SCOREBOARD_CUP_SIZE = 40.dp
 
 /** UX-05: replaces the flat "Pontos/Meta/Mov" row with a filling [ProgressCup] toward the target. */
@@ -187,5 +195,54 @@ internal fun TutorialHint() {
             style = MaterialTheme.typography.bodyMedium,
             color = CoffeeTheme.colors.hudText
         )
+    }
+}
+
+/**
+ * GP-04: fills as pieces are matched; once full, "Degustacao" reveals a valid move for a few
+ * seconds - the only barista skill implemented in this pass (see backlog note for Torra
+ * Perfeita/Mao Firme/Dose Dupla and the pre-stage equip screen, both deferred).
+ */
+@Composable
+internal fun AromaMeter(aroma: Int, aromaCapacity: Int, onActivate: () -> Unit) {
+    val colors = CoffeeTheme.colors
+    val fraction = if (aromaCapacity > 0) (aroma.toFloat() / aromaCapacity).coerceIn(0f, 1f) else 0f
+    val full = aroma >= aromaCapacity
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.aroma_meter_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.hudTextMuted
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(AROMA_BAR_HEIGHT)
+                    .clip(RoundedCornerShape(AROMA_BAR_SHAPE_PERCENT))
+                    .background(colors.progressTrack)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(fraction)
+                        .clip(RoundedCornerShape(AROMA_BAR_SHAPE_PERCENT))
+                        .background(colors.warning)
+                )
+            }
+        }
+        if (full) {
+            Spacer(modifier = Modifier.height(6.dp))
+            CoffeePrimaryButton(
+                text = stringResource(R.string.activate_barista_skill),
+                onClick = onActivate,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

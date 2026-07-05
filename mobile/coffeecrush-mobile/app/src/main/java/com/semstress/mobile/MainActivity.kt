@@ -232,7 +232,8 @@ private fun GameDestination(
             onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
             onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
             onToggleMusic = { settingsViewModel.toggleMusic() },
-            onToggleSfx = { settingsViewModel.toggleSfx() }
+            onToggleSfx = { settingsViewModel.toggleSfx() },
+            onActivateBaristaSkill = { gameViewModel.onAction(GameAction.ActivateBaristaSkill) }
         ),
         debugTools = GameScreenDebugTools(
             host = dependencies.debugMenuHost,

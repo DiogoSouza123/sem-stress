@@ -81,6 +81,14 @@ fun GameScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Scoreboard(score = game.points, target = game.target, moves = game.moves, isZenMode = game.isZenMode)
+        if (!game.isZenMode) {
+            Spacer(modifier = Modifier.height(8.dp))
+            AromaMeter(
+                aroma = game.aroma,
+                aromaCapacity = game.aromaCapacity,
+                onActivate = actions.onActivateBaristaSkill
+            )
+        }
         CollectObjectiveChip(game)
         FloatingPointsBanner(points = game.points)
         ComboBanner(message = game.message?.takeIf { it != GameViewModel.INVALID_MOVE_MESSAGE })

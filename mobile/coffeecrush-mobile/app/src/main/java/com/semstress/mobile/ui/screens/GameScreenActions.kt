@@ -7,5 +7,6 @@ data class GameScreenActions(
     val onBackToMenu: () -> Unit,
     val onReplayStage: () -> Unit,
     val onToggleMusic: () -> Unit,
-    val onToggleSfx: () -> Unit
+    val onToggleSfx: () -> Unit,
+    val onActivateBaristaSkill: () -> Unit
 )

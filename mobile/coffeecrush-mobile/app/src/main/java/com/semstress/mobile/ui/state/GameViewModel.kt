@@ -56,7 +56,9 @@ data class GameUiState(
     val collectTarget: Int = 0,
     val collectProgress: Int = 0,
     val hintMove: Pair<Position, Position>? = null,
-    val isZenMode: Boolean = false
+    val isZenMode: Boolean = false,
+    val aroma: Int = 0,
+    val aromaCapacity: Int = AROMA_CAPACITY
 )
 
 sealed interface GameAction {
@@ -64,6 +66,9 @@ sealed interface GameAction {
     data class CellDragSwapped(val fromRow: Int, val fromCol: Int, val toRow: Int, val toCol: Int) : GameAction
     data object Replay : GameAction
     data object BackToMenu : GameAction
+
+    /** GP-04: consumes a full Aroma meter to reveal a valid move ("Degustacao") for a few seconds. */
+    data object ActivateBaristaSkill : GameAction
 
     /** CQ-03: debug-panel-only actions; the panel that emits these only exists in debug builds. */
     data class DebugAddMoves(val amount: Int) : GameAction
@@ -75,6 +80,11 @@ private const val MATCH_HIGHLIGHT_MS = 140L
 private const val EXPLOSION_MS = 220L
 private const val FALL_FRAME_MS = 65L
 private const val HINT_DELAY_MS = 8000L
+
+/** GP-04: how much Aroma each matched piece releases, and how full the meter needs to be to act. */
+private const val AROMA_PER_MATCHED_PIECE = 1
+const val AROMA_CAPACITY = 30
+private const val BARISTA_SKILL_REVEAL_MS = 5000L
 
 private data class GameSession(
     val board: Match3Board,
@@ -92,7 +102,8 @@ private data class GameSession(
     var invalidSwap: Pair<Position, Position>? = null,
     var invalidMoveNonce: Int = 0,
     var collectedCount: Int = 0,
-    var hintMove: Pair<Position, Position>? = null
+    var hintMove: Pair<Position, Position>? = null,
+    var aroma: Int = 0
 )
 
 private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState(
@@ -118,7 +129,8 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     collectTarget = stage.collectObjective?.count ?: 0,
     collectProgress = collectedCount,
     hintMove = hintMove,
-    isZenMode = stage.isZenMode
+    isZenMode = stage.isZenMode,
+    aroma = aroma
 )
 
 /**
@@ -203,17 +215,49 @@ class GameViewModel @AssistedInject constructor(
             is GameAction.CellTapped -> onCellTap(action.row, action.col)
             is GameAction.CellDragSwapped ->
                 onCellDragSwap(action.fromRow, action.fromCol, action.toRow, action.toCol)
-            GameAction.Replay -> restart()
+            GameAction.Replay -> {
+                moveJob?.cancel()
+                hintJob?.cancel()
+                session = createFreshSession(stage, engineFactory, seed)
+                emit()
+                scheduleHint(session)
+            }
+            GameAction.ActivateBaristaSkill -> {
+                val currentSession = session
+                if (currentSession.aroma >= AROMA_CAPACITY && !currentSession.finished) {
+                    currentSession.aroma = 0
+                    currentSession.hintMove = currentSession.engine.findAvailableMove(currentSession.board)
+                    hintJob?.cancel()
+                    hintJob = viewModelScope.launch {
+                        delay(BARISTA_SKILL_REVEAL_MS)
+                        if (session === currentSession) {
+                            currentSession.hintMove = null
+                            emit()
+                        }
+                    }
+                    emit()
+                }
+            }
             GameAction.BackToMenu -> {
                 moveJob?.cancel()
                 hintJob?.cancel()
                 _backToMenuRequests.tryEmit(Unit)
             }
-            is GameAction.DebugAddMoves -> if (BuildConfig.DEBUG) {
+            is GameAction.DebugAddMoves, GameAction.DebugForceWin, is GameAction.DebugReshuffleWithSeed ->
+                if (BuildConfig.DEBUG) {
+                    handleDebugAction(action)
+                }
+        }
+    }
+
+    /** CQ-03: debug-panel-only actions, split out to keep [onAction]'s complexity in check. */
+    private fun handleDebugAction(action: GameAction) {
+        when (action) {
+            is GameAction.DebugAddMoves -> {
                 session.moves += action.amount
                 emit()
             }
-            GameAction.DebugForceWin -> if (BuildConfig.DEBUG && moveJob?.isActive != true) {
+            GameAction.DebugForceWin -> if (moveJob?.isActive != true) {
                 val currentSession = session
                 currentSession.points = stage.targetScore
                 currentSession.finished = true
@@ -231,9 +275,14 @@ class GameViewModel @AssistedInject constructor(
                     persistProgressIfFinished(currentSession, spec, progressRepository, ioDispatcher)
                 }
             }
-            is GameAction.DebugReshuffleWithSeed -> if (BuildConfig.DEBUG) {
-                restart(action.seed)
+            is GameAction.DebugReshuffleWithSeed -> {
+                moveJob?.cancel()
+                hintJob?.cancel()
+                session = createFreshSession(stage, engineFactory, action.seed)
+                emit()
+                scheduleHint(session)
             }
+            else -> Unit
         }
     }
 
@@ -370,6 +419,8 @@ class GameViewModel @AssistedInject constructor(
                 }
                 currentSession.collectedCount += collected
             }
+            currentSession.aroma = (currentSession.aroma + round.matchedPositions.size * AROMA_PER_MATCHED_PIECE)
+                .coerceAtMost(AROMA_CAPACITY)
             currentSession.applyRound(round) { emit() }
         }
 
@@ -419,6 +470,8 @@ class GameViewModel @AssistedInject constructor(
         stage.collectObjective?.let { objective ->
             currentSession.collectedCount += outcome.milledPieces.count { (_, value) -> value == objective.pieceType }
         }
+        currentSession.aroma = (currentSession.aroma + outcome.milledPieces.size * AROMA_PER_MATCHED_PIECE)
+            .coerceAtMost(AROMA_CAPACITY)
 
         currentSession.animating = false
         finalizeMove(currentSession, stage) { scheduleHint(currentSession) }
@@ -431,14 +484,6 @@ class GameViewModel @AssistedInject constructor(
     }
 
     /** GP-05: replaying without an explicit seed reuses the session's own (e.g. the daily challenge's). */
-    private fun restart(newSeed: Long? = seed) {
-        moveJob?.cancel()
-        hintJob?.cancel()
-        session = createFreshSession(stage, engineFactory, newSeed)
-        emit()
-        scheduleHint(session)
-    }
-
     private fun emit() {
         _uiState.value = session.toUiState(stage)
 
