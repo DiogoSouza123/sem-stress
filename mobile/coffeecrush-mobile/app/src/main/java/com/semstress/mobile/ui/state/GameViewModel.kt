@@ -8,6 +8,7 @@ import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.engine.AnimationRound
+import com.semstress.mobile.engine.BoardEvent
 import com.semstress.mobile.engine.Match3Board
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.engine.Match3EngineFactory
@@ -87,29 +88,44 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     won = won
 )
 
-/** Plays out a single [AnimationRound] (highlight -> explode -> fall), calling [onChanged] after each frame. */
+/**
+ * Plays out a single [AnimationRound] (highlight -> explode -> fall) onto [GameSession.board],
+ * calling [onChanged] after each frame. The engine already resolved this round on a separate
+ * working copy (see [performMoveAnimated]); here the same round is replayed frame-by-frame onto
+ * the board the UI is actually showing, starting from wherever the previous round (or the initial
+ * swap) left it -- the same invariant the old snapshot-based version relied on.
+ */
 private suspend fun GameSession.applyRound(round: AnimationRound, onChanged: () -> Unit) {
-    board.overwrite(round.stateBeforeClear)
     highlightedMatches = round.matchedPositions.toSet()
     explodingMatches = emptySet()
     onChanged()
     delay(MATCH_HIGHLIGHT_MS)
 
-    board.overwrite(round.stateAfterClear)
+    round.matchedPositions.forEach { board.set(it.row, it.col, Match3Engine.EMPTY) }
     explodingMatches = round.matchedPositions.toSet()
     onChanged()
     delay(EXPLOSION_MS)
 
     highlightedMatches = emptySet()
     explodingMatches = emptySet()
-    if (round.fallFrames.isEmpty()) {
+    if (round.fallSteps.isEmpty()) {
         onChanged()
     } else {
-        round.fallFrames.forEach { frame ->
-            board.overwrite(frame)
+        round.fallSteps.forEach { step ->
+            step.forEach { event -> board.apply(event) }
             onChanged()
             delay(FALL_FRAME_MS)
         }
+    }
+}
+
+private fun Match3Board.apply(event: BoardEvent) {
+    when (event) {
+        is BoardEvent.Moved -> {
+            set(event.to.row, event.to.col, event.piece)
+            set(event.from.row, event.from.col, Match3Engine.EMPTY)
+        }
+        is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
     }
 }
 
@@ -215,10 +231,12 @@ class GameViewModel @AssistedInject constructor(
     }
 
     private suspend fun performMoveAnimated(currentSession: GameSession, first: Position, second: Position) {
-        val outcome = currentSession.engine.tryMoveAnimated(currentSession.board, first, second)
+        val workingBoard = currentSession.board.copyOf()
+        val outcome = currentSession.engine.tryMoveAnimated(workingBoard, first, second)
         if (outcome.valid) {
             currentSession.animating = true
             currentSession.message = null
+            currentSession.board.swap(first, second)
             emit()
 
             for (round in outcome.rounds) {

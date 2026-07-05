@@ -89,7 +89,6 @@ class Match3Engine(
             }
             totalPoints += roundPoints
 
-            val stateBeforeClear = if (captureRounds) board.snapshot() else emptyList()
             val matchedPositions = if (captureRounds) {
                 matches.positions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
             } else {
@@ -97,9 +96,8 @@ class Match3Engine(
             }
 
             clearMatched(board, matches.positions)
-            val stateAfterClear = if (captureRounds) board.snapshot() else emptyList()
-            val fallFrames = if (captureRounds) {
-                collapseAndRefillCapturingFrames(board)
+            val fallSteps = if (captureRounds) {
+                collapseAndRefillCapturingEvents(board)
             } else {
                 collapseAndRefill(board)
                 emptyList()
@@ -107,10 +105,8 @@ class Match3Engine(
 
             if (captureRounds) {
                 rounds += AnimationRound(
-                    stateBeforeClear = stateBeforeClear,
                     matchedPositions = matchedPositions,
-                    stateAfterClear = stateAfterClear,
-                    fallFrames = fallFrames,
+                    fallSteps = fallSteps,
                     roundPoints = roundPoints
                 )
             }
@@ -188,28 +184,32 @@ class Match3Engine(
     }
 
     private fun collapseAndRefill(board: Match3Board) {
-        while (dropStep(board)) {
+        while (dropStep(board).isNotEmpty()) {
             // Repeat until stable.
         }
         fillEmptyWithNewPieces(board)
     }
 
-    private fun collapseAndRefillCapturingFrames(board: Match3Board): List<List<List<Int>>> {
-        val frames = mutableListOf<List<List<Int>>>()
-        while (dropStep(board)) {
-            frames += board.snapshot()
+    private fun collapseAndRefillCapturingEvents(board: Match3Board): List<List<BoardEvent>> {
+        val steps = mutableListOf<List<BoardEvent>>()
+        while (true) {
+            val moves = dropStep(board)
+            if (moves.isEmpty()) {
+                break
+            }
+            steps += moves.map { (from, to) -> BoardEvent.Moved(from, to, board.get(to.row, to.col)) }
         }
         fillEmptyWithNewPieces(
             board = board,
-            onPieceAdded = {
-                frames += board.snapshot()
+            onPieceAdded = { position, piece ->
+                steps += listOf(BoardEvent.Spawned(position, piece))
             }
         )
-        return frames
+        return steps
     }
 
-    private fun dropStep(board: Match3Board): Boolean {
-        var moved = false
+    private fun dropStep(board: Match3Board): List<Pair<Position, Position>> {
+        val moves = mutableListOf<Pair<Position, Position>>()
         for (row in board.rows - 2 downTo 0) {
             for (col in 0 until board.cols) {
                 val value = board.get(row, col)
@@ -219,22 +219,23 @@ class Match3Engine(
                 if (board.get(row + 1, col) == EMPTY) {
                     board.set(row + 1, col, value)
                     board.set(row, col, EMPTY)
-                    moved = true
+                    moves += Position(row, col) to Position(row + 1, col)
                 }
             }
         }
-        return moved
+        return moves
     }
 
     private fun fillEmptyWithNewPieces(
         board: Match3Board,
-        onPieceAdded: (() -> Unit)? = null
+        onPieceAdded: ((Position, Int) -> Unit)? = null
     ) {
         for (col in 0 until board.cols) {
             for (row in board.rows - 1 downTo 0) {
                 if (board.get(row, col) == EMPTY) {
-                    board.set(row, col, board.nextPiece())
-                    onPieceAdded?.invoke()
+                    val piece = board.nextPiece()
+                    board.set(row, col, piece)
+                    onPieceAdded?.invoke(Position(row, col), piece)
                 }
             }
         }

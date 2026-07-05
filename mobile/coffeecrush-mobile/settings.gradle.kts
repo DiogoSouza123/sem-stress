@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "CoffeeCrushMobile"
 include(":app")
 include(":macrobenchmark")
+include(":core:model")
+include(":core:engine")

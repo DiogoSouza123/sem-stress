@@ -52,4 +52,11 @@ class Match3Board(
             }
         }
     }
+
+    /** A detached working copy with the same cell contents, for computations that must not mutate this board. */
+    fun copyOf(): Match3Board {
+        val copy = Match3Board(rows, cols, pieceTypes)
+        copy.overwrite(snapshot())
+        return copy
+    }
 }

@@ -40,10 +40,10 @@ jobs:
         run: ./gradlew lintDebug --stacktrace
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew test testDebugUnitTest --stacktrace
 
       - name: Engine coverage (>= 90%)
-        run: ./gradlew koverVerifyDebug --stacktrace
+        run: ./gradlew :core:engine:koverVerify --stacktrace
 
       - name: Assemble debug
         run: ./gradlew assembleDebug --stacktrace

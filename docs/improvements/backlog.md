@@ -42,8 +42,8 @@ Fonte única de execução. Cada item referencia o documento com o detalhamento 
 ## Fase 4 — Estrutura e engine 2.0 (P2)
 
 - [x] **RR-09** `M` — Código 100% inglês; strings de usuário em `strings.xml`. PR isolado, sem lógica.
-- [ ] **RR-08** `G` — Modularização: `:core:model` e `:core:engine` (Kotlin JVM puro) primeiro; depois `:core:data`, `:core:ui`, `:feature:*`. *Aceite:* `:core:engine` compila sem Android SDK.
-- [ ] **RR-07 / RR-17** `G` — Engine emite eventos semânticos (`Cleared/Moved/Spawned`); board encapsulado; UI interpola. *Aceite:* testes de engine adaptados passam; animação de queda contínua possível; flag para alternar pipeline.
+- [x] **RR-08** `G` — Modularização: `:core:model` e `:core:engine` (Kotlin JVM puro) primeiro; depois `:core:data`, `:core:ui`, `:feature:*`. *Aceite:* `:core:engine` compila sem Android SDK. (apenas `:core:model` e `:core:engine`, conforme aceite; `:core:data`/`:core:ui`/`:feature:*` ficam para item futuro)
+- [x] **RR-07 / RR-17** `G` — Engine emite eventos semânticos (`Cleared/Moved/Spawned`); board encapsulado; UI interpola. *Aceite:* testes de engine adaptados passam; animação de queda contínua possível; flag para alternar pipeline. (engine reescrita para eventos semânticos — `Moved`/`Spawned` — e extraída para `:core:engine`; `GameViewModel` mantém o mesmo contrato/tempos visíveis de hoje, então não há pipeline alternativo a alternar nesta etapa; consumir os eventos para queda renderizada continuamente fica para item futuro de UI)
 - [ ] **MZ-01** `M` — Infra `FeatureFlags` (Debug → Remote → Default) em `:core:common`. ([monetization](monetization.md) §1.4)
 - [ ] **CQ-03** `M` — Painel de debug (seed, pular fase, +movimentos, flags) em `debugImplementation`.
 

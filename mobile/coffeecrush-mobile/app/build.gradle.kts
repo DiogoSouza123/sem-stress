@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
-    alias(libs.plugins.kover)
     alias(libs.plugins.hilt.android.gradle)
     alias(libs.plugins.ksp)
     alias(libs.plugins.protobuf)
@@ -101,27 +100,10 @@ protobuf {
     }
 }
 
-kover {
-    currentProject {
-        instrumentation {
-            disabledForTestTasks.add("testReleaseUnitTest")
-        }
-    }
-    reports {
-        filters {
-            includes {
-                packages("com.semstress.mobile.engine")
-            }
-        }
-        verify {
-            rule("Engine coverage") {
-                minBound(90)
-            }
-        }
-    }
-}
-
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:engine"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.process)
@@ -157,6 +139,7 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.robolectric)
     testRuntimeOnly(libs.junit.vintage.engine)
+    testImplementation(testFixtures(project(":core:engine")))
 
     detektPlugins(libs.detekt.formatting)
 }

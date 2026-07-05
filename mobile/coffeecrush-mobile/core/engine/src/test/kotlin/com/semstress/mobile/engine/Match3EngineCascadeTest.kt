@@ -87,7 +87,7 @@ class Match3EngineCascadeTest {
     }
 
     @Test
-    fun `resolveBoardAnimated captura os frames de queda de cada rodada`() {
+    fun `resolveBoardAnimated captura os eventos de queda de cada rodada`() {
         val board = boardFrom(
             """
             1 1 1 3 4
@@ -101,7 +101,40 @@ class Match3EngineCascadeTest {
         val outcome = engine.resolveBoardAnimated(board)
 
         assertTrue(outcome.rounds.isNotEmpty())
-        assertTrue(outcome.rounds.first().fallFrames.isNotEmpty())
+        assertTrue(outcome.rounds.first().fallSteps.isNotEmpty())
         assertEquals(outcome.points, outcome.rounds.sumOf { it.roundPoints })
+    }
+
+    @Test
+    fun `replay dos eventos de resolveBoardAnimated reproduz o board final exatamente`() {
+        val original = boardFrom(
+            """
+            1 1 1 3 4
+            0 1 2 3 4
+            1 2 3 4 0
+            2 3 4 0 1
+            3 4 0 1 2
+            """
+        )
+        val replay = original.copyOf()
+
+        val outcome = engine.resolveBoardAnimated(original)
+
+        outcome.rounds.forEach { round ->
+            round.matchedPositions.forEach { replay.set(it.row, it.col, Match3Engine.EMPTY) }
+            round.fallSteps.forEach { step -> step.forEach { event -> replay.apply(event) } }
+        }
+
+        assertEquals(original.snapshot(), replay.snapshot())
+    }
+}
+
+private fun Match3Board.apply(event: BoardEvent) {
+    when (event) {
+        is BoardEvent.Moved -> {
+            set(event.to.row, event.to.col, event.piece)
+            set(event.from.row, event.from.col, Match3Engine.EMPTY)
+        }
+        is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
     }
 }
