@@ -3,11 +3,16 @@ package com.semstress.mobile.domain
 data class PlayerProgress(
     val highestUnlockedStage: Int = 1,
     val currentStage: Int = 1,
-    val bestScores: Map<Int, Int> = emptyMap()
+    val bestScores: Map<Int, Int> = emptyMap(),
+    val starsByStage: Map<Int, Int> = emptyMap()
 ) {
     fun isUnlocked(stageId: Int): Boolean = stageId <= highestUnlockedStage
 
     fun scoreFor(stageId: Int): Int = bestScores[stageId] ?: 0
+
+    fun starsFor(stageId: Int): Int = starsByStage[stageId] ?: 0
+
+    fun totalStars(): Int = starsByStage.values.sum()
 
     fun completedStagesCount(): Int = bestScores.values.count { it > 0 }
 
@@ -25,13 +30,21 @@ data class PlayerProgress(
         stageId: Int,
         score: Int,
         won: Boolean,
-        totalStages: Int
+        totalStages: Int,
+        stars: Int = 0
     ): PlayerProgress {
         val previousBest = scoreFor(stageId)
         val updatedBest = if (score > previousBest) {
             bestScores + (stageId to score)
         } else {
             bestScores
+        }
+
+        val previousStars = starsFor(stageId)
+        val updatedStars = if (stars > previousStars) {
+            starsByStage + (stageId to stars)
+        } else {
+            starsByStage
         }
 
         var unlocked = highestUnlockedStage
@@ -43,7 +56,8 @@ data class PlayerProgress(
         return copy(
             highestUnlockedStage = unlocked,
             currentStage = updatedCurrent,
-            bestScores = updatedBest
+            bestScores = updatedBest,
+            starsByStage = updatedStars
         )
     }
 }

@@ -59,7 +59,8 @@ class ProgressRepository @Inject constructor(
         return PlayerProgress(
             highestUnlockedStage = highestUnlocked.coerceIn(1, totalStages),
             currentStage = currentStage.coerceIn(1, totalStages),
-            bestScores = proto.bestScoresMap.filterValues { it > 0 }
+            bestScores = proto.bestScoresMap.filterValues { it > 0 },
+            starsByStage = proto.starsByStageMap.filterValues { it > 0 }
         )
     }
 
@@ -70,6 +71,8 @@ class ProgressRepository @Inject constructor(
                 .setCurrentStage(progress.currentStage)
                 .clearBestScores()
                 .putAllBestScores(progress.bestScores)
+                .clearStarsByStage()
+                .putAllStarsByStage(progress.starsByStage)
                 .build()
         }
     }

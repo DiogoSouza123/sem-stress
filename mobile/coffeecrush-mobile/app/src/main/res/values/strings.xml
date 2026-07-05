@@ -29,6 +29,7 @@
     <string name="progress_stages">Fases</string>
     <string name="progress_points">Pontos</string>
     <string name="progress_average">Media</string>
+    <string name="progress_stars">Estrelas</string>
     <string name="stage_status_unlocked">Liberada</string>
     <string name="stage_status_locked">Bloqueada</string>
     <string name="stage_status_completed">Concluida</string>

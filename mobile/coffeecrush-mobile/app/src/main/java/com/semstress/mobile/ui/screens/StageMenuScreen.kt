@@ -38,9 +38,12 @@ import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeePrimaryButton
+import com.semstress.mobile.ui.components.StarRating
 import com.semstress.mobile.ui.components.StatChip
 import com.semstress.mobile.ui.components.StatRow
 import com.semstress.mobile.ui.theme.CoffeeTheme
+
+private const val MAX_STARS_PER_STAGE = 3
 
 @Composable
 fun StageMenuScreen(
@@ -91,14 +94,16 @@ fun StageMenuScreen(
         ) {
             items(stages) { stage ->
                 val unlocked = progress.isUnlocked(stage.id)
-                val selected = selectedStageId == stage.id
-                val completed = progress.scoreFor(stage.id) > 0
+                val status = StageCardStatus(
+                    unlocked = unlocked,
+                    selected = selectedStageId == stage.id,
+                    completed = progress.scoreFor(stage.id) > 0,
+                    stars = progress.starsFor(stage.id)
+                )
 
                 StageCard(
                     stage = stage,
-                    unlocked = unlocked,
-                    selected = selected,
-                    completed = completed,
+                    status = status,
                     onClick = { if (unlocked) actions.onSelectStage(stage.id) }
                 )
             }
@@ -151,6 +156,7 @@ private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
     val stagesLabel = stringResource(R.string.progress_stages)
     val pointsLabel = stringResource(R.string.progress_points)
     val averageLabel = stringResource(R.string.progress_average)
+    val starsLabel = stringResource(R.string.progress_stars)
     CoffeePanel {
         Text(
             text = stringResource(R.string.progress_overall),
@@ -162,31 +168,38 @@ private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
             stats = listOf(
                 stagesLabel to "${progress.completedStagesCount()} / $totalStages",
                 pointsLabel to progress.totalScore().toString(),
-                averageLabel to progress.averageScore().toString()
+                averageLabel to progress.averageScore().toString(),
+                starsLabel to "${progress.totalStars()} / ${totalStages * MAX_STARS_PER_STAGE}"
             )
         )
     }
 }
 
+/** GP-03: bundles a stage card's derived progress flags to keep [StageCard]'s arity in check. */
+private data class StageCardStatus(
+    val unlocked: Boolean,
+    val selected: Boolean,
+    val completed: Boolean,
+    val stars: Int
+)
+
 @Composable
 private fun StageCard(
     stage: StageConfig,
-    unlocked: Boolean,
-    selected: Boolean,
-    completed: Boolean,
+    status: StageCardStatus,
     onClick: () -> Unit
 ) {
     val colors = CoffeeTheme.colors
     val container = when {
-        !unlocked -> MaterialTheme.colorScheme.surfaceVariant
-        selected -> colors.surfaceBoardBorder.copy(alpha = 0.35f)
-        completed -> colors.success.copy(alpha = 0.22f)
+        !status.unlocked -> MaterialTheme.colorScheme.surfaceVariant
+        status.selected -> colors.surfaceBoardBorder.copy(alpha = 0.35f)
+        status.completed -> colors.success.copy(alpha = 0.22f)
         else -> MaterialTheme.colorScheme.surface
     }
 
     Card(
         onClick = onClick,
-        enabled = unlocked,
+        enabled = status.unlocked,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = container)
     ) {
@@ -194,7 +207,7 @@ private fun StageCard(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StageCardBadge(stage = stage, unlocked = unlocked)
+            StageCardBadge(stage = stage, unlocked = status.unlocked)
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -209,8 +222,13 @@ private fun StageCard(
                 style = MaterialTheme.typography.bodySmall
             )
 
+            if (status.completed) {
+                Spacer(modifier = Modifier.height(4.dp))
+                StarRating(stars = status.stars, starSize = 14.dp)
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
-            StageCardStatusRow(unlocked = unlocked, completed = completed)
+            StageCardStatusRow(unlocked = status.unlocked, completed = status.completed)
         }
     }
 }

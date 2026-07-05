@@ -7,4 +7,5 @@ message PlayerProgressProto {
   int32 highest_unlocked_stage = 1;
   int32 current_stage = 2;
   map<int32, int32> best_scores = 3;
+  map<int32, int32> stars_by_stage = 4;
 }

@@ -8,6 +8,7 @@ import com.semstress.mobile.data.ProgressStore
 import com.semstress.mobile.di.IoDispatcher
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.domain.StageConfig
+import com.semstress.mobile.domain.calculateStars
 import com.semstress.mobile.engine.AnimationRound
 import com.semstress.mobile.engine.BoardEvent
 import com.semstress.mobile.engine.Match3Board
@@ -44,7 +45,8 @@ data class GameUiState(
     val explodingMatches: Set<Position> = emptySet(),
     val message: String? = null,
     val finished: Boolean = false,
-    val won: Boolean = false
+    val won: Boolean = false,
+    val starsEarned: Int = 0
 )
 
 sealed interface GameAction {
@@ -71,6 +73,7 @@ private data class GameSession(
     var moves: Int,
     var finished: Boolean = false,
     var won: Boolean = false,
+    var starsEarned: Int = 0,
     var animating: Boolean = false,
     var highlightedMatches: Set<Position> = emptySet(),
     var explodingMatches: Set<Position> = emptySet(),
@@ -91,7 +94,8 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     explodingMatches = explodingMatches,
     message = message,
     finished = finished,
-    won = won
+    won = won,
+    starsEarned = starsEarned
 )
 
 /**
@@ -184,6 +188,13 @@ class GameViewModel @AssistedInject constructor(
                 currentSession.points = stage.targetScore
                 currentSession.finished = true
                 currentSession.won = true
+                currentSession.starsEarned = calculateStars(
+                    won = true,
+                    score = currentSession.points,
+                    targetScore = stage.targetScore,
+                    movesRemaining = currentSession.moves,
+                    initialMoves = stage.initialMoves
+                )
                 emit()
                 viewModelScope.launch { persistProgressIfFinished(currentSession) }
             }
@@ -294,6 +305,15 @@ class GameViewModel @AssistedInject constructor(
             currentSession.finished = true
             currentSession.won = false
         }
+        if (currentSession.finished) {
+            currentSession.starsEarned = calculateStars(
+                won = currentSession.won,
+                score = currentSession.points,
+                targetScore = stage.targetScore,
+                movesRemaining = currentSession.moves,
+                initialMoves = stage.initialMoves
+            )
+        }
         persistProgressIfFinished(currentSession)
     }
 
@@ -306,7 +326,8 @@ class GameViewModel @AssistedInject constructor(
                 stageId = stage.id,
                 score = currentSession.points,
                 won = currentSession.won,
-                totalStages = totalStages
+                totalStages = totalStages,
+                stars = currentSession.starsEarned
             )
             progressRepository.save(progress)
         }
@@ -346,6 +367,7 @@ class GameViewModel @AssistedInject constructor(
         savedStateHandle[KEY_MOVES] = currentSession.moves
         savedStateHandle[KEY_FINISHED] = currentSession.finished
         savedStateHandle[KEY_WON] = currentSession.won
+        savedStateHandle[KEY_STARS] = currentSession.starsEarned
         savedStateHandle[KEY_MESSAGE] = currentSession.message
         savedStateHandle[KEY_SELECTED_ROW] = currentSession.selected?.row ?: NO_SELECTION
         savedStateHandle[KEY_SELECTED_COL] = currentSession.selected?.col ?: NO_SELECTION
@@ -375,6 +397,7 @@ class GameViewModel @AssistedInject constructor(
             moves = savedStateHandle.get<Int>(KEY_MOVES) ?: stage.initialMoves,
             finished = savedStateHandle.get<Boolean>(KEY_FINISHED) ?: false,
             won = savedStateHandle.get<Boolean>(KEY_WON) ?: false,
+            starsEarned = savedStateHandle.get<Int>(KEY_STARS) ?: 0,
             message = savedStateHandle.get<String>(KEY_MESSAGE)
         )
     }
@@ -390,6 +413,7 @@ class GameViewModel @AssistedInject constructor(
         private const val KEY_MOVES = "game_moves"
         private const val KEY_FINISHED = "game_finished"
         private const val KEY_WON = "game_won"
+        private const val KEY_STARS = "game_stars"
         private const val KEY_MESSAGE = "game_message"
         private const val KEY_SELECTED_ROW = "game_selected_row"
         private const val KEY_SELECTED_COL = "game_selected_col"

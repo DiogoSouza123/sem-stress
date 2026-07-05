@@ -36,6 +36,7 @@ import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeeSecondaryButton
+import com.semstress.mobile.ui.components.StarRating
 import com.semstress.mobile.ui.components.StatRow
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
@@ -239,14 +240,20 @@ private fun GameResultDialog(game: GameUiState, onReplayStage: () -> Unit, onBac
             )
         },
         text = {
-            Text(
-                stringResource(
-                    R.string.stage_result_summary,
-                    game.points,
-                    game.target,
-                    game.moves
+            Column {
+                Text(
+                    stringResource(
+                        R.string.stage_result_summary,
+                        game.points,
+                        game.target,
+                        game.moves
+                    )
                 )
-            )
+                if (game.won) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    StarRating(stars = game.starsEarned)
+                }
+            }
         },
         confirmButton = {
             Button(onClick = onReplayStage) {
