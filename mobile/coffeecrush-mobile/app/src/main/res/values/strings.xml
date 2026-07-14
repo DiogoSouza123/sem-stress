@@ -16,6 +16,10 @@
     <string name="hud_moves">Mov</string>
 
     <string name="app_title">Coffee Crush</string>
+    <string name="title_play">Jogar</string>
+    <string name="title_settings_label">Ajustes</string>
+    <string name="title_music_label">Musica</string>
+    <string name="title_sfx_label">Efeitos</string>
     <string name="menu_subtitle">Menu de fases</string>
     <string name="select_your_stage">Selecione sua fase</string>
     <string name="play_selected_stage">Jogar fase selecionada</string>

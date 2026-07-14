@@ -3,6 +3,9 @@ package com.semstress.mobile.ui.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+data object TitleRoute
+
+@Serializable
 data object MenuRoute
 
 @Serializable

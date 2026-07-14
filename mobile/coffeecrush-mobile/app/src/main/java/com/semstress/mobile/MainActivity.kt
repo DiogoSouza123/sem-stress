@@ -36,6 +36,7 @@ import com.semstress.mobile.domain.ZEN_MODE_STAGE_ID
 import com.semstress.mobile.ui.navigation.GameRoute
 import com.semstress.mobile.ui.navigation.MenuRoute
 import com.semstress.mobile.ui.navigation.SettingsRoute
+import com.semstress.mobile.ui.navigation.TitleRoute
 import com.semstress.mobile.ui.screens.GameScreen
 import com.semstress.mobile.ui.screens.GameScreenActions
 import com.semstress.mobile.ui.screens.GameScreenDebugTools
@@ -46,6 +47,9 @@ import com.semstress.mobile.ui.screens.SettingsScreenState
 import com.semstress.mobile.ui.screens.StageMenuScreen
 import com.semstress.mobile.ui.screens.StageMenuScreenActions
 import com.semstress.mobile.ui.screens.StageMenuScreenSound
+import com.semstress.mobile.ui.screens.TitleScreen
+import com.semstress.mobile.ui.screens.TitleScreenActions
+import com.semstress.mobile.ui.screens.TitleScreenSound
 import com.semstress.mobile.ui.state.GameAction
 import com.semstress.mobile.ui.state.GameSessionSpec
 import com.semstress.mobile.ui.state.GameViewModel
@@ -123,32 +127,85 @@ private fun CoffeeCrushApp(dependencies: GameDestinationDependencies) {
 
     val navController = rememberNavController()
 
+    // The title screen draws its artwork edge-to-edge and applies safe-drawing insets itself,
+    // so the inset padding lives on each other destination instead of on the NavHost.
     NavHost(
         navController = navController,
-        startDestination = MenuRoute,
-        modifier = Modifier.safeDrawingPadding()
+        startDestination = TitleRoute
     ) {
+        composable<TitleRoute> {
+            TitleDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
+        }
+
         composable<MenuRoute> {
-            MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
+            InsetPadded {
+                MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
+            }
         }
 
         composable<SettingsRoute> {
-            SettingsDestination(navController, settingsViewModel)
+            InsetPadded {
+                SettingsDestination(navController, settingsViewModel)
+            }
         }
 
         composable<GameRoute>(
             deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
         ) { backStackEntry ->
             val route: GameRoute = backStackEntry.toRoute()
-            GameDestination(
-                route,
-                navController,
-                menuState,
-                settingsViewModel,
-                dependencies
-            )
+            InsetPadded {
+                GameDestination(
+                    route,
+                    navController,
+                    menuState,
+                    settingsViewModel,
+                    dependencies
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun InsetPadded(content: @Composable () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+        content()
+    }
+}
+
+@Composable
+private fun TitleDestination(
+    navController: NavController,
+    menuViewModel: MenuViewModel,
+    settingsViewModel: SettingsViewModel,
+    backgroundMusicPlayer: BackgroundMusicPlayer
+) {
+    val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Same refresh-on-return contract as MenuDestination: coming back from a game (zen mode is
+    // launched straight from here) must show up-to-date streak/progress.
+    LaunchedEffect(Unit) {
+        menuViewModel.onAction(MenuAction.ReturnToMenu)
+    }
+
+    PlayTrackForMenu(menuState, settingsState.musicMuted, backgroundMusicPlayer)
+
+    TitleScreen(
+        sound = TitleScreenSound(
+            isMusicMuted = settingsState.musicMuted,
+            isSfxMuted = settingsState.sfxMuted
+        ),
+        actions = TitleScreenActions(
+            onPlay = { navController.navigate(MenuRoute) },
+            onPlayZenMode = {
+                navController.navigate(GameRoute(stageId = menuState.stages.first().id, zen = true))
+            },
+            onOpenSettings = { navController.navigate(SettingsRoute) },
+            onToggleMusic = { settingsViewModel.toggleMusic() },
+            onToggleSfx = { settingsViewModel.toggleSfx() }
+        )
+    )
 }
 
 @Composable

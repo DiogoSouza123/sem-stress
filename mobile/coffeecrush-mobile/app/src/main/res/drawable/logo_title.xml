@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Placeholder title-screen logo. To ship the real logo art, drop the transparent PNG at
+  res/drawable-nodpi/logo_title.png and DELETE this file — TitleScreen references
+  R.drawable.logo_title either way, no code change needed.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="72dp"
+    android:viewportWidth="960"
+    android:viewportHeight="720">
+    <!-- Simple coffee-bean silhouette so the slot is visible until the real art lands. -->
+    <path
+        android:fillColor="#AA6D4C41"
+        android:pathData="M480,120 C660,120 800,240 800,360 C800,480 660,600 480,600 C300,600 160,480 160,360 C160,240 300,120 480,120 Z" />
+    <path
+        android:fillColor="#AAFBE9E7"
+        android:pathData="M480,150 C500,240 460,300 480,360 C500,420 460,480 480,570 C460,570 440,480 460,360 C440,240 460,150 480,150 Z" />
+</vector>
