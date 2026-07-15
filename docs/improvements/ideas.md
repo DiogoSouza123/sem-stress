@@ -26,6 +26,7 @@ Ideias **fora do roadmap comprometido** (nenhuma tem prioridade acima de P3 hoje
 | Ideia | Descrição | Gatilho | Pré-requisitos |
 |---|---|---|---|
 | **Duelo assíncrono** | Ambos jogam a mesma seed do diário; compara-se pontuação (sem tempo real — barato e justo) | Base de amigos/social pedir | Backend leve ou Play Games; seed determinística (já existe) |
+| **Coop por turnos (assíncrono)** | Dois jogadores compartilham o mesmo board; cada um faz uma jogada e aguarda o outro (like "correspondence chess"). Diferencial de nicho: quase não existe coop turn-based em match-3 (o gênero é dominado por single-player com vidas/energia). Evita o custo de infra do "multiplayer tempo real" já descartado acima — é só sync de estado por turno, não real-time | Validar em protótipo que o tempo de espera não mata o loop de dopamina do match-3 (risco de design, não técnico); testar como modo opcional paralelo ao solo, nunca substituindo-o | Backend leve (fila de turnos) ou notificação local; engine determinística já suporta replay de estado; alinhar com posicionamento "sem stress" (turno sem timer punitivo, sem penalidade por demora) |
 | **Ligas semanais** | Buckets de ~30 jogadores por pontuação semanal | Retenção estagnar com conteúdo solo | Backend; antifraude básico (validação server-side de scores plausíveis) |
 | **Compartilhar replay** | Exportar GIF/vídeo curto de uma cascata grande (o desktop já gerou GIFs para o README — a ideia tem DNA no projeto) | Busca de crescimento orgânico | Captura de frames do Canvas |
 
