@@ -28,18 +28,22 @@
       "id": 1,
       "name": "Fase 1 - Introducao",
       "description": "Aprenda o basico",
-      "pieceTypes": 5,
+      "rows": 5,
+      "cols": 5,
+      "pieceTypes": 4,
       "initialMoves": 20,
-      "targetScore": 15000,
+      "targetScore": 45000,
       "region": "Cafezal"
     },
     {
       "id": 2,
       "name": "Fase 2 - Moagem",
       "description": "Ritmo crescente",
+      "rows": 5,
+      "cols": 5,
       "pieceTypes": 5,
-      "initialMoves": 18,
-      "targetScore": 21000,
+      "initialMoves": 20,
+      "targetScore": 25000,
       "region": "Cafezal"
     },
     {
