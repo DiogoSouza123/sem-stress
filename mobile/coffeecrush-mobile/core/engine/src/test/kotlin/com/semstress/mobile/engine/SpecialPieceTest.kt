@@ -12,7 +12,7 @@ class SpecialPieceTest {
     private val engine = Match3Engine(stageConfig(rows = 5, cols = 5, pieceTypes = 5))
 
     @Test
-    fun `match-4 deixa um Moedor no lugar de limpar todas as pecas`() {
+    fun `Moedor sem gesto de swap queima ao longo da propria corrida horizontal`() {
         val board = boardFrom(
             """
             4 4 4 4 2
@@ -23,14 +23,58 @@ class SpecialPieceTest {
             """
         )
 
-        engine.resolveBoard(board)
+        val outcome = engine.resolveBoardAnimated(board)
 
         val grinderCount = board.snapshot().flatten().count { it == Match3Engine.SPECIAL_GRINDER }
-        assertEquals(1, grinderCount, "Esperava exatamente um Moedor criado pelo match-4")
+        assertEquals(0, grinderCount, "O Moedor detona ao nascer - nao deveria permanecer no tabuleiro")
+        // Passo 1: o match explode e o Moedor recem-criado e exibido na celula de spawn.
+        val matchStep = outcome.rounds[0]
+        assertTrue(
+            matchStep.specialSpawns.any { it.pieceValue == Match3Engine.SPECIAL_GRINDER },
+            "O passo do match deveria exibir o Moedor recem-criado"
+        )
+        // Passo 2: o Moedor detona ao longo da corrida - uma unica linha, nunca cruz.
+        val blastStep = outcome.rounds[1]
+        assertTrue(
+            blastStep.matchedPositions.contains(Position(0, 4)),
+            "A explosao deveria queimar o resto da linha da corrida"
+        )
+        assertFalse(
+            blastStep.matchedPositions.contains(Position(1, 3)),
+            "A explosao nao deveria descer pela coluna"
+        )
     }
 
     @Test
-    fun `activar Moedor mói os 8 vizinhos e pontua`() {
+    fun `Moedor sem gesto de swap queima ao longo da propria corrida vertical`() {
+        val board = boardFrom(
+            """
+            4 0 1 2 3
+            4 1 2 3 0
+            4 2 3 0 1
+            4 3 0 1 2
+            0 4 1 2 3
+            """
+        )
+
+        val outcome = engine.resolveBoardAnimated(board)
+
+        val grinderCount = board.snapshot().flatten().count { it == Match3Engine.SPECIAL_GRINDER }
+        assertEquals(0, grinderCount, "O Moedor detona ao nascer - nao deveria permanecer no tabuleiro")
+        // Passo 2: o Moedor detona ao longo da corrida - uma unica coluna, nunca cruz.
+        val blastStep = outcome.rounds[1]
+        assertTrue(
+            blastStep.matchedPositions.contains(Position(4, 0)),
+            "A explosao deveria queimar o resto da coluna da corrida"
+        )
+        assertFalse(
+            blastStep.matchedPositions.contains(Position(3, 1)),
+            "A explosao nao deveria abrir pela linha"
+        )
+    }
+
+    @Test
+    fun `ativar Moedor moi a coluna inteira e pontua`() {
         val board = boardFrom(
             """
             1 2 3 4 0
@@ -47,9 +91,11 @@ class SpecialPieceTest {
         val outcome = engine.activateSpecialPiece(board, grinderPosition)
 
         assertTrue(outcome.activated)
-        assertEquals(8, outcome.affectedPieces.size)
+        assertEquals(4, outcome.affectedPieces.size)
         assertEquals(outcome.affectedPieces.size * 500, outcome.points)
-        assertNotEquals(Match3Engine.SPECIAL_GRINDER, board.get(grinderPosition.row, grinderPosition.col))
+        for (row in 0 until board.rows) {
+            assertNotEquals(Match3Engine.SPECIAL_GRINDER, board.get(row, grinderPosition.col))
+        }
     }
 
     @Test
@@ -72,7 +118,7 @@ class SpecialPieceTest {
     }
 
     @Test
-    fun `L-shape de match-5 cria uma Prensa Francesa`() {
+    fun `L-shape de match-5 detona a Prensa Francesa na hora amassando os vizinhos`() {
         val board = boardFrom(
             """
             4 4 4 2 3
@@ -83,13 +129,12 @@ class SpecialPieceTest {
             """
         )
 
-        engine.resolveBoard(board)
+        val outcome = engine.resolveBoard(board)
 
-        // A peca especial cai como qualquer outra ate assentar - a coluna 0 tinha 2 celulas vazias
-        // abaixo da intersecao (0,0), entao ela deveria assentar na linha 2 apos a gravidade.
         val frenchPressCount = board.snapshot().flatten().count { it == Match3Engine.SPECIAL_FRENCH_PRESS }
-        assertEquals(1, frenchPressCount, "Esperava exatamente uma Prensa Francesa criada pelo L-shape")
-        assertEquals(Match3Engine.SPECIAL_FRENCH_PRESS, board.get(2, 0))
+        assertEquals(0, frenchPressCount, "A Prensa Francesa detona ao nascer - nao deveria permanecer no tabuleiro")
+        // Dois bracos de 3 (2 * 500) + o vizinho (1,1) amassado pela detonacao (500).
+        assertTrue(outcome.points >= 1500, "Esperava os pontos do L-shape mais a detonacao dos vizinhos")
     }
 
     @Test
@@ -111,7 +156,7 @@ class SpecialPieceTest {
     }
 
     @Test
-    fun `ativar Prensa Francesa limpa a coluna inteira e pontua`() {
+    fun `ativar Prensa Francesa amassa os 8 vizinhos e pontua`() {
         val board = boardFrom(
             """
             1 2 3 4 0
@@ -128,11 +173,9 @@ class SpecialPieceTest {
         val outcome = engine.activateSpecialPiece(board, pressPosition)
 
         assertTrue(outcome.activated)
-        assertEquals(4, outcome.affectedPieces.size)
+        assertEquals(8, outcome.affectedPieces.size)
         assertEquals(outcome.affectedPieces.size * 500, outcome.points)
-        for (row in 0 until board.rows) {
-            assertNotEquals(Match3Engine.SPECIAL_FRENCH_PRESS, board.get(row, pressPosition.col))
-        }
+        assertNotEquals(Match3Engine.SPECIAL_FRENCH_PRESS, board.get(pressPosition.row, pressPosition.col))
     }
 
     @Test
@@ -247,9 +290,9 @@ class SpecialPieceTest {
 
     @Test
     fun `alinhamento criado pela ativacao de um especial explode em cascata`() {
-        // Grinder at (2,2) clears rows 1-3 x cols 1-3. Gravity then drops row 0's "2 2 3" (cols
-        // 1-3) onto row 3, forming "2 2 2" with the untouched (3,0) - a match the activation MUST
-        // resolve instead of leaving aligned pieces sitting on the board.
+        // French press at (2,2) clears rows 1-3 x cols 1-3. Gravity then drops row 0's "2 2 3"
+        // (cols 1-3) onto row 3, forming "2 2 2" with the untouched (3,0) - a match the activation
+        // MUST resolve instead of leaving aligned pieces sitting on the board.
         val board = boardFrom(
             """
             1 2 2 3 4
@@ -260,10 +303,10 @@ class SpecialPieceTest {
             """,
             pieceTypes = 5
         )
-        val grinderPosition = Position(2, 2)
-        board.set(grinderPosition.row, grinderPosition.col, Match3Engine.SPECIAL_GRINDER)
+        val pressPosition = Position(2, 2)
+        board.set(pressPosition.row, pressPosition.col, Match3Engine.SPECIAL_FRENCH_PRESS)
 
-        val outcome = engine.activateSpecialPiece(board, grinderPosition)
+        val outcome = engine.activateSpecialPiece(board, pressPosition)
 
         assertTrue(outcome.activated)
         assertTrue(outcome.cascadeRounds.isNotEmpty(), "Esperava a cascata do alinhamento criado pela ativacao")
@@ -272,10 +315,10 @@ class SpecialPieceTest {
     }
 
     @Test
-    fun `especial criado por um swap nasce na celula de origem do movimento`() {
-        // Swapping (1,2) up into (0,2) completes the match-4 "4 4 4 4" on row 0. The Moedor must
-        // spawn at (0,2) - where the player's piece landed (Candy Crush behavior) - and not at the
-        // run's last cell (0,3).
+    fun `Moedor criado por um swap queima ao longo da corrida do match`() {
+        // Swapping (1,2) up into (0,2) completes the horizontal match-4 "4 4 4 4" on row 0. The
+        // Moedor detonates along the run: the whole row 0 burns as one continuous line - it never
+        // opens a perpendicular column (the "cross" bug).
         val board = boardFrom(
             """
             4 4 0 4 2
@@ -291,7 +334,27 @@ class SpecialPieceTest {
 
         assertTrue(outcome.valid)
         val grinderCount = board.snapshot().flatten().count { it == Match3Engine.SPECIAL_GRINDER }
-        assertEquals(1, grinderCount, "Esperava exatamente um Moedor criado pelo match-4")
-        assertEquals(Match3Engine.SPECIAL_GRINDER, board.get(0, 2), "O Moedor deveria nascer na celula do swap")
+        assertEquals(0, grinderCount, "O Moedor detona ao nascer - nao deveria permanecer no tabuleiro")
+        // Passo 1 exibe o Moedor na celula onde a peca do jogador pousou.
+        val matchStep = outcome.rounds[0]
+        assertEquals(
+            listOf(Position(0, 2)),
+            matchStep.specialSpawns.filter { it.pieceValue == Match3Engine.SPECIAL_GRINDER }.map { it.position },
+            "O passo do match deveria exibir o Moedor na celula do swap"
+        )
+        // Passo 2 detona ao longo da corrida.
+        val blastStep = outcome.rounds[1]
+        assertTrue(
+            blastStep.matchedPositions.contains(Position(0, 4)),
+            "A explosao deveria queimar o resto da linha da corrida"
+        )
+        assertFalse(
+            blastStep.matchedPositions.contains(Position(2, 2)),
+            "A explosao nao deveria descer pela coluna da celula de origem"
+        )
+        assertFalse(
+            blastStep.matchedPositions.contains(Position(2, 3)),
+            "A explosao nao deveria descer pela coluna do fim da corrida"
+        )
     }
 }

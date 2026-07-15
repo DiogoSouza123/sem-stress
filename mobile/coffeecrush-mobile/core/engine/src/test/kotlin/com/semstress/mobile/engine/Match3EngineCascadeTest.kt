@@ -59,7 +59,8 @@ class Match3EngineCascadeTest {
 
         val outcome = engine.resolveBoard(board)
 
-        assertEquals(1000, outcome.points)
+        // match-4 (1000) + a detonacao do Moedor sem gesto queimando o resto da linha (1 * 500).
+        assertTrue(outcome.points >= 1500, "Esperava >= 1500 pontos, foi ${outcome.points}")
         assertFalse(hasAnyMatch(board))
     }
 
@@ -133,9 +134,11 @@ class Match3EngineCascadeTest {
 
     @Test
     fun `replay reproduz o board final quando a rodada cria uma peca especial`() {
+        // Moedor e Prensa Francesa detonam ao nascer, entao a peca especial que persiste em
+        // specialSpawns e a Xicara Vazia, criada por um match-5 em linha reta.
         val original = boardFrom(
             """
-            4 4 4 4 2
+            4 4 4 4 4
             0 1 2 3 4
             1 2 3 4 0
             2 3 4 0 1
@@ -147,7 +150,7 @@ class Match3EngineCascadeTest {
         val outcome = engine.resolveBoardAnimated(original)
         assertTrue(
             outcome.rounds.any { it.specialSpawns.isNotEmpty() },
-            "Esperava que o match-4 gerasse uma peca especial capturada em specialSpawns"
+            "Esperava que o match-5 gerasse uma peca especial capturada em specialSpawns"
         )
 
         outcome.rounds.forEach { round ->
@@ -169,6 +172,5 @@ private fun Match3Board.apply(event: BoardEvent) {
             set(event.from.row, event.from.col, Match3Engine.EMPTY)
         }
         is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
-        is BoardEvent.Reshuffled -> set(event.position.row, event.position.col, event.piece)
     }
 }

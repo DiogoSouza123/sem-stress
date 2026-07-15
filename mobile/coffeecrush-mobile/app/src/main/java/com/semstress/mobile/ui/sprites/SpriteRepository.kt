@@ -46,7 +46,7 @@ private val PIECE_ITEMS = listOf(
 private val SPECIAL_ITEMS = mapOf(
     Match3Engine.SPECIAL_GRINDER to "special-grinder",
     Match3Engine.SPECIAL_FRENCH_PRESS to "special-french-press",
-    SpriteAtlas.EMPTY_CUP_SPRITE_KEY to "special-empty-cup"
+    SpriteAtlas.EMPTY_CUP_SPRITE_KEY to "special-steam"
 )
 
 /**

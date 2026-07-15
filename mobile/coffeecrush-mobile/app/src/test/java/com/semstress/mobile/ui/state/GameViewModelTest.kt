@@ -337,7 +337,7 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `tocar em um Moedor mói os vizinhos, pontua e nao consome movimento`() = runTest(testDispatcher) {
+    fun `tocar em um Moedor moi a coluna, pontua e nao consome movimento`() = runTest(testDispatcher) {
         val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
         val seeded = newGameViewModel(stage)
         val originalBoard = seeded.uiState.value.board
@@ -373,11 +373,11 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `um match-4 exato cria um Moedor na ultima celula da corrida, sem deixa-la vazia`() = runTest(testDispatcher) {
+    fun `um match-4 exato detona o Moedor na hora sem deixa-lo no tabuleiro`() = runTest(testDispatcher) {
         val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
         // Extende a corrida "0 0 0" ja presente na linha 0 (colunas 0-2) trocando a peca 1, na
-        // linha 0 coluna 3, pela peca 0 que esta abaixo dela - produz uma corrida de exatamente 4,
-        // cuja ultima celula (linha 0, coluna 3) deveria virar um Moedor em vez de ficar vazia.
+        // linha 0 coluna 3, pela peca 0 que esta abaixo dela - produz uma corrida de exatamente 4.
+        // O Moedor detona na hora queimando o resto da linha 0, ao longo da corrida horizontal.
         val rows = listOf(
             intArrayOf(0, 0, 0, 1, 2, 3),
             intArrayOf(1, 2, 3, 0, 4, 0),
@@ -403,15 +403,16 @@ class GameViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val result = viewModel.uiState.value
-        assertEquals(
-            Match3Engine.SPECIAL_GRINDER,
-            result.board[0][3],
-            "A ultima celula do match-4 deveria ter virado um Moedor, nao ficar vazia/ser substituida"
+        assertFalse(
+            result.board.flatten().contains(Match3Engine.SPECIAL_GRINDER),
+            "O Moedor detona ao nascer - nao deveria permanecer no tabuleiro"
         )
+        // match-4 (1000) + as 2 pecas restantes da linha 0 queimadas pela detonacao (2 * 500).
+        assertTrue(result.points >= 2000, "Esperava os pontos do match-4 mais a explosao da linha")
     }
 
     @Test
-    fun `tocar em uma Prensa Francesa limpa a coluna inteira e nao consome movimento`() = runTest(testDispatcher) {
+    fun `tocar em uma Prensa Francesa amassa os vizinhos e nao consome movimento`() = runTest(testDispatcher) {
         val stage = stageConfig(rows = 6, cols = 6, pieceTypes = 5, initialMoves = 20, targetScore = 999_999)
         val seeded = newGameViewModel(stage)
         val originalBoard = seeded.uiState.value.board

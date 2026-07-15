@@ -59,7 +59,8 @@ data class GameUiState(
     val hintMove: Pair<Position, Position>? = null,
     val isZenMode: Boolean = false,
     val aroma: Int = 0,
-    val aromaCapacity: Int = AROMA_CAPACITY
+    val aromaCapacity: Int = AROMA_CAPACITY,
+    val scorePerPiece: Int = 0
 )
 
 sealed interface GameAction {
@@ -131,7 +132,8 @@ private fun GameSession.toUiState(stage: StageConfig): GameUiState = GameUiState
     collectProgress = collectedCount,
     hintMove = hintMove,
     isZenMode = stage.isZenMode,
-    aroma = aroma
+    aroma = aroma,
+    scorePerPiece = stage.scoreMatch3
 )
 
 /**
@@ -173,7 +175,6 @@ private fun Match3Board.apply(event: BoardEvent) {
             set(event.from.row, event.from.col, Match3Engine.EMPTY)
         }
         is BoardEvent.Spawned -> set(event.position.row, event.position.col, event.piece)
-        is BoardEvent.Reshuffled -> set(event.position.row, event.position.col, event.piece)
     }
 }
 

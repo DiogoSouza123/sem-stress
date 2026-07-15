@@ -12,14 +12,15 @@ Loop único: trocar peças adjacentes → atingir **meta de pontos** antes de ac
 
 ## 2. Peças especiais originais — `GP-01` (P1, G)
 
-Criadas ao formar padrões, consumidas ao serem ativadas (tap duplo ou uso em match):
+Criadas ao formar padrões. Moedor e Prensa Francesa **detonam no instante em que nascem**, dentro da mesma sequência de explosões do match que as criou (decisão de 2026-07: sem passo extra de ativação por tap); a Xícara Vazia é a única que permanece no tabuleiro:
 
 | Peça | Como surge | Efeito | Por que melhora o jogo |
 |---|---|---|---|
-| **Moedor** ☕⚙️ | Match-4 | Ao ativar, **mói as 8 peças ao redor** transformando-as em "café moído" que é coletado (pontos + conta para objetivos de coleta) em vez de simplesmente destruir | Recompensa match-4 com efeito de área; sinergia direta com objetivos de coleta (§3) |
-| **Prensa Francesa** ⬇️ | Match-5 em L/T | **Comprime a coluna inteira**: todas as peças da coluna descem, as de cima esmagam as de baixo gerando pontos, e o topo é preenchido com peças novas — na prática, "rejoga" uma coluna | Efeito espacial único (não é "limpa linha"); cria decisões de posicionamento |
-| **Xícara Vazia** 🫗 | Match-5 em linha | Fica no tabuleiro **absorvendo** as peças matched adjacentes por 3 turnos; quando enche, explode em área 3×3 com pontuação proporcional ao que absorveu | Peça de **investimento com timing** — o jogador decide protegê-la ou detonar cedo; não existe equivalente no gênero mainstream |
-| **Vapor** 🌫️ | Cascata ≥ 3 níveis (recompensa por cascata, não por padrão!) | Sobe do ponto da cascata **embaralhando suavemente 2 linhas superiores** em novas posições que garantem ≥ 1 match disponível | Transforma cascatas (hoje só pontos) em ferramenta tática; suaviza RNG de topo de board |
+| **Moedor** ☕⚙️ | Match-4 | Detona ao nascer e **queima a linha inteira ao longo do match** (match horizontal → linha inteira; match vertical → coluna inteira) — match e explosão formam uma única linha contínua, nunca cruz. Pontos + contagem para objetivos de coleta | Recompensa match-4 imediata; a direção da explosão depende da orientação do match, criando decisões de posicionamento |
+| **Prensa Francesa** ⬇️ | Match-5 em L/T | Detona ao nascer na interseção do L/T e **amassa as 8 peças ao redor** | Recompensa o padrão mais difícil com efeito de área no ponto exato do cruzamento |
+| **Xícara Vazia / Vapor** 🌫️ | Match-5 em linha | Fica no tabuleiro **absorvendo** as peças matched adjacentes por 3 turnos; quando enche, explode em área 3×3 com pontuação proporcional ao que absorveu. Usa a arte `special-steam` e exibe os pontos acumulados abaixo da peça em dígitos arco-íris | Peça de **investimento com timing** — o jogador decide protegê-la ou detonar cedo; não existe equivalente no gênero mainstream |
+
+> **Removido (2026-07):** o evento **Vapor** original (reembaralhar as 2 linhas do topo ao atingir cascata de 3 níveis) foi implementado e depois cortado por decisão de gameplay. A arte `special-steam` foi reaproveitada como sprite da Xícara Vazia.
 
 Combinações de especiais (ativar uma adjacente à outra) geram efeitos ampliados — projetar tabela de 4×4 combinações na implementação.
 
@@ -66,6 +67,7 @@ Mecânica-assinatura do jogo (sem equivalente direto no gênero):
 | **Jornada** | O principal (fases + objetivos + estrelas) | Espinha dorsal |
 | **Café da Manhã** (desafio diário) | 1 fase gerada por seed do dia (o suporte a seed **já existe** em `Match3Board`), igual para todos; 3 tentativas | Hábito diário — motor de retenção barato de construir |
 | **Modo Zen** | Sem movimentos/meta; só relaxar (opção de encerrar com resumo) | Honra o nome original *sem-stress*; diferencial de marketing real |
+| **Dupla Barista** (multiplayer cooperativo híbrido) | Dois jogadores entram por lobby, pareiam, escolhem uma fase e começam em tabuleiros individuais. Após N movimentos, os tabuleiros se mesclam; os turnos passam a ser alternados, cada jogador só mexe na sua área do tabuleiro compartilhado, e a pontuação do trecho cooperativo soma às pontuações individuais. A vitória exige que a dupla alcance a meta de pontos | Diferencial futuro do Coffee Crush: cria um momento social próprio do jogo, com preparação individual antes da colaboração |
 | **Contrarrelógio** (futuro) | 90 s, movimentos ilimitados | Sessões curtas, leaderboard futuro |
 
 ## 7. Progressão, eventos e retenção — `GP-06` (P2, G)

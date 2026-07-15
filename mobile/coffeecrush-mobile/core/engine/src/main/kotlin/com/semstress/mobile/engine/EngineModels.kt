@@ -26,20 +26,23 @@ data class AnimatedResolveOutcome(
     val rounds: List<AnimationRound>
 )
 
-/**
- * A single piece dropping one step due to gravity, a new piece filling an empty cell, or (GP-01,
- * Vapor) an existing piece's value changing in place without moving position.
- */
+/** A single piece dropping one step due to gravity, or a new piece filling an empty cell. */
 sealed interface BoardEvent {
     data class Moved(val from: Position, val to: Position, val piece: Int) : BoardEvent
     data class Spawned(val position: Position, val piece: Int) : BoardEvent
-
-    /** GP-01: Vapor reshuffles the top rows in place - the cell stays put, only its value changes. */
-    data class Reshuffled(val position: Position, val piece: Int) : BoardEvent
 }
 
-/** GP-01: a special piece created this round, and the board value it should become. */
-data class SpecialSpawn(val position: Position, val pieceValue: Int)
+/**
+ * GP-01: a special piece created this round, and the board value it should become.
+ * [blastAlongRow] is the direction a Moedor burns when it detonates: always along the run that
+ * created it (horizontal match = row, vertical match = column), so the blast and the match form
+ * one continuous line instead of a cross.
+ */
+data class SpecialSpawn(
+    val position: Position,
+    val pieceValue: Int,
+    val blastAlongRow: Boolean = false
+)
 
 /**
  * One cascade step: the pieces matched at [matchedPositions], then the sequence of [BoardEvent]

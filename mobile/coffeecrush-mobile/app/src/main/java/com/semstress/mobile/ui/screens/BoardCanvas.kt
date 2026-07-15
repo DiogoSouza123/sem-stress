@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
+import com.semstress.mobile.engine.EmptyCupState
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.sprites.SpriteSheet
@@ -61,7 +62,8 @@ data class BoardSelectionState(
     val shaking: Set<Position> = emptySet(),
     val invalidMoveNonce: Int = 0,
     val hinted: Set<Position> = emptySet(),
-    val symbolModeEnabled: Boolean = false
+    val symbolModeEnabled: Boolean = false,
+    val cupScorePerPiece: Int = 0
 )
 
 private data class BoardDrawContext(
@@ -74,7 +76,8 @@ private data class BoardDrawContext(
     val explosionTextStyle: TextStyle,
     val colors: CoffeeSemanticColors,
     val shakeOffsetPx: Float,
-    val symbolModeEnabled: Boolean
+    val symbolModeEnabled: Boolean,
+    val cupScorePerPiece: Int
 )
 
 /**
@@ -138,7 +141,8 @@ fun BoardCanvas(
                     explosionTextStyle = explosionTextStyle,
                     colors = colors,
                     shakeOffsetPx = shakeOffset.value,
-                    symbolModeEnabled = selection.symbolModeEnabled
+                    symbolModeEnabled = selection.symbolModeEnabled,
+                    cupScorePerPiece = selection.cupScorePerPiece
                 )
                 val dragOrigin = dragController.origin
                 val dragTarget = dragController.targetCell()
@@ -312,6 +316,14 @@ private fun DrawScope.drawPiece(value: Int, topLeft: Offset, context: BoardDrawC
     } else {
         val symbol = fallbackPieceSymbol(value)
         drawCenteredText(context.textMeasurer, symbol, context.pieceTextStyle, topLeft, context.cellSizePx)
+    }
+    if (EmptyCupState.matches(value)) {
+        drawCupAbsorbedPoints(
+            textMeasurer = context.textMeasurer,
+            points = EmptyCupState.absorbed(value) * context.cupScorePerPiece,
+            topLeft = topLeft,
+            cellSizePx = context.cellSizePx
+        )
     }
 }
 

@@ -10,19 +10,23 @@ class Match3Engine(
     companion object {
         const val EMPTY = -1
 
-        /** GP-01: "Moedor" special piece, created by a match-4; mills its 8 neighbors on activation. */
+        /**
+         * GP-01: "Moedor", created by a match-4; detonates as soon as it spawns, grinding the full
+         * line along the run that created it (horizontal match = whole row, vertical match = whole
+         * column). Match and blast always form one continuous line, never a cross.
+         */
         const val SPECIAL_GRINDER = -2
 
-        /** GP-01: "Prensa Francesa", created by an L/T-shaped match-5; compresses its whole column on activation. */
+        /**
+         * GP-01: "Prensa Francesa", created by an L/T-shaped match-5; detonates as soon as it
+         * spawns, pressing its 8 neighbors.
+         */
         const val SPECIAL_FRENCH_PRESS = -3
 
         private const val MAX_SHUFFLE_ATTEMPTS = 300
         private const val GRINDER_MATCH_LENGTH = 4
         private const val LT_SHAPE_ARM_LENGTH = 3
         private const val EMPTY_CUP_MIN_LENGTH = 5
-        private const val VAPOR_CASCADE_THRESHOLD = 3
-        private const val VAPOR_TOP_ROWS = 2
-        private const val VAPOR_MAX_SHUFFLE_ATTEMPTS = 200
 
         /** GP-01: true for any special piece value - the three tappable ones, or Xicara Vazia in any of its states. */
         fun isSpecialPiece(value: Int): Boolean {
@@ -90,7 +94,6 @@ class Match3Engine(
     ): AnimatedResolveOutcome {
         var totalPoints = 0
         var cascadeLevel = 0
-        var vaporTriggered = false
         val rounds = mutableListOf<AnimationRound>()
 
         while (true) {
@@ -109,47 +112,77 @@ class Match3Engine(
             } else {
                 0
             }
-            totalPoints += roundPoints
-
-            val allPositions = runs.flatMapTo(linkedSetOf()) { it.positions }
             // Only the move's own matches (first cascade) anchor to the swapped cells; later
             // cascades were not caused directly by the player's gesture.
             val spawnAnchors = if (cascadeLevel == 1) preferredSpawns else emptySet()
-            val specialSpawns = selectSpecialSpawns(runs, board, spawnAnchors)
-            val matchedPositions = if (captureRounds) {
-                allPositions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
-            } else {
-                emptyList()
-            }
-
-            clearMatched(board, allPositions)
-            specialSpawns.forEach { spawn -> board.set(spawn.position.row, spawn.position.col, spawn.pieceValue) }
-            val fallSteps = if (captureRounds) {
-                collapseAndRefillCapturingEvents(board)
-            } else {
-                collapseAndRefill(board)
-                emptyList()
-            }
-
-            val vaporDue = !vaporTriggered && cascadeLevel == VAPOR_CASCADE_THRESHOLD
-            vaporTriggered = vaporTriggered || vaporDue
-            val vaporEvents = if (vaporDue) steamReshuffleTopRows(board) else emptyList()
-
-            if (captureRounds) {
-                rounds += AnimationRound(
-                    matchedPositions = matchedPositions,
-                    fallSteps = if (vaporEvents.isEmpty()) fallSteps else fallSteps + listOf(vaporEvents),
-                    roundPoints = roundPoints,
-                    specialSpawns = specialSpawns
-                )
-            }
+            val (blastPoints, roundSteps) = resolveRound(board, runs, spawnAnchors, roundPoints, captureRounds)
+            totalPoints += roundPoints + blastPoints
+            rounds += roundSteps
         }
     }
 
     /**
-     * GP-01: activates whichever special piece sits at [position] - Moedor (mills 8 neighbors),
-     * Prensa Francesa (compresses its column) or Xicara Vazia (explodes a 3x3 area, tap-detonated
-     * early instead of waiting out its countdown - see [tickEmptyCups]).
+     * Clears one cascade round on [board] (matches + instant special detonations + refill) and
+     * returns the blast bonus points plus the captured animation steps. A round that detonates a
+     * Moedor or Prensa Francesa is captured as TWO steps: first the match explodes and the newborn
+     * special is shown on its cell, then the special itself detonates - so the player sees which
+     * power-up was created and what it does before it goes off.
+     */
+    private fun resolveRound(
+        board: Match3Board,
+        runs: List<MatchRun>,
+        spawnAnchors: Set<Position>,
+        roundPoints: Int,
+        captureRounds: Boolean
+    ): Pair<Int, List<AnimationRound>> {
+        val allPositions = runs.flatMapTo(linkedSetOf()) { it.positions }
+        val specialSpawns = selectSpecialSpawns(runs, board, spawnAnchors)
+        // Moedor and Prensa Francesa detonate in the same cascade round they are born in; only
+        // Xicara Vazia stays on the board.
+        val (instantSpawns, persistentSpawns) = specialSpawns.partition { isInstantSpecial(it.pieceValue) }
+        val blastPositions = instantBlastPositions(board, instantSpawns, allPositions)
+        val blastPoints = blastPositions.size * config.scoreMatch3
+
+        clearMatched(board, allPositions + blastPositions)
+        persistentSpawns.forEach { spawn -> board.set(spawn.position.row, spawn.position.col, spawn.pieceValue) }
+        val fallSteps = if (captureRounds) {
+            collapseAndRefillCapturingEvents(board)
+        } else {
+            collapseAndRefill(board)
+            emptyList()
+        }
+        if (!captureRounds) {
+            return blastPoints to emptyList()
+        }
+
+        val steps = mutableListOf(
+            AnimationRound(
+                matchedPositions = sortedPositions(allPositions),
+                fallSteps = if (instantSpawns.isEmpty()) fallSteps else emptyList(),
+                roundPoints = roundPoints,
+                specialSpawns = specialSpawns
+            )
+        )
+        if (instantSpawns.isNotEmpty()) {
+            steps += AnimationRound(
+                matchedPositions = sortedPositions(blastPositions + instantSpawns.map { it.position }),
+                fallSteps = fallSteps,
+                roundPoints = blastPoints,
+                specialSpawns = emptyList()
+            )
+        }
+        return blastPoints to steps
+    }
+
+    private fun sortedPositions(positions: Collection<Position>): List<Position> =
+        positions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
+
+    /**
+     * GP-01: activates whichever special piece sits at [position] - Moedor (grinds its column),
+     * Prensa Francesa (presses its 8 neighbors) or Xicara Vazia (explodes a 3x3 area, tap-detonated
+     * early instead of waiting out its countdown - see [tickEmptyCups]). Moedor and Prensa Francesa
+     * normally detonate the instant they spawn (see [resolveBoardAnimated]); this tap path only
+     * matters for boards that still hold one from before that rule.
      */
     fun activateSpecialPiece(board: Match3Board, position: Position): SpecialActivationOutcome {
         if (!board.isValid(position)) {
@@ -173,13 +206,15 @@ class Match3Engine(
         )
     }
 
+    /** GP-01: grinds the whole column and refills it from the top. */
     private fun activateGrinder(board: Match3Board, position: Position): SpecialActivationOutcome {
-        val milled = moorePositions(board, position).mapNotNull { neighbor ->
-            val value = board.get(neighbor.row, neighbor.col)
-            if (value >= 0) neighbor to value else null
+        val milled = columnPositions(board, position).mapNotNull { cell ->
+            val value = board.get(cell.row, cell.col)
+            if (value >= 0) cell to value else null
         }
-        board.set(position.row, position.col, EMPTY)
-        milled.forEach { (neighbor, _) -> board.set(neighbor.row, neighbor.col, EMPTY) }
+        for (row in 0 until board.rows) {
+            board.set(row, position.col, EMPTY)
+        }
         return settleActivation(
             board = board,
             points = milled.size * config.scoreMatch3,
@@ -188,15 +223,14 @@ class Match3Engine(
         )
     }
 
-    /** GP-01: clears the whole column - the pieces above "crush" the ones below - and refills it from the top. */
+    /** GP-01: presses the 8 neighboring pieces flat. */
     private fun activateFrenchPress(board: Match3Board, position: Position): SpecialActivationOutcome {
-        val affected = (0 until board.rows).mapNotNull { row ->
-            val value = board.get(row, position.col)
-            if (value >= 0) Position(row, position.col) to value else null
+        val affected = moorePositions(board, position).mapNotNull { neighbor ->
+            val value = board.get(neighbor.row, neighbor.col)
+            if (value >= 0) neighbor to value else null
         }
-        for (row in 0 until board.rows) {
-            board.set(row, position.col, EMPTY)
-        }
+        board.set(position.row, position.col, EMPTY)
+        affected.forEach { (neighbor, _) -> board.set(neighbor.row, neighbor.col, EMPTY) }
         return settleActivation(
             board = board,
             points = affected.size * config.scoreMatch3,
@@ -244,6 +278,39 @@ class Match3Engine(
             cascadePoints = cascade.points
         )
     }
+
+    private fun isInstantSpecial(value: Int): Boolean =
+        value == SPECIAL_GRINDER || value == SPECIAL_FRENCH_PRESS
+
+    /**
+     * GP-01: Moedor and Prensa Francesa explode as soon as they spawn. Returns the extra cells
+     * their blasts clear (Moedor = the full line along [SpecialSpawn.blastAlongRow], Prensa
+     * Francesa = its 8 neighbors), excluding cells this round's matches already cleared and any
+     * other special piece caught in the area.
+     */
+    private fun instantBlastPositions(
+        board: Match3Board,
+        spawns: List<SpecialSpawn>,
+        alreadyMatched: Set<Position>
+    ): Set<Position> {
+        val blast = linkedSetOf<Position>()
+        spawns.forEach { spawn ->
+            val area = when {
+                spawn.pieceValue == SPECIAL_GRINDER && spawn.blastAlongRow ->
+                    rowPositions(board, spawn.position)
+                spawn.pieceValue == SPECIAL_GRINDER -> columnPositions(board, spawn.position)
+                else -> moorePositions(board, spawn.position)
+            }
+            area.filterTo(blast) { it !in alreadyMatched && board.get(it.row, it.col) >= 0 }
+        }
+        return blast
+    }
+
+    private fun rowPositions(board: Match3Board, center: Position): List<Position> =
+        (0 until board.cols).map { col -> Position(center.row, col) }
+
+    private fun columnPositions(board: Match3Board, center: Position): List<Position> =
+        (0 until board.rows).map { row -> Position(row, center.col) }
 
     private fun moorePositions(board: Match3Board, center: Position): List<Position> {
         val deltas = listOf(-1 to -1, -1 to 0, -1 to 1, 0 to -1, 0 to 1, 1 to -1, 1 to 0, 1 to 1)
@@ -355,47 +422,6 @@ class Match3Engine(
         if (findMatches(board).positions.isNotEmpty() || !hasAvailableMove(board)) {
             shuffleWithoutMatches(board)
         }
-    }
-
-    /**
-     * GP-01: Vapor - triggered once a move's cascade reaches [VAPOR_CASCADE_THRESHOLD] levels.
-     * Rearranges the existing pieces of the top [VAPOR_TOP_ROWS] rows (never introduces new values)
-     * into a permutation with no immediate match and at least one available move, smoothing the
-     * "stuck top of board" RNG problem instead of just rewarding cascades with points.
-     */
-    private fun steamReshuffleTopRows(board: Match3Board): List<BoardEvent.Reshuffled> {
-        val affectedRows = minOf(VAPOR_TOP_ROWS, board.rows)
-        val positions = (0 until affectedRows).flatMap { row -> (0 until board.cols).map { col -> Position(row, col) } }
-        val original = positions.map { board.get(it.row, it.col) }
-
-        var chosen = original
-        var attempts = 0
-        var valid = false
-        while (attempts < VAPOR_MAX_SHUFFLE_ATTEMPTS && !valid) {
-            chosen = shuffledValues(original, board)
-            applyValues(board, positions, chosen)
-            valid = findMatchRuns(board).isEmpty() && hasAvailableMove(board)
-            attempts++
-        }
-
-        return positions.indices.mapNotNull { index ->
-            if (original[index] == chosen[index]) null else BoardEvent.Reshuffled(positions[index], chosen[index])
-        }
-    }
-
-    private fun shuffledValues(values: List<Int>, board: Match3Board): List<Int> {
-        val shuffled = values.toMutableList()
-        for (i in shuffled.indices.reversed()) {
-            val j = board.nextIndex(i + 1)
-            val temp = shuffled[i]
-            shuffled[i] = shuffled[j]
-            shuffled[j] = temp
-        }
-        return shuffled
-    }
-
-    private fun applyValues(board: Match3Board, positions: List<Position>, values: List<Int>) {
-        positions.indices.forEach { index -> board.set(positions[index].row, positions[index].col, values[index]) }
     }
 
     private fun calculatePoints(runLengths: List<Int>, cascadeLevel: Int): Int {
@@ -549,7 +575,11 @@ class Match3Engine(
         runs.filterNot { it in consumedRuns }.forEach { run ->
             when {
                 run.length == GRINDER_MATCH_LENGTH ->
-                    spawns += SpecialSpawn(spawnCellFor(run, preferredSpawns), SPECIAL_GRINDER)
+                    spawns += SpecialSpawn(
+                        position = spawnCellFor(run, preferredSpawns),
+                        pieceValue = SPECIAL_GRINDER,
+                        blastAlongRow = run.isHorizontalRun()
+                    )
                 run.length >= EMPTY_CUP_MIN_LENGTH -> {
                     val cupValue = EmptyCupState.encode(EmptyCupState.INITIAL_TURNS, absorbed = 0)
                     spawns += SpecialSpawn(spawnCellFor(run, preferredSpawns), cupValue)
