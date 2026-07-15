@@ -30,7 +30,7 @@
       "description": "Aprenda o basico",
       "pieceTypes": 5,
       "initialMoves": 20,
-      "targetScore": 5000,
+      "targetScore": 15000,
       "region": "Cafezal"
     },
     {
@@ -39,7 +39,7 @@
       "description": "Ritmo crescente",
       "pieceTypes": 5,
       "initialMoves": 18,
-      "targetScore": 7000,
+      "targetScore": 21000,
       "region": "Cafezal"
     },
     {
@@ -47,7 +47,7 @@
       "name": "Fase 3 - Torrefacao",
       "description": "Mais variedade",
       "initialMoves": 17,
-      "targetScore": 9000,
+      "targetScore": 27000,
       "region": "Torrefacao"
     },
     {
@@ -56,7 +56,7 @@
       "description": "Tabuleiro maior",
       "rows": 7,
       "initialMoves": 20,
-      "targetScore": 12000,
+      "targetScore": 36000,
       "region": "Torrefacao"
     },
     {
@@ -65,7 +65,7 @@
       "description": "Mais desafio",
       "rows": 7,
       "initialMoves": 18,
-      "targetScore": 14000,
+      "targetScore": 42000,
       "region": "Cafeteria"
     },
     {
@@ -75,7 +75,7 @@
       "rows": 7,
       "cols": 7,
       "initialMoves": 18,
-      "targetScore": 17000,
+      "targetScore": 51000,
       "region": "Cafeteria"
     },
     {
@@ -85,7 +85,7 @@
       "rows": 7,
       "cols": 7,
       "initialMoves": 16,
-      "targetScore": 19000,
+      "targetScore": 57000,
       "region": "Graos Nobres"
     },
     {
@@ -95,7 +95,7 @@
       "rows": 8,
       "cols": 7,
       "initialMoves": 16,
-      "targetScore": 22000,
+      "targetScore": 66000,
       "region": "Graos Nobres"
     },
     {
@@ -105,7 +105,7 @@
       "rows": 8,
       "cols": 7,
       "initialMoves": 15,
-      "targetScore": 25000,
+      "targetScore": 75000,
       "region": "Mestre do Cafe"
     },
     {
@@ -115,8 +115,108 @@
       "rows": 8,
       "cols": 8,
       "initialMoves": 14,
-      "targetScore": 30000,
+      "targetScore": 90000,
       "region": "Mestre do Cafe"
+    },
+    {
+      "id": 11,
+      "name": "Fase 11 - Colheita",
+      "description": "Novos horizontes",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 16,
+      "targetScore": 97000,
+      "region": "Origens"
+    },
+    {
+      "id": 12,
+      "name": "Fase 12 - Peneira",
+      "description": "Escolha certeira",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 16,
+      "targetScore": 104000,
+      "region": "Origens"
+    },
+    {
+      "id": 13,
+      "name": "Fase 13 - Altitude",
+      "description": "Ar rarefeito",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 105000,
+      "region": "Alta Montanha"
+    },
+    {
+      "id": 14,
+      "name": "Fase 14 - Microlote",
+      "description": "Precisao no gesto",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 110000,
+      "region": "Alta Montanha"
+    },
+    {
+      "id": 15,
+      "name": "Fase 15 - Safra Rara",
+      "description": "Cada grao vale ouro",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 115000,
+      "region": "Safra Especial"
+    },
+    {
+      "id": 16,
+      "name": "Fase 16 - Blend Perfeito",
+      "description": "Equilibrio total",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 120000,
+      "region": "Safra Especial"
+    },
+    {
+      "id": 17,
+      "name": "Fase 17 - Cafe Turco",
+      "description": "Tradicao intensa",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 124000,
+      "region": "Cafe do Mundo"
+    },
+    {
+      "id": 18,
+      "name": "Fase 18 - Ristretto",
+      "description": "Curto e forte",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 128000,
+      "region": "Cafe do Mundo"
+    },
+    {
+      "id": 19,
+      "name": "Fase 19 - Torra Mestra",
+      "description": "Perfeicao no ponto",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 15,
+      "targetScore": 132000,
+      "region": "Lenda do Cafe"
+    },
+    {
+      "id": 20,
+      "name": "Fase 20 - Lenda do Cafe",
+      "description": "O desafio final",
+      "rows": 8,
+      "cols": 8,
+      "initialMoves": 14,
+      "targetScore": 135000,
+      "region": "Lenda do Cafe"
     }
   ]
 }
