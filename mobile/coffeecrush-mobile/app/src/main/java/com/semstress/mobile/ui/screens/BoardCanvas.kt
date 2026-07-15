@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
@@ -36,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
 import com.semstress.mobile.engine.Match3Engine
 import com.semstress.mobile.ui.sprites.SpriteAtlas
+import com.semstress.mobile.ui.sprites.SpriteSheet
 import com.semstress.mobile.ui.theme.CoffeeSemanticColors
 import com.semstress.mobile.ui.theme.CoffeeTheme
 
@@ -108,6 +108,10 @@ fun BoardCanvas(
     val reducedMotion = rememberReducedMotionEnabled()
     val shakeOffset = rememberShakeOffsetPx(selection.invalidMoveNonce, reducedMotion)
 
+    val dragController = rememberBoardDragController(board, selection.invalidMoveNonce) { from, to ->
+        onCellDragSwap(from.row, from.col, to.row, to.col)
+    }
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -116,12 +120,13 @@ fun BoardCanvas(
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
             val geometry = rememberBoardGeometry(rows, cols)
             val boardHeight = with(LocalDensity.current) { geometry.boardHeightPx.toDp() }
+            dragController.geometry = geometry
 
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(boardHeight)
-                    .boardGestures(geometry, onCellTap, onCellDragSwap)
+                    .boardGestures(geometry, onCellTap, dragController)
             ) {
                 val context = BoardDrawContext(
                     spriteAtlas = spriteAtlas,
@@ -135,18 +140,52 @@ fun BoardCanvas(
                     shakeOffsetPx = shakeOffset.value,
                     symbolModeEnabled = selection.symbolModeEnabled
                 )
+                val dragOrigin = dragController.origin
+                val dragTarget = dragController.targetCell()
                 for (row in 0 until rows) {
                     for (col in 0 until cols) {
-                        drawCell(Position(row, col), board[row][col], selection, context)
+                        val position = Position(row, col)
+                        val partOfDrag = dragOrigin != null && (position == dragOrigin || position == dragTarget)
+                        drawCell(position, board[row][col], selection, context, skipPiece = partOfDrag)
                     }
                 }
+                drawDragPreview(board, dragOrigin, dragTarget, dragController.offset.value, context)
             }
         }
     }
 }
 
+/**
+ * Draws the two pieces involved in a live drag on top of everything else: the displaced neighbor
+ * counter-slides by the inverse offset and the grabbed piece rides the finger, drawn last so it
+ * stays above its neighbor — the Candy Crush layering.
+ */
+private fun DrawScope.drawDragPreview(
+    board: List<List<Int>>,
+    origin: Position?,
+    target: Position?,
+    dragOffset: Offset,
+    context: BoardDrawContext
+) {
+    if (origin == null) {
+        return
+    }
+    if (target != null) {
+        val targetValue = board[target.row][target.col]
+        if (targetValue != Match3Engine.EMPTY) {
+            val topLeft = Offset(target.col * context.pitchPx, target.row * context.pitchPx) - dragOffset
+            drawPiece(targetValue, topLeft, context)
+        }
+    }
+    val originValue = board[origin.row][origin.col]
+    if (originValue != Match3Engine.EMPTY) {
+        val topLeft = Offset(origin.col * context.pitchPx, origin.row * context.pitchPx) + dragOffset
+        drawPiece(originValue, topLeft, context)
+    }
+}
+
 private fun currentSpriteFrame(spriteAtlas: SpriteAtlas?, frameTimeMs: Long): Int {
-    val frameCount = spriteAtlas?.frameCount ?: 1
+    val frameCount = spriteAtlas?.maxFrameCount ?: 1
     if (frameCount <= 1) {
         return 0
     }
@@ -189,7 +228,8 @@ private fun DrawScope.drawCell(
     position: Position,
     value: Int,
     selection: BoardSelectionState,
-    context: BoardDrawContext
+    context: BoardDrawContext,
+    skipPiece: Boolean = false
 ) {
     val hasPiece = value != Match3Engine.EMPTY
     val topLeft = Offset(position.col * context.pitchPx, position.row * context.pitchPx)
@@ -205,7 +245,8 @@ private fun DrawScope.drawCell(
 
     drawSelectionOverlay(position, selection, topLeft, context)
 
-    if (hasPiece) {
+    // Pieces riding the drag preview are drawn later, on top of the whole grid.
+    if (hasPiece && !skipPiece) {
         val pieceTopLeft = if (position in selection.shaking) {
             topLeft + Offset(context.shakeOffsetPx, 0f)
         } else {
@@ -214,7 +255,13 @@ private fun DrawScope.drawCell(
         drawPiece(value, pieceTopLeft, context)
     }
     if (position in selection.exploding) {
-        drawExplosion(topLeft, context)
+        val inset = EXPLOSION_INSET_DP.dp.toPx()
+        val sheet = context.spriteAtlas?.explosionSheet()
+        if (sheet != null) {
+            drawSpriteFrame(sheet, topLeft, inset, context)
+        } else {
+            drawCenteredText(context.textMeasurer, "🔥", context.explosionTextStyle, topLeft, context.cellSizePx)
+        }
     }
 }
 
@@ -268,23 +315,12 @@ private fun DrawScope.drawPiece(value: Int, topLeft: Offset, context: BoardDrawC
     }
 }
 
-private fun DrawScope.drawExplosion(topLeft: Offset, context: BoardDrawContext) {
-    val inset = EXPLOSION_INSET_DP.dp.toPx()
-    val sheet = context.spriteAtlas?.explosionSheet()
-    if (sheet != null) {
-        drawSpriteFrame(sheet, topLeft, inset, context)
-    } else {
-        drawCenteredText(context.textMeasurer, "🔥", context.explosionTextStyle, topLeft, context.cellSizePx)
-    }
-}
-
-private fun DrawScope.drawSpriteFrame(sheet: ImageBitmap, topLeft: Offset, inset: Float, context: BoardDrawContext) {
-    val atlas = requireNotNull(context.spriteAtlas)
+private fun DrawScope.drawSpriteFrame(sheet: SpriteSheet, topLeft: Offset, inset: Float, context: BoardDrawContext) {
     val size = (context.cellSizePx - inset * 2).toInt().coerceAtLeast(1)
     drawImage(
-        image = sheet,
-        srcOffset = atlas.srcOffsetFor(context.frame),
-        srcSize = atlas.frameSize,
+        image = sheet.bitmap,
+        srcOffset = sheet.srcOffsetFor(context.frame),
+        srcSize = sheet.frameSize,
         dstOffset = IntOffset((topLeft.x + inset).toInt(), (topLeft.y + inset).toInt()),
         dstSize = IntSize(size, size)
     )

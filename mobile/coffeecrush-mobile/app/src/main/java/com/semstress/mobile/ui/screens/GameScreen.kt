@@ -1,8 +1,9 @@
 package com.semstress.mobile.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,9 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,10 +48,13 @@ import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeePrimaryButton
 import com.semstress.mobile.ui.components.CoffeeSecondaryButton
+import com.semstress.mobile.ui.components.OverlayLabelStyle
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
 import com.semstress.mobile.ui.theme.CoffeeTheme
+
+private val FeedbackSlotHeight = 40.dp
 
 @Composable
 fun GameScreen(
@@ -66,39 +72,45 @@ fun GameScreen(
     BackHandler(enabled = !game.finished, onBack = requestPause)
     GameSfxAndHaptics(game, sound)
 
-    val colors = CoffeeTheme.colors
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(colors.surfaceBoardBorder.copy(alpha = 0.4f), colors.surfaceBoard, colors.panelBackground)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Swappable full-bleed scenery (same scheme as bg_title / the stage map): the artwork has
+        // no baked-in UI, all HUD elements float on top.
+        Image(
+            painter = painterResource(R.drawable.bg_game),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            GameHeader(game, sound, actions, requestPause)
+            DebugMenuTrigger(debugTools)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Scoreboard(score = game.points, target = game.target, moves = game.moves, isZenMode = game.isZenMode)
+            if (!game.isZenMode) {
+                Spacer(modifier = Modifier.height(8.dp))
+                AromaMeter(
+                    aroma = game.aroma,
+                    aromaCapacity = game.aromaCapacity,
+                    onActivate = actions.onActivateBaristaSkill
                 )
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        GameHeader(game, sound, actions, requestPause)
-        DebugMenuTrigger(debugTools)
+            }
+            CollectObjectiveChip(game)
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Scoreboard(score = game.points, target = game.target, moves = game.moves, isZenMode = game.isZenMode)
-        if (!game.isZenMode) {
-            Spacer(modifier = Modifier.height(8.dp))
-            AromaMeter(
-                aroma = game.aroma,
-                aromaCapacity = game.aromaCapacity,
-                onActivate = actions.onActivateBaristaSkill
-            )
+            BoardSection(game, spriteAtlas, actions, sound.isSymbolModeEnabled)
+
+            FeedbackSlot(game)
         }
-        CollectObjectiveChip(game)
-        FloatingPointsBanner(points = game.points)
-        ComboBanner(message = resolveGameMessage(game.message))
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        BoardSection(game, spriteAtlas, actions, sound.isSymbolModeEnabled)
     }
 
     if (showPauseMenu) {
@@ -117,6 +129,24 @@ fun GameScreen(
 
     if (game.finished) {
         GameResultOverlay(game, actions.onReplayStage, actions.onBackToMenu)
+    }
+}
+
+/**
+ * Fixed-height feedback slot BELOW the board: the +points and combo banners appear inside this
+ * always-reserved space, so they can never push the board around when they come and go.
+ */
+@Composable
+private fun FeedbackSlot(game: GameUiState) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(FeedbackSlotHeight),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        FloatingPointsBanner(points = game.points)
+        ComboBanner(message = resolveGameMessage(game.message))
     }
 }
 
@@ -176,7 +206,6 @@ private fun GameHeader(
     actions: GameScreenActions,
     onBackClick: () -> Unit
 ) {
-    val colors = CoffeeTheme.colors
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -189,16 +218,15 @@ private fun GameHeader(
         )
 
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            // Cream-on-shadow so the title stays readable over the scenery artwork.
             Text(
                 text = game.stageName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = colors.hudText
+                style = MaterialTheme.typography.headlineSmall.merge(OverlayLabelStyle),
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = game.stageDescription,
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.hudTextMuted
+                style = MaterialTheme.typography.bodyMedium.merge(OverlayLabelStyle)
             )
         }
 

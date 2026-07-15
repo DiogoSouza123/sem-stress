@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -47,9 +48,12 @@ import com.semstress.mobile.ui.components.StatChip
 import com.semstress.mobile.ui.components.StatColumn
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.theme.CoffeeTheme
+import com.semstress.mobile.ui.theme.Cream
 import com.semstress.mobile.ui.theme.TABULAR_NUMBER_FEATURE
 import kotlinx.coroutines.delay
 
+private const val BANNER_SHADOW_ALPHA = 0.7f
+private const val BANNER_SHADOW_BLUR = 8f
 private const val LOW_MOVES_THRESHOLD = 5
 private const val PULSE_MIN_ALPHA = 0.4f
 private const val PULSE_STEP_MS = 500
@@ -146,10 +150,12 @@ internal fun FloatingPointsBanner(points: Int) {
     ) {
         Text(
             text = "+${delta ?: 0}",
-            style = MaterialTheme.typography.titleMedium,
+            // Drop shadow keeps the banner readable over the scenery artwork below the board.
+            style = MaterialTheme.typography.titleMedium.copy(
+                shadow = Shadow(color = Color.Black.copy(alpha = BANNER_SHADOW_ALPHA), blurRadius = BANNER_SHADOW_BLUR)
+            ),
             fontWeight = FontWeight.ExtraBold,
-            color = CoffeeTheme.colors.success,
-            modifier = Modifier.padding(top = 4.dp)
+            color = CoffeeTheme.colors.success
         )
     }
 }
@@ -164,10 +170,11 @@ internal fun ComboBanner(message: String?) {
     ) {
         Text(
             text = message ?: "",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(
+                shadow = Shadow(color = Color.Black.copy(alpha = BANNER_SHADOW_ALPHA), blurRadius = BANNER_SHADOW_BLUR)
+            ),
             fontWeight = FontWeight.ExtraBold,
-            color = CoffeeTheme.colors.hudText,
-            modifier = Modifier.padding(top = 8.dp)
+            color = Cream
         )
     }
 }

@@ -10,7 +10,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.domain.Position
-import kotlin.math.abs
 import kotlin.math.hypot
 
 private const val BOARD_SPACING_DP = 6
@@ -63,59 +62,48 @@ private fun exceedsTouchSlop(current: Offset, origin: Offset, slop: Float): Bool
     return hypot(delta.x, delta.y) > slop
 }
 
-private fun finishGesture(
-    startCell: Position?,
-    currentCell: Position?,
-    dragging: Boolean,
-    onCellTap: (row: Int, col: Int) -> Unit,
-    onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit
-) {
-    if (startCell == null) return
-    when {
-        !dragging -> onCellTap(startCell.row, startCell.col)
-        dragging && currentCell != null -> {
-            val target = currentCell
-            val adjacent = abs(startCell.row - target.row) + abs(startCell.col - target.col) == 1
-            if (adjacent && target != startCell) {
-                onCellDragSwap(startCell.row, startCell.col, target.row, target.col)
-            }
-        }
-    }
-}
-
 /**
  * Resolves tap-to-select and drag-to-swap on a single gesture detector, replacing the previous
  * pairing of per-cell `clickable` (tap) with a board-level `detectDragGestures` (drag): with the
  * whole board now a single [BoardCanvas] draw surface (RR-20), there is no per-cell Composable left
- * to own the tap. A gesture is a tap when the pointer is released before crossing touch slop, and a
- * swap when it is released over an orthogonally adjacent cell.
+ * to own the tap. A gesture is a tap when the pointer is released before crossing touch slop;
+ * once it crosses slop it becomes a drag, streamed to [dragListener] so [BoardCanvas] can render
+ * the live Candy-Crush-style swap preview — the listener decides on release whether the drag
+ * commits a swap or springs back.
  */
 fun Modifier.boardGestures(
     geometry: BoardGeometry,
     onCellTap: (row: Int, col: Int) -> Unit,
-    onCellDragSwap: (fromRow: Int, fromCol: Int, toRow: Int, toCol: Int) -> Unit
+    dragListener: BoardDragListener
 ): Modifier = pointerInput(geometry) {
     awaitEachGesture {
         val down = awaitFirstDown()
         val startCell = geometry.cellAt(down.position)
-        var currentCell = startCell
         var dragging = false
         var released = false
         while (!released) {
             val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
             when {
-                change == null -> released = true
+                change == null -> {
+                    if (dragging) dragListener.onDragCancel()
+                    released = true
+                }
                 !change.pressed -> {
-                    finishGesture(startCell, currentCell, dragging, onCellTap, onCellDragSwap)
+                    when {
+                        startCell == null -> Unit
+                        !dragging -> onCellTap(startCell.row, startCell.col)
+                        else -> dragListener.onDragEnd(startCell, change.position - down.position)
+                    }
                     released = true
                 }
                 else -> {
                     if (!dragging && exceedsTouchSlop(change.position, down.position, viewConfiguration.touchSlop)) {
                         dragging = true
+                        startCell?.let(dragListener::onDragStart)
                     }
                     if (dragging) {
                         change.consume()
-                        currentCell = geometry.cellAt(change.position) ?: currentCell
+                        startCell?.let { dragListener.onDrag(it, change.position - down.position) }
                     }
                 }
             }

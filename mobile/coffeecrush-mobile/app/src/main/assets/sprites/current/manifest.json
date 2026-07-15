@@ -1,21 +1,20 @@
 {
-  "packId": "v1-small-64",
-  "frameSize": 64,
-  "framesPerItem": 12,
-  "grid": { "cols": 4, "rows": 3 },
+  "packId": "v2-hd-256",
   "structure": {
-    "itemSheet": "items/<item>/sheet.png",
-    "frames": "items/<item>/frames/frame_00..11.png",
-    "composedA": "composed/spritesheet-a-4itens.png",
-    "composedB": "composed/spritesheet-b-4itens.png"
+    "itemSheet": "items/<item>/sheet.png"
   },
+  "notes": "HD static pieces (single 256px frame per item, generated via image AI, backgrounds removed). 'fire' keeps the animated 4x3 grid of 64px frames from v1-small-64. 'special-steam' is reserved for a future vapor visual effect (vapor is a board event, not a cell piece).",
   "items": [
-    { "name": "coffee-red", "frames": 12 },
-    { "name": "coffee-yellow", "frames": 12 },
-    { "name": "coffee-white", "frames": 12 },
-    { "name": "coffee-green", "frames": 12 },
-    { "name": "coffee-brown", "frames": 12 },
-    { "name": "coffee-beans", "frames": 12 },
-    { "name": "fire", "frames": 12 }
+    { "name": "coffee-red", "frames": 1, "frameSize": 256 },
+    { "name": "coffee-yellow", "frames": 1, "frameSize": 256 },
+    { "name": "coffee-white", "frames": 1, "frameSize": 256 },
+    { "name": "coffee-green", "frames": 1, "frameSize": 256 },
+    { "name": "coffee-brown", "frames": 1, "frameSize": 256 },
+    { "name": "coffee-beans", "frames": 1, "frameSize": 256 },
+    { "name": "special-grinder", "frames": 1, "frameSize": 256 },
+    { "name": "special-french-press", "frames": 1, "frameSize": 256 },
+    { "name": "special-empty-cup", "frames": 1, "frameSize": 256 },
+    { "name": "special-steam", "frames": 1, "frameSize": 256 },
+    { "name": "fire", "frames": 12, "frameSize": 64, "grid": { "cols": 4, "rows": 3 } }
   ]
 }
