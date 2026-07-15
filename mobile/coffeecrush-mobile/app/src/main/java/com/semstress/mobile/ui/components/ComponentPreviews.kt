@@ -1,6 +1,8 @@
 package com.semstress.mobile.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,5 +45,61 @@ private fun ComponentGallery() {
         StarRating(stars = 2)
         Spacer(modifier = Modifier.height(12.dp))
         ProgressCup(progress = 0.65f)
+        Spacer(modifier = Modifier.height(12.dp))
+        StageNodeButtonGallery()
+    }
+}
+
+@Composable
+private fun StageNodeButtonGallery() {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StageNodeButton(
+            state = StageNodeState(
+                stageNumber = 1,
+                unlocked = false,
+                completed = false,
+                selected = false,
+                isNextPlayable = false,
+                stars = 0
+            ),
+            stageName = "Fase 1",
+            onClick = {}
+        )
+        StageNodeButton(
+            state = StageNodeState(
+                stageNumber = 2,
+                unlocked = true,
+                completed = false,
+                selected = true,
+                isNextPlayable = false,
+                stars = 0
+            ),
+            stageName = "Fase 2",
+            onClick = {}
+        )
+        StageNodeButton(
+            state = StageNodeState(
+                stageNumber = 3,
+                unlocked = true,
+                completed = false,
+                selected = false,
+                isNextPlayable = true,
+                stars = 0
+            ),
+            stageName = "Fase 3",
+            onClick = {}
+        )
+        StageNodeButton(
+            state = StageNodeState(
+                stageNumber = 4,
+                unlocked = true,
+                completed = true,
+                selected = false,
+                isNextPlayable = false,
+                stars = 2
+            ),
+            stageName = "Fase 4",
+            onClick = {}
+        )
     }
 }

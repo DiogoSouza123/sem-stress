@@ -1,52 +1,62 @@
 package com.semstress.mobile.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.semstress.mobile.R
 import com.semstress.mobile.domain.PlayerProgress
 import com.semstress.mobile.domain.StageConfig
-import com.semstress.mobile.ui.components.CoffeeIconButton
-import com.semstress.mobile.ui.components.CoffeePanel
-import com.semstress.mobile.ui.components.CoffeePrimaryButton
-import com.semstress.mobile.ui.components.CoffeeSecondaryButton
-import com.semstress.mobile.ui.components.StarRating
-import com.semstress.mobile.ui.components.StatChip
-import com.semstress.mobile.ui.components.StatRow
-import com.semstress.mobile.ui.theme.CoffeeTheme
+import com.semstress.mobile.ui.components.SpriteIconButton
+import com.semstress.mobile.ui.theme.CoffeeDark
+import com.semstress.mobile.ui.theme.Latte
 import java.time.LocalDate
 
-private const val MAX_STARS_PER_STAGE = 3
+private val LogoHeight = 56.dp
+private const val PILL_SHAPE_PERCENT = 50
+private val PillShape = RoundedCornerShape(PILL_SHAPE_PERCENT)
+private val BottomBarShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+private const val BOTTOM_BAR_ALPHA = 0.92f
+private const val PILL_BACKGROUND_ALPHA = 0.92f
+private const val PILL_DISABLED_ALPHA = 0.45f
 
+/**
+ * Full-screen stage selector: the constellation [JourneyMap] fills the whole screen and the
+ * chrome (logo, sprite buttons, bottom mode bar) floats on top of it. Empty overlay areas have
+ * no pointer handling, so map drag gestures pass through everywhere except the controls.
+ * Tapping an unlocked node enters the stage directly — there is no separate play CTA.
+ */
 @Composable
 fun StageMenuScreen(
     stages: List<StageConfig>,
@@ -55,149 +65,115 @@ fun StageMenuScreen(
     sound: StageMenuScreenSound,
     actions: StageMenuScreenActions
 ) {
-    val colors = CoffeeTheme.colors
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        colors.panelBackground,
-                        colors.surfaceBoard.copy(alpha = 0.75f),
-                        colors.surfaceBoardBorder.copy(alpha = 0.5f)
-                    )
-                )
-            )
-            .padding(16.dp)
-    ) {
-        StageMenuHeader(sound, actions)
+    // Standard floating-bars-over-scrollable treatment: measure the real height of the top and
+    // bottom chrome and reserve it as the map's content padding, so the first/last nodes rest
+    // clear of the bars while the map still scrolls behind them.
+    val density = LocalDensity.current
+    var topBarHeight by remember { mutableStateOf(0.dp) }
+    var bottomBarHeight by remember { mutableStateOf(0.dp) }
+    val safeInsets = WindowInsets.safeDrawing.asPaddingValues()
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ProgressCard(progress = progress, totalStages = stages.size)
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        GameModesRow(progress = progress, actions = actions)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.select_your_stage),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = colors.hudText
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
+    Box(modifier = Modifier.fillMaxSize()) {
         JourneyMap(
-            stages = stages,
-            progress = progress,
-            selectedStageId = selectedStageId,
-            onSelectStage = actions.onSelectStage,
-            modifier = Modifier.weight(1f)
+            content = JourneyMapContent(stages, progress, selectedStageId),
+            onSelectStage = { stageId ->
+                actions.onSelectStage(stageId)
+                actions.onPlayStage(stageId)
+            },
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = safeInsets.calculateTopPadding() + topBarHeight,
+                bottom = safeInsets.calculateBottomPadding() + bottomBarHeight
+            )
         )
 
-        CoffeePrimaryButton(
-            text = stringResource(R.string.play_selected_stage),
-            onClick = actions.onPlaySelectedStage,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }
+            ) {
+                MenuTopBar(sound, actions)
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier.onSizeChanged { bottomBarHeight = with(density) { it.height.toDp() } }
+            ) {
+                BottomModeBar(progress = progress, actions = actions)
+            }
+        }
     }
 }
 
 @Composable
-private fun StageMenuHeader(sound: StageMenuScreenSound, actions: StageMenuScreenActions) {
-    val colors = CoffeeTheme.colors
+private fun MenuTopBar(sound: StageMenuScreenSound, actions: StageMenuScreenActions) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
-        Column {
-            Text(
-                text = stringResource(R.string.app_title),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = colors.hudText
-            )
-            Text(
-                text = stringResource(R.string.menu_subtitle),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.hudTextMuted
-            )
-        }
+        Image(
+            painter = painterResource(R.drawable.logo_title),
+            contentDescription = stringResource(R.string.app_title),
+            modifier = Modifier.height(LogoHeight),
+            contentScale = ContentScale.Fit
+        )
 
-        Column(horizontalAlignment = Alignment.End) {
-            CoffeeIconButton(
-                icon = Icons.Filled.Settings,
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SpriteIconButton(
+                spriteRes = R.drawable.icon_settings,
+                label = stringResource(R.string.title_settings_label),
                 contentDescription = stringResource(R.string.open_settings),
                 onClick = actions.onOpenSettings
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedButton(onClick = actions.onToggleMusic) {
-                Text(stringResource(if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on))
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedButton(onClick = actions.onToggleSfx) {
-                Text(stringResource(if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProgressCard(progress: PlayerProgress, totalStages: Int) {
-    val stagesLabel = stringResource(R.string.progress_stages)
-    val pointsLabel = stringResource(R.string.progress_points)
-    val averageLabel = stringResource(R.string.progress_average)
-    val starsLabel = stringResource(R.string.progress_stars)
-    val completedStages = progress.completedStagesCount()
-    val averageScore = if (completedStages == 0) 0 else progress.totalScore() / completedStages
-    CoffeePanel {
-        Text(
-            text = stringResource(R.string.progress_overall),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        StatRow(
-            stats = listOf(
-                stagesLabel to "$completedStages / $totalStages",
-                pointsLabel to progress.totalScore().toString(),
-                averageLabel to averageScore.toString(),
-                starsLabel to "${progress.totalStars()} / ${totalStages * MAX_STARS_PER_STAGE}"
+            SpriteIconButton(
+                spriteRes = if (sound.isMusicMuted) R.drawable.icon_toggle_off else R.drawable.icon_toggle_on,
+                label = stringResource(R.string.title_music_label),
+                contentDescription = stringResource(
+                    if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on
+                ),
+                onClick = actions.onToggleMusic
             )
-        )
-        if (progress.currentStreakDays > 0) {
-            Spacer(modifier = Modifier.height(8.dp))
-            StatChip(
-                text = pluralStringResource(
-                    R.plurals.daily_streak,
-                    progress.currentStreakDays,
-                    progress.currentStreakDays
-                )
+            SpriteIconButton(
+                spriteRes = if (sound.isSfxMuted) R.drawable.icon_toggle_off else R.drawable.icon_toggle_on,
+                label = stringResource(R.string.title_sfx_label),
+                contentDescription = stringResource(
+                    if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on
+                ),
+                onClick = actions.onToggleSfx
             )
         }
     }
 }
 
-/** GP-05: entry points for the daily challenge (seeded, shared board, limited attempts) and zen mode. */
+/**
+ * GP-05: fixed bottom bar (the mobile-game staple) hosting the extra game modes for now — the
+ * daily challenge (seeded, shared board, limited attempts) and zen mode. More entries later.
+ */
 @Composable
-private fun GameModesRow(progress: PlayerProgress, actions: StageMenuScreenActions) {
+private fun BottomModeBar(progress: PlayerProgress, actions: StageMenuScreenActions) {
     val today = remember { LocalDate.now().toEpochDay() }
     val attemptsRemaining = progress.dailyAttemptsRemaining(today)
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(BottomBarShape)
+            .background(CoffeeDark.copy(alpha = BOTTOM_BAR_ALPHA))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        CoffeeSecondaryButton(
+        MenuPillButton(
             text = stringResource(R.string.zen_mode),
             onClick = actions.onPlayZenMode,
             modifier = Modifier.weight(1f)
         )
-        CoffeeSecondaryButton(
+        MenuPillButton(
             text = stringResource(R.string.daily_challenge, attemptsRemaining),
             onClick = actions.onPlayDailyChallenge,
             modifier = Modifier.weight(1f),
@@ -206,96 +182,28 @@ private fun GameModesRow(progress: PlayerProgress, actions: StageMenuScreenActio
     }
 }
 
-/** GP-03: bundles a stage card's derived progress flags to keep [StageCard]'s arity in check. */
-internal data class StageCardStatus(
-    val unlocked: Boolean,
-    val selected: Boolean,
-    val completed: Boolean,
-    val stars: Int
-)
-
+/** Filled pill (same treatment as the title screen's zen button) so it reads over the artwork. */
 @Composable
-internal fun StageCard(
-    stage: StageConfig,
-    status: StageCardStatus,
-    onClick: () -> Unit
+private fun MenuPillButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
-    val colors = CoffeeTheme.colors
-    val container = when {
-        !status.unlocked -> MaterialTheme.colorScheme.surfaceVariant
-        status.selected -> colors.surfaceBoardBorder.copy(alpha = 0.35f)
-        status.completed -> colors.success.copy(alpha = 0.22f)
-        else -> MaterialTheme.colorScheme.surface
-    }
-
-    Card(
-        onClick = onClick,
-        enabled = status.unlocked,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = container)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            StageCardBadge(stage = stage, unlocked = status.unlocked)
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stage.name,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stage.description,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall
-            )
-
-            if (status.completed) {
-                Spacer(modifier = Modifier.height(4.dp))
-                StarRating(stars = status.stars, starSize = 14.dp)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            StageCardStatusRow(unlocked = status.unlocked, completed = status.completed)
-        }
-    }
-}
-
-@Composable
-private fun StageCardBadge(stage: StageConfig, unlocked: Boolean) {
+    val backgroundAlpha = if (enabled) PILL_BACKGROUND_ALPHA else PILL_DISABLED_ALPHA
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+        modifier = modifier
+            .clip(PillShape)
+            .background(Latte.copy(alpha = backgroundAlpha))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
     ) {
-        if (unlocked) {
-            Text(
-                text = stage.id.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold
-            )
-        } else {
-            Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.stage_status_locked))
-        }
-    }
-}
-
-@Composable
-private fun StageCardStatusRow(unlocked: Boolean, completed: Boolean) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        val statusText = if (unlocked) {
-            stringResource(R.string.stage_status_unlocked)
-        } else {
-            stringResource(R.string.stage_status_locked)
-        }
-        StatChip(text = statusText)
-        if (completed) {
-            Spacer(modifier = Modifier.width(6.dp))
-            StatChip(text = stringResource(R.string.stage_status_completed))
-        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = CoffeeDark
+        )
     }
 }

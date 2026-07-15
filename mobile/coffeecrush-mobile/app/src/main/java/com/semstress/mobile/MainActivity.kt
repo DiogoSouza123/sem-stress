@@ -137,10 +137,10 @@ private fun CoffeeCrushApp(dependencies: GameDestinationDependencies) {
             TitleDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
         }
 
+        // The stage menu draws the constellation map edge-to-edge and, like the title screen,
+        // applies safe-drawing insets to its own overlay content.
         composable<MenuRoute> {
-            InsetPadded {
-                MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
-            }
+            MenuDestination(navController, menuViewModel, settingsViewModel, backgroundMusicPlayer)
         }
 
         composable<SettingsRoute> {
@@ -149,19 +149,18 @@ private fun CoffeeCrushApp(dependencies: GameDestinationDependencies) {
             }
         }
 
+        // The game screen draws its scenery edge-to-edge and applies safe-drawing insets itself.
         composable<GameRoute>(
             deepLinks = listOf(navDeepLink { uriPattern = GAME_DEEP_LINK_PATTERN })
         ) { backStackEntry ->
             val route: GameRoute = backStackEntry.toRoute()
-            InsetPadded {
-                GameDestination(
-                    route,
-                    navController,
-                    menuState,
-                    settingsViewModel,
-                    dependencies
-                )
-            }
+            GameDestination(
+                route,
+                navController,
+                menuState,
+                settingsViewModel,
+                dependencies
+            )
         }
     }
 }
@@ -198,9 +197,6 @@ private fun TitleDestination(
         ),
         actions = TitleScreenActions(
             onPlay = { navController.navigate(MenuRoute) },
-            onPlayZenMode = {
-                navController.navigate(GameRoute(stageId = menuState.stages.first().id, zen = true))
-            },
             onOpenSettings = { navController.navigate(SettingsRoute) },
             onToggleMusic = { settingsViewModel.toggleMusic() },
             onToggleSfx = { settingsViewModel.toggleSfx() }
@@ -237,7 +233,7 @@ private fun MenuDestination(
         ),
         actions = StageMenuScreenActions(
             onSelectStage = { menuViewModel.onAction(MenuAction.SelectStage(it)) },
-            onPlaySelectedStage = { navController.navigate(GameRoute(menuState.selectedStageId)) },
+            onPlayStage = { stageId -> navController.navigate(GameRoute(stageId)) },
             onPlayZenMode = {
                 navController.navigate(GameRoute(stageId = menuState.stages.first().id, zen = true))
             },

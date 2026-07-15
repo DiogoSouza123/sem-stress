@@ -15,6 +15,12 @@ import androidx.compose.ui.text.font.FontWeight
 private val DisplayFontFamily = FontFamily(Font(DeviceFontFamilyName("sans-serif-rounded"), FontWeight.Bold))
 private val BodyFontFamily = FontFamily.SansSerif
 
+/**
+ * Bundled game-display font (Lilita One, SIL Open Font License) for map/HUD labels drawn over
+ * artwork, where the system families look too "app-like".
+ */
+val GameFontFamily = FontFamily(Font(com.semstress.mobile.R.font.lilita_one))
+
 private val base = Typography()
 
 val Typography = base.copy(

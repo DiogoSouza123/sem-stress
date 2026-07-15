@@ -20,9 +20,6 @@
     <string name="title_settings_label">Ajustes</string>
     <string name="title_music_label">Musica</string>
     <string name="title_sfx_label">Efeitos</string>
-    <string name="menu_subtitle">Menu de fases</string>
-    <string name="select_your_stage">Selecione sua fase</string>
-    <string name="play_selected_stage">Jogar fase selecionada</string>
     <string name="progress_overall">Progresso geral</string>
     <string name="progress_stages">Fases</string>
     <string name="progress_points">Pontos</string>
@@ -30,7 +27,7 @@
     <string name="progress_stars">Estrelas</string>
     <string name="stage_status_unlocked">Liberada</string>
     <string name="stage_status_locked">Bloqueada</string>
-    <string name="stage_status_completed">Concluida</string>
+    <string name="stage_node_accessibility">%1$s. %2$s.</string>
 
     <string name="collect_objective_progress">Pedido: %1$d/%2$d</string>
     <string name="tutorial_hint_message">Toque em duas pecas vizinhas para trocar e formar grupos de 3 ou mais.</string>
