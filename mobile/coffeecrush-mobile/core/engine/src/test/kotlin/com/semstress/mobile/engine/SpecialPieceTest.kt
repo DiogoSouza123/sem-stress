@@ -244,4 +244,54 @@ class SpecialPieceTest {
         assertEquals(0, outcome.points)
         assertEquals(Match3Engine.SPECIAL_GRINDER, board.get(2, 2))
     }
+
+    @Test
+    fun `alinhamento criado pela ativacao de um especial explode em cascata`() {
+        // Grinder at (2,2) clears rows 1-3 x cols 1-3. Gravity then drops row 0's "2 2 3" (cols
+        // 1-3) onto row 3, forming "2 2 2" with the untouched (3,0) - a match the activation MUST
+        // resolve instead of leaving aligned pieces sitting on the board.
+        val board = boardFrom(
+            """
+            1 2 2 3 4
+            2 3 4 0 1
+            3 4 0 1 2
+            2 0 1 2 3
+            0 1 2 3 4
+            """,
+            pieceTypes = 5
+        )
+        val grinderPosition = Position(2, 2)
+        board.set(grinderPosition.row, grinderPosition.col, Match3Engine.SPECIAL_GRINDER)
+
+        val outcome = engine.activateSpecialPiece(board, grinderPosition)
+
+        assertTrue(outcome.activated)
+        assertTrue(outcome.cascadeRounds.isNotEmpty(), "Esperava a cascata do alinhamento criado pela ativacao")
+        assertTrue(outcome.cascadePoints >= 500, "A cascata pos-ativacao deveria pontuar")
+        assertFalse(hasAnyMatch(board), "Nenhum alinhamento pode sobrar no tabuleiro apos a ativacao")
+    }
+
+    @Test
+    fun `especial criado por um swap nasce na celula de origem do movimento`() {
+        // Swapping (1,2) up into (0,2) completes the match-4 "4 4 4 4" on row 0. The Moedor must
+        // spawn at (0,2) - where the player's piece landed (Candy Crush behavior) - and not at the
+        // run's last cell (0,3).
+        val board = boardFrom(
+            """
+            4 4 0 4 2
+            1 2 4 3 1
+            2 3 0 1 2
+            3 0 1 2 3
+            0 1 2 3 0
+            """,
+            pieceTypes = 5
+        )
+
+        val outcome = engine.tryMoveAnimated(board, Position(1, 2), Position(0, 2))
+
+        assertTrue(outcome.valid)
+        val grinderCount = board.snapshot().flatten().count { it == Match3Engine.SPECIAL_GRINDER }
+        assertEquals(1, grinderCount, "Esperava exatamente um Moedor criado pelo match-4")
+        assertEquals(Match3Engine.SPECIAL_GRINDER, board.get(0, 2), "O Moedor deveria nascer na celula do swap")
+    }
 }

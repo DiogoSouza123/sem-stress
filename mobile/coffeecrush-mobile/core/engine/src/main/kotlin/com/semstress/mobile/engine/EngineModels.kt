@@ -72,11 +72,15 @@ data class MatchRun(
  * cleared cell with the piece value it held before being cleared, so callers can credit collect
  * objectives; [triggerPosition] is the special piece's own cell, cleared separately by the caller
  * so it can be included in the highlight/explosion animation alongside [affectedPieces].
+ * [cascadeRounds]/[cascadePoints] carry the regular match resolution that runs after the
+ * activation's refill settles — alignments created by the power-up explode like any other match.
  */
 data class SpecialActivationOutcome(
     val activated: Boolean,
     val points: Int,
     val affectedPieces: List<Pair<Position, Int>>,
     val fallSteps: List<List<BoardEvent>>,
-    val triggerPosition: Position? = null
+    val triggerPosition: Position? = null,
+    val cascadeRounds: List<AnimationRound> = emptyList(),
+    val cascadePoints: Int = 0
 )

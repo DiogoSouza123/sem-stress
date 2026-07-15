@@ -207,7 +207,19 @@ private suspend fun GameSession.animateSpecialOutcome(
         delay(FALL_FRAME_MS)
     }
 
-    points += outcome.points
+    // Alignments created by the activation resolve like any regular move's cascades, with the
+    // same aroma/objective crediting (read before applyRound clears the matched cells).
+    for (round in outcome.cascadeRounds) {
+        stage.collectObjective?.let { objective ->
+            collectedCount += round.matchedPositions.count { position ->
+                board.get(position.row, position.col) == objective.pieceType
+            }
+        }
+        aroma = (aroma + round.matchedPositions.size * AROMA_PER_MATCHED_PIECE).coerceAtMost(AROMA_CAPACITY)
+        applyRound(round) { onChanged() }
+    }
+
+    points += outcome.points + outcome.cascadePoints
     stage.collectObjective?.let { objective ->
         collectedCount += outcome.affectedPieces.count { (_, value) -> value == objective.pieceType }
     }

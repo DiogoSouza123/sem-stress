@@ -63,7 +63,9 @@ class Match3Engine(
             return AnimatedMoveOutcome(valid = false, points = 0, cascades = 0, rounds = emptyList())
         }
 
-        val resolved = resolveBoardAnimated(board)
+        // The swapped cells are the preferred spawn spots: a special created by this move appears
+        // where the player acted (Candy Crush behavior), not at an arbitrary end of the run.
+        val resolved = resolveBoardAnimated(board, captureRounds = true, preferredSpawns = setOf(first, second))
         return AnimatedMoveOutcome(
             valid = true,
             points = resolved.points,
@@ -83,7 +85,8 @@ class Match3Engine(
 
     private fun resolveBoardAnimated(
         board: Match3Board,
-        captureRounds: Boolean
+        captureRounds: Boolean,
+        preferredSpawns: Set<Position> = emptySet()
     ): AnimatedResolveOutcome {
         var totalPoints = 0
         var cascadeLevel = 0
@@ -109,7 +112,10 @@ class Match3Engine(
             totalPoints += roundPoints
 
             val allPositions = runs.flatMapTo(linkedSetOf()) { it.positions }
-            val specialSpawns = selectSpecialSpawns(runs, board)
+            // Only the move's own matches (first cascade) anchor to the swapped cells; later
+            // cascades were not caused directly by the player's gesture.
+            val spawnAnchors = if (cascadeLevel == 1) preferredSpawns else emptySet()
+            val specialSpawns = selectSpecialSpawns(runs, board, spawnAnchors)
             val matchedPositions = if (captureRounds) {
                 allPositions.sortedWith(compareBy<Position> { it.row }.thenBy { it.col })
             } else {
@@ -174,12 +180,10 @@ class Match3Engine(
         }
         board.set(position.row, position.col, EMPTY)
         milled.forEach { (neighbor, _) -> board.set(neighbor.row, neighbor.col, EMPTY) }
-        val fallSteps = collapseAndRefillCapturingEvents(board)
-        return SpecialActivationOutcome(
-            activated = true,
+        return settleActivation(
+            board = board,
             points = milled.size * config.scoreMatch3,
             affectedPieces = milled,
-            fallSteps = fallSteps,
             triggerPosition = position
         )
     }
@@ -193,12 +197,10 @@ class Match3Engine(
         for (row in 0 until board.rows) {
             board.set(row, position.col, EMPTY)
         }
-        val fallSteps = collapseAndRefillCapturingEvents(board)
-        return SpecialActivationOutcome(
-            activated = true,
+        return settleActivation(
+            board = board,
             points = affected.size * config.scoreMatch3,
             affectedPieces = affected,
-            fallSteps = fallSteps,
             triggerPosition = position
         )
     }
@@ -211,13 +213,35 @@ class Match3Engine(
             if (value >= 0) pos to value else null
         }
         area.forEach { pos -> board.set(pos.row, pos.col, EMPTY) }
-        val fallSteps = collapseAndRefillCapturingEvents(board)
-        return SpecialActivationOutcome(
-            activated = true,
+        return settleActivation(
+            board = board,
             points = (affected.size + absorbed) * config.scoreMatch3,
             affectedPieces = affected,
-            fallSteps = fallSteps,
             triggerPosition = position
+        )
+    }
+
+    /**
+     * Shared tail of every special activation: refill the cleared cells, then run the regular
+     * match resolution — alignments of 3+ created by the power-up (or its refill) must explode
+     * like any other match instead of sitting on the board.
+     */
+    private fun settleActivation(
+        board: Match3Board,
+        points: Int,
+        affectedPieces: List<Pair<Position, Int>>,
+        triggerPosition: Position
+    ): SpecialActivationOutcome {
+        val fallSteps = collapseAndRefillCapturingEvents(board)
+        val cascade = resolveBoardAnimated(board, captureRounds = true)
+        return SpecialActivationOutcome(
+            activated = true,
+            points = points,
+            affectedPieces = affectedPieces,
+            fallSteps = fallSteps,
+            triggerPosition = triggerPosition,
+            cascadeRounds = cascade.rounds,
+            cascadePoints = cascade.points
         )
     }
 
@@ -508,25 +532,35 @@ class Match3Engine(
     }
 
     /**
-     * GP-01: the last cell of each exact match-4 run becomes a Moedor; a straight run of 5+ becomes
-     * a Xicara Vazia; a length-3 run crossing another length-3 run of the same value (L/T shape)
-     * becomes a Prensa Francesa at the intersection instead - checked first, since it consumes the
-     * two arms that would otherwise each just be a plain 3-match.
+     * GP-01: each exact match-4 run becomes a Moedor; a straight run of 5+ becomes a Xicara Vazia;
+     * a length-3 run crossing another length-3 run of the same value (L/T shape) becomes a Prensa
+     * Francesa at the intersection instead - checked first, since it consumes the two arms that
+     * would otherwise each just be a plain 3-match. The special spawns at the run cell the player's
+     * swap landed in when one is part of the run ([preferredSpawns], Candy Crush behavior);
+     * cascade-created runs fall back to the run's last cell.
      */
-    private fun selectSpecialSpawns(runs: List<MatchRun>, board: Match3Board): List<SpecialSpawn> {
+    private fun selectSpecialSpawns(
+        runs: List<MatchRun>,
+        board: Match3Board,
+        preferredSpawns: Set<Position>
+    ): List<SpecialSpawn> {
         val (lShapeSpawns, consumedRuns) = findLShapeSpawns(runs, board)
         val spawns = lShapeSpawns.toMutableList()
         runs.filterNot { it in consumedRuns }.forEach { run ->
             when {
-                run.length == GRINDER_MATCH_LENGTH -> spawns += SpecialSpawn(run.positions.last(), SPECIAL_GRINDER)
+                run.length == GRINDER_MATCH_LENGTH ->
+                    spawns += SpecialSpawn(spawnCellFor(run, preferredSpawns), SPECIAL_GRINDER)
                 run.length >= EMPTY_CUP_MIN_LENGTH -> {
                     val cupValue = EmptyCupState.encode(EmptyCupState.INITIAL_TURNS, absorbed = 0)
-                    spawns += SpecialSpawn(run.positions.last(), cupValue)
+                    spawns += SpecialSpawn(spawnCellFor(run, preferredSpawns), cupValue)
                 }
             }
         }
         return spawns
     }
+
+    private fun spawnCellFor(run: MatchRun, preferredSpawns: Set<Position>): Position =
+        run.positions.firstOrNull { it in preferredSpawns } ?: run.positions.last()
 
     /**
      * Pairs each length-3 horizontal run with a crossing length-3 vertical run of the same value,
