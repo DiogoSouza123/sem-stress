@@ -14,12 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -44,11 +38,11 @@ import com.semstress.mobile.audio.SfxEffect
 import com.semstress.mobile.debug.DebugMenuState
 import com.semstress.mobile.engine.EmptyCupState
 import com.semstress.mobile.engine.Match3Engine
-import com.semstress.mobile.ui.components.CoffeeIconButton
 import com.semstress.mobile.ui.components.CoffeePanel
 import com.semstress.mobile.ui.components.CoffeePrimaryButton
 import com.semstress.mobile.ui.components.CoffeeSecondaryButton
 import com.semstress.mobile.ui.components.OverlayLabelStyle
+import com.semstress.mobile.ui.components.SpriteIconButton
 import com.semstress.mobile.ui.sprites.SpriteAtlas
 import com.semstress.mobile.ui.state.GameUiState
 import com.semstress.mobile.ui.state.GameViewModel
@@ -168,7 +162,8 @@ private fun BoardSection(
             shaking = shakingPositions,
             invalidMoveNonce = game.invalidMoveNonce,
             hinted = hintedPositions,
-            symbolModeEnabled = symbolModeEnabled
+            symbolModeEnabled = symbolModeEnabled,
+            cupScorePerPiece = game.scorePerPiece
         ),
         spriteAtlas = spriteAtlas,
         onCellTap = actions.onCellTap,
@@ -198,7 +193,7 @@ private fun DebugMenuTrigger(debugTools: GameScreenDebugTools) {
     )
 }
 
-/** UX-05: system controls (back/music/sfx) as discreet top icon buttons instead of full-width text buttons. */
+/** UX-05: system controls use the same sprite-button chrome as the title and stage selector. */
 @Composable
 private fun GameHeader(
     game: GameUiState,
@@ -209,10 +204,10 @@ private fun GameHeader(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
-        CoffeeIconButton(
-            icon = Icons.AutoMirrored.Filled.ArrowBack,
+        SpriteIconButton(
+            spriteRes = R.drawable.icon_back,
             contentDescription = stringResource(R.string.back_to_menu),
             onClick = onBackClick
         )
@@ -230,21 +225,24 @@ private fun GameHeader(
             )
         }
 
-        Row {
-            CoffeeIconButton(
-                icon = if (sound.isMusicMuted) Icons.Filled.MusicOff else Icons.Filled.MusicNote,
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SpriteIconButton(
+                spriteRes = R.drawable.icon_settings,
+                label = stringResource(R.string.title_settings_label),
+                contentDescription = stringResource(R.string.open_settings),
+                onClick = actions.onOpenSettings
+            )
+            SpriteIconButton(
+                spriteRes = if (sound.isMusicMuted) R.drawable.icon_music_off else R.drawable.icon_music_on,
+                label = stringResource(R.string.title_music_label),
                 contentDescription = stringResource(
                     if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on
                 ),
                 onClick = actions.onToggleMusic
             )
-            val sfxIcon = if (sound.isSfxMuted) {
-                Icons.AutoMirrored.Filled.VolumeOff
-            } else {
-                Icons.AutoMirrored.Filled.VolumeUp
-            }
-            CoffeeIconButton(
-                icon = sfxIcon,
+            SpriteIconButton(
+                spriteRes = if (sound.isSfxMuted) R.drawable.icon_toggle_off else R.drawable.icon_toggle_on,
+                label = stringResource(R.string.title_sfx_label),
                 contentDescription = stringResource(
                     if (sound.isSfxMuted) R.string.toggle_sfx_off else R.string.toggle_sfx_on
                 ),
@@ -348,7 +346,7 @@ internal fun fallbackPieceSymbol(value: Int): String {
     return when {
         value == Match3Engine.SPECIAL_GRINDER -> "⚙️"
         value == Match3Engine.SPECIAL_FRENCH_PRESS -> "⬇️"
-        EmptyCupState.matches(value) -> "🫗"
+        EmptyCupState.matches(value) -> "💨"
         else -> when ((value % 6 + 6) % 6) {
             0 -> "☕"
             1 -> "🫘"

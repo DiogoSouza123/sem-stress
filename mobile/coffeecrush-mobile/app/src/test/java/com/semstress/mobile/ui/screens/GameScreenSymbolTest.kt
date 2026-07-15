@@ -15,8 +15,8 @@ class GameScreenSymbolTest {
     fun `cada peca especial tem um glifo proprio, distinto das pecas normais`() {
         assertEquals("⚙️", fallbackPieceSymbol(Match3Engine.SPECIAL_GRINDER))
         assertEquals("⬇️", fallbackPieceSymbol(Match3Engine.SPECIAL_FRENCH_PRESS))
-        assertEquals("🫗", fallbackPieceSymbol(EmptyCupState.encode(turnsRemaining = 3, absorbed = 0)))
-        assertEquals("🫗", fallbackPieceSymbol(EmptyCupState.encode(turnsRemaining = 1, absorbed = 9)))
+        assertEquals("💨", fallbackPieceSymbol(EmptyCupState.encode(turnsRemaining = 3, absorbed = 0)))
+        assertEquals("💨", fallbackPieceSymbol(EmptyCupState.encode(turnsRemaining = 1, absorbed = 9)))
     }
 
     @Test

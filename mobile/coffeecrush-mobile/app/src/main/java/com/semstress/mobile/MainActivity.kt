@@ -312,6 +312,7 @@ private fun GameDestination(
             },
             onBackToMenu = { gameViewModel.onAction(GameAction.BackToMenu) },
             onReplayStage = { gameViewModel.onAction(GameAction.Replay) },
+            onOpenSettings = { navController.navigate(SettingsRoute) },
             onToggleMusic = { settingsViewModel.toggleMusic() },
             onToggleSfx = { settingsViewModel.toggleSfx() },
             onActivateBaristaSkill = { gameViewModel.onAction(GameAction.ActivateBaristaSkill) }

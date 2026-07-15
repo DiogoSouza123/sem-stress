@@ -133,7 +133,7 @@ private fun MenuTopBar(sound: StageMenuScreenSound, actions: StageMenuScreenActi
                 onClick = actions.onOpenSettings
             )
             SpriteIconButton(
-                spriteRes = if (sound.isMusicMuted) R.drawable.icon_toggle_off else R.drawable.icon_toggle_on,
+                spriteRes = if (sound.isMusicMuted) R.drawable.icon_music_off else R.drawable.icon_music_on,
                 label = stringResource(R.string.title_music_label),
                 contentDescription = stringResource(
                     if (sound.isMusicMuted) R.string.toggle_music_off else R.string.toggle_music_on
