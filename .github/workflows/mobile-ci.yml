@@ -96,7 +96,8 @@ jobs:
           disable-animations: true
           working-directory: mobile/coffeecrush-mobile
           script: |
-            adb install -r app/build/outputs/apk/release/app-release-unsigned.apk
+            APK=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+            adb install -r "$APK"
             adb shell am start -W -n com.semstress.mobile/.MainActivity
             sleep 8
             if adb shell pidof com.semstress.mobile > /dev/null; then
