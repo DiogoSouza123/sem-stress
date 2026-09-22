@@ -20,11 +20,6 @@
     <string name="title_settings_label">Ajustes</string>
     <string name="title_music_label">Musica</string>
     <string name="title_sfx_label">Efeitos</string>
-    <string name="progress_overall">Progresso geral</string>
-    <string name="progress_stages">Fases</string>
-    <string name="progress_points">Pontos</string>
-    <string name="progress_average">Media</string>
-    <string name="progress_stars">Estrelas</string>
     <string name="stage_status_unlocked">Liberada</string>
     <string name="stage_status_locked">Bloqueada</string>
     <string name="stage_node_accessibility">%1$s. %2$s.</string>
